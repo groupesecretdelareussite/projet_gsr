@@ -37,6 +37,16 @@ export default function Home() {
         className="relative overflow-hidden"
         style={{ background: "linear-gradient(110deg, #05330f 20%, #0a5c10 60%, #12aa00 100%)" }}
       >
+        {/* Texture photo discrète, cohérente avec l'en-tête À propos */}
+        <div className="absolute inset-0 opacity-10">
+          <Image
+            src="/images/imgC.jpg"
+            alt=""
+            fill
+            className="object-cover blur-sm scale-105"
+          />
+        </div>
+
         {/* Images en rotation — absolute, collées en bas à droite, z-index: 1 */}
         <div
           className="absolute bottom-0 right-0 hidden lg:block"
