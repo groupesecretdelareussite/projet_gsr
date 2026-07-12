@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ChevronRight, Play, BookOpen, Users, Trophy, ChevronDown, CheckCircle, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
 
-function Counter({ value, suffix="" }) {
+function Counter({ value, suffix="" }: { value: number; suffix?: string }) {
 
   const [count,setCount] = useState(0);
 
