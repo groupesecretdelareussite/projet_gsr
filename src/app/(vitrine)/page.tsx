@@ -4,14 +4,59 @@ import Link from "next/link";
 import { ChevronRight, Play, BookOpen, Users, Trophy, ChevronDown, CheckCircle, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
 
+function Counter({ value, suffix="" }) {
+
+  const [count,setCount] = useState(0);
+
+
+  useEffect(()=>{
+
+    let start = 0;
+
+    const duration = 4500;
+
+    const increment = value / (duration / 16);
+
+
+    const timer = setInterval(()=>{
+
+      start += increment;
+
+      if(start >= value){
+        setCount(value);
+        clearInterval(timer);
+      }
+      else{
+        setCount(Math.floor(start));
+      }
+
+    },16);
+
+
+    return ()=>clearInterval(timer);
+
+
+  },[value]);
+
+
+  return (
+    <h3 className="text-4xl font-bold text-primary mb-2">
+      {count}{suffix}
+    </h3>
+  );
+}
+
 export default function Home() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+
   const heroImages = [
-    "/images/img_accueil_1.png",
     "/images/img_accueil_2.png",
     "/images/img_accueil_3.png",
+    "/images/img_accueil_4.png",
+    "/images/img_accueil_6.png",
+    "/images/img_accueil_7.png",
   ];
 
   useEffect(() => {
@@ -25,7 +70,7 @@ export default function Home() {
     { q: "Comment se déroulent les séances de soutien ?", a: "Nos séances se déroulent en présentiel avec des groupes restreints. Chaque élève bénéficie d'un suivi régulier, d'évaluations périodiques et d'un accompagnement personnalisé selon ses difficultés." },
     { q: "Quels sont les tarifs mensuels ?", a: "Les tarifs varient en fonction de la classe (de la 6ème à la Terminale). Les paiements peuvent être effectués en ligne via Mobile Money ou en présentiel. Veuillez nous contacter pour la grille tarifaire complète." },
     { q: "Quels sont les rôles des superviseurs ?", a: "Les superviseurs encadrent les élèves, s'assurent de leur présence effective, vérifient l'assimilation des cours et font le pont entre les enseignants et la direction pédagogique." },
-    { q: "Comment s'inscrire à une séance ?", a: "Vous pouvez inscrire votre enfant en vous rendant dans l'un de nos centres (Akpakpa, Jonquet, etc.) avec les pièces requises et en remplissant le formulaire d'inscription physique." },
+    { q: "Comment s'inscrire à une séance ?", a: "Vous pouvez inscrire votre enfant en vous rendant dans l'un de nos centres (Akpakpa Yagbé, Jéricho, Vèdoko.) avec les pièces requises et en remplissant le formulaire d'inscription physique." },
     { q: "Quel est le programme des cours préparatoires ?", a: "Le programme couvre rigoureusement le programme officiel de l'éducation nationale, avec un accent particulier sur les matières principales (Mathématiques, Physique-Chimie, Français, SVT, Anglais) selon la série." },
     { q: "Quels sont les horaires des cours ?", a: "Les cours se déroulent principalement les mercredis après-midi, samedis et dimanches pour s'adapter au calendrier scolaire classique de vos enfants." },
   ];
@@ -50,7 +95,7 @@ export default function Home() {
         {/* Images en rotation — absolute, collées en bas à droite, z-index: 1 */}
         <div
           className="absolute bottom-0 right-0 hidden lg:block"
-          style={{ width: "500px", height: "460px", zIndex: 1 }}
+          style={{ width: "650px", height: "560px", zIndex: 1 }}
         >
           {heroImages.map((src, index) => (
             <div
@@ -59,13 +104,31 @@ export default function Home() {
                 index === currentImageIndex ? "opacity-100" : "opacity-0"
               }`}
             >
+              {/*
               <Image
                 src={src}
                 alt={`Illustration accueil ${index + 1}`}
                 fill
-                className="object-contain object-bottom"
-                priority={index === 0}
-              />
+                className="object-contain object-bottom drop-shadow-[0_0_8px_white]"
+              /> */}
+              <Image
+                  src={src}
+                  alt=""
+                  fill
+                  className="object-contain object-bottom scale-105 brightness-0 invert"
+                  aria-hidden="true"
+                />
+
+                {/* Image originale au-dessus */}
+                <Image
+                  src={src}
+                  alt={`Illustration accueil ${index + 1}`}
+                  fill
+                  className="object-contain object-bottom"
+                  priority={index === 0}
+                />
+
+
             </div>
           ))}
         </div>
@@ -124,21 +187,21 @@ export default function Home() {
             <div className="bg-primary/10 p-4 rounded-full mb-4 text-primary">
               <BookOpen className="w-8 h-8" />
             </div>
-            <h3 className="text-4xl font-bold text-primary mb-2">5+</h3>
+            <Counter value={5} suffix="+" />
             <p className="text-gray-600 font-medium">Années d&apos;expérience</p>
           </div>
           <div className="bg-white rounded-xl shadow-lg p-8 text-center flex flex-col items-center justify-center transform transition hover:-translate-y-1">
             <div className="bg-primary/10 p-4 rounded-full mb-4 text-primary">
               <Users className="w-8 h-8" />
             </div>
-            <h3 className="text-4xl font-bold text-primary mb-2">800+</h3>
+            <Counter value={800} suffix="+" />
             <p className="text-gray-600 font-medium">Élèves formés en 2025</p>
           </div>
           <div className="bg-white rounded-xl shadow-lg p-8 text-center flex flex-col items-center justify-center transform transition hover:-translate-y-1">
             <div className="bg-secondary/20 p-4 rounded-full mb-4 text-secondary">
               <Trophy className="w-8 h-8" />
             </div>
-            <h3 className="text-4xl font-bold text-secondary mb-2">86%</h3>
+            <Counter value={86} suffix="%" />
             <p className="text-gray-600 font-medium">Taux de Réussite</p>
           </div>
         </div>
@@ -307,9 +370,13 @@ export default function Home() {
           <p className="text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
             Nous vous mettons en relation avec des répétiteurs qualifiés, rigoureusement sélectionnés pour répondre aux besoins spécifiques de votre enfant à domicile.
           </p>
-          <button className="bg-dark text-white hover:bg-dark/90 px-8 py-3 rounded-md font-medium inline-flex items-center gap-2 transition-colors shadow-md">
-            <Phone className="w-5 h-5" /> Prendre contact avec nous
-          </button>
+          <a
+            href="tel:+2290196084067"
+            className="bg-dark text-white hover:bg-dark/90 px-8 py-3 rounded-md font-medium inline-flex items-center gap-2 transition-colors shadow-md"
+          >
+            <Phone className="w-5 h-5" />
+            Prendre contact avec nous
+          </a>
         </div>
       </section>
 

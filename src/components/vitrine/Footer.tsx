@@ -10,13 +10,13 @@ export default function Footer() {
           {/* Column 1: About */}
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="bg-white p-1 rounded-sm inline-flex">
-                <Image src="/logo.png" alt="GSR Logo" width={32} height={32} className="h-8 w-auto object-contain" />
+              <div className="bg-white w-11 h-11 rounded-full inline-flex items-center justify-center">
+                <Image src="/logo.png" alt="GSR Logo" width={32} height={32} className="h-8 w-auto object-contain scale-150 translate-y-0.5" />
               </div>
-              <span className="font-bold text-lg leading-tight">GROUPE SECRET<br/>DE LA REUSSITE</span>
+              <span className="font-bold text-lg leading-tight">GROUPE SECRET DE LA REUSSITE</span>
             </div>
             <p className="text-gray-300 text-sm leading-relaxed">
-              Le Groupe Secret de la Réussite (G.S.R) est votre partenaire d&apos;excellence pour l&apos;accompagnement scolaire, le renforcement de capacités et la réussite aux examens.
+              Le Groupe Secret de la Réussite (G.S.R) est votre partenaire d&apos;excellence pour l&apos;accompagnement scolaire, le renforcement de capacités et la réussite aux examens de vos enfants.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-300 hover:text-white transition-colors">
@@ -47,15 +47,16 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/mentions-legales" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Mentions légales
-                </Link>
-              </li>
-              <li>
                 <Link href="/portail-parents" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Portail parents
                 </Link>
               </li>
+              <li>
+                <Link href="/mentions-legales" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Mentions légales
+                </Link>
+              </li>
+              
             </ul>
           </div>
 
@@ -65,15 +66,15 @@ export default function Footer() {
             <ul className="space-y-4">
               <li className="flex items-start gap-3 text-gray-300">
                 <MapPin className="h-5 w-5 text-secondary shrink-0 mt-0.5" />
-                <span>Akpakpa, Cotonou, Bénin</span>
+                <span>Cotonou, Bénin</span>
               </li>
               <li className="flex items-center gap-3 text-gray-300">
                 <Phone className="h-5 w-5 text-secondary shrink-0" />
-                <span>+229 01 02 03 04</span>
+                <span>+229 01 96 08 40 67</span>
               </li>
               <li className="flex items-center gap-3 text-gray-300">
                 <Phone className="h-5 w-5 text-secondary shrink-0" />
-                <span>+229 05 06 07 08</span>
+                <span>+229 01 49 76 16 35</span>
               </li>
               <li className="flex items-center gap-3 text-gray-300">
                 <Mail className="h-5 w-5 text-secondary shrink-0" />

@@ -22,12 +22,12 @@ export default function Navbar() {
   return (
     <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link href="/" className="flex items-center gap-2">
-              <Image src="/logo.png" alt="GSR Logo" width={32} height={32} className="h-8 w-auto object-contain" />
-              <span className="font-bold text-xl text-primary-dark hidden sm:block">G.S.R</span>
+              <Image src="/logo.png" alt="GSR Logo" width={32} height={32} className="h-8 w-auto object-contain scale-150 translate-y-1" />
+              <span className="font-bold text-2xl text-primary-dark block">G.S.R</span>
             </Link>
           </div>
 
