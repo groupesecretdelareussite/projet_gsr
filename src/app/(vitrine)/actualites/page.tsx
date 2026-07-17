@@ -87,7 +87,7 @@ export default function ActualitesPage() {
                   Préparations intensives pour le BAC 2026 : Le GSR mobilise ses experts
                 </h2>
                 <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-6">
-                  Afin d'assurer la réussite de nos futurs bacheliers, EduGrowth Academy met en place un programme d'accompagnement sur-mesure. Nos enseignants...
+                  Afin d'assurer la réussite de nos futurs bacheliers, le Groupe met en place un programme d'accompagnement sur-mesure. Nos enseignants...
                 </p>
               </div>
               <div>

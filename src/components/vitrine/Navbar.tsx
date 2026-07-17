@@ -11,6 +11,7 @@ const navLinks = [
   { name: "Programmes", href: "/programmes" },
   { name: "Sites", href: "/sites" },
   { name: "Actualités", href: "/actualites" },
+  { name: "Tarifs", href: "/tarifs" },
   { name: "À propos", href: "/apropos" },
   { name: "Galerie", href: "/galerie" },
 ];

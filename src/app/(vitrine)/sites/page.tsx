@@ -1,8 +1,145 @@
-﻿export default function Page() {
+import Image from "next/image";
+import { MapPin, Phone, Calendar, Map } from "lucide-react";
+
+const SITES = [
+  {
+    nom: "Site Jéricho",
+    badge: "Siège social",
+    adresse: "EPP Jéricho, Cotonou, Bénin",
+    telephones: ["+229 01 49 76 16 35", "01 96 08 40 67"],
+    horaires: "Mercredi - Samedi - Dimanche",
+    image: "/images/img_cip.jpg",
+  },
+  {
+    nom: "Site Yagbé",
+    badge: null,
+    adresse: "EPP Yagbé, Akpakpa, Cotonou, Bénin",
+    telephones: ["+229 01 49 76 16 35", "01 96 08 40 67"],
+    horaires: "Samedi - Dimanche",
+    image: "/images/img_pas.jpg",
+  },
+  {
+    nom: "Site Vèdoko",
+    badge: null,
+    adresse: "EPP Vèdoko, Cotonou, Bénin",
+    telephones: ["+229 01 49 76 16 35", "01 96 08 40 67"],
+    horaires: "Samedi - Dimanche",
+    image: "/images/img_prepa.jpg",
+  },
+];
+
+export default function SitesPage() {
   return (
-    <div className="min-h-[60vh] flex flex-col items-center justify-center p-8 text-center">
-      <h1 className="text-3xl font-bold text-gray-900 mb-4 capitalize">Page: sites</h1>
-      <p className="text-gray-600">En attente de la maquette correspondante.</p>
+    <div>
+      {/* ── Hero Header ── */}
+      <div
+        className="py-16 sm:py-20 px-4"
+        style={{ background: "linear-gradient(135deg, #12AA00, #0e8f00)" }}
+      >
+        <div className="max-w-6xl mx-auto">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+            Nos Sites au Bénin
+          </h1>
+          <p className="text-white/90 text-sm sm:text-base max-w-2xl leading-relaxed">
+            Retrouvez-nous dans nos différents centres d&apos;excellence à travers le pays.
+            Chaque site offre un environnement d&apos;apprentissage premium et sécurisé.
+          </p>
+        </div>
+      </div>
+
+      {/* ── Cartes des sites ── */}
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+          {SITES.map((site) => (
+            <div
+              key={site.nom}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+            >
+              <div className="relative h-48">
+                <Image src={site.image} alt={site.nom} fill className="object-cover" />
+                {site.badge && (
+                  <span className="absolute top-3 left-3 bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide">
+                    {site.badge}
+                  </span>
+                )}
+              </div>
+
+              <div className="p-6">
+                <h3 className="font-bold text-gray-900 text-lg mb-3">{site.nom}</h3>
+
+                <div className="space-y-2 text-sm text-gray-600 mb-5">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                    <span>{site.adresse}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-primary shrink-0" />
+                    <span>{site.telephones.join(" / ")}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-primary shrink-0" />
+                    <span>{site.horaires}</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <a
+                    href="#"
+                    className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-primary-dark transition-colors"
+                  >
+                    <Map className="w-4 h-4" /> Voir sur la carte
+                  </a>
+                  <a
+                    href={`tel:${site.telephones[0].replace(/\s/g, "")}`}
+                    className="inline-flex items-center justify-center border border-primary text-primary px-3.5 py-2.5 rounded-lg hover:bg-primary/5 transition-colors"
+                    aria-label={`Appeler ${site.nom}`}
+                  >
+                    <Phone className="w-4 h-4" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ── Orientation + Carte ── */}
+      <section className="pb-20 px-4">
+        <div className="max-w-6xl mx-auto border-t border-gray-100 pt-16 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+              Besoin d&apos;une orientation ?
+            </h2>
+            <p className="text-gray-600 text-sm sm:text-base leading-relaxed mb-8">
+              Nos conseillers d&apos;orientation sont disponibles pour vous. Contactez le{" "}
+              <span className="font-semibold text-gray-900">+229 01 49 76 16 35</span> pour être
+              pris(e) en charge.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <a
+                href="tel:+22901497616"
+                className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-primary-dark transition-colors shadow-sm"
+              >
+                Prendre Rendez-vous
+              </a>
+              <a
+                href="/programmes"
+                className="inline-flex items-center gap-2 border border-primary text-primary px-6 py-3 rounded-lg font-semibold text-sm hover:bg-primary/5 transition-colors"
+              >
+                Télécharger notre Brochure
+              </a>
+            </div>
+          </div>
+
+          <div className="bg-gray-100 rounded-2xl h-72 flex flex-col items-center justify-center text-center p-8 border border-gray-200">
+            <Map className="w-10 h-10 text-gray-400 mb-4" />
+            <p className="font-semibold text-gray-700 mb-1">Carte interactive des sites</p>
+            <p className="text-gray-500 text-sm">
+              Cliquez pour explorer nos localisations sur Google Maps
+            </p>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
