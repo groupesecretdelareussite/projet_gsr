@@ -33,6 +33,11 @@ export default async function ListeElevesPage({
     supabase.from("classes").select("id, nom_classe, site_id").order("ordre"),
   ]);
 
+  const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
+  const classesFiltrees = searchParams.site_id
+    ? (classes ?? []).filter((c) => String(c.site_id) === searchParams.site_id)
+    : classes ?? [];
+
   let query = supabase
     .from("eleves")
     .select("id, matricule, nom, prenoms, contact_parent, option_m, classes!inner(nom_classe, site_id, sites(nom_site))")
@@ -122,9 +127,9 @@ export default async function ListeElevesPage({
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
         >
           <option value="">Toutes les classes</option>
-          {classes?.map((c) => (
+          {classesFiltrees.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.nom_classe}
+              {searchParams.site_id ? c.nom_classe : `${c.nom_classe} — ${nomSiteParId.get(c.site_id) ?? "?"}`}
             </option>
           ))}
         </select>

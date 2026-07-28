@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Search, Bell, Settings, HelpCircle } from "lucide-react";
 import { useUserScope } from "@/hooks/useUserScope";
 import { ROLE_LABELS } from "@/lib/constants";
@@ -36,7 +37,17 @@ export function Topbar() {
 
       <div className="flex items-center gap-1">
         <IconPlaceholder icon={Bell} />
-        <IconPlaceholder icon={Settings} />
+        {role === "coordonnateur" ? (
+          <Link
+            href="/admin/parametres/utilisateurs"
+            title="Paramètres"
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+          >
+            <Settings className="w-4 h-4" />
+          </Link>
+        ) : (
+          <IconPlaceholder icon={Settings} />
+        )}
         <IconPlaceholder icon={HelpCircle} />
       </div>
 

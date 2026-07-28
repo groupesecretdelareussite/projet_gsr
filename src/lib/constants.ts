@@ -46,3 +46,15 @@ export const MODE_PAIEMENT_LABELS: Record<ModePaiement, string> = {
   MoMo: "Mobile Money",
   Presentiel: "Présentiel",
 };
+
+export const TYPES_NOTE = ["I1", "I2", "I3", "D1", "D2", "Ctrl"] as const;
+export type TypeNote = (typeof TYPES_NOTE)[number];
+
+export const TYPE_NOTE_LABELS: Record<TypeNote, string> = {
+  I1: "Interro 1",
+  I2: "Interro 2",
+  I3: "Interro 3",
+  D1: "Devoir 1",
+  D2: "Devoir 2",
+  Ctrl: "Contrôle",
+};

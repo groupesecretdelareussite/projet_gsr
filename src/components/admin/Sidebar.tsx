@@ -56,14 +56,14 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/notes",
     icon: NotebookText,
     roles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Présences",
     href: "/admin/presences",
     icon: ClipboardCheck,
     roles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Paiements",
@@ -77,7 +77,7 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/statistiques",
     icon: BarChart3,
     roles: ["coordonnateur", "comptable", "superviseur"],
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Programmation TD",
