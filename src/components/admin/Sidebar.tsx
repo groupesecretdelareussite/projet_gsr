@@ -126,7 +126,7 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/parametres/utilisateurs",
     icon: Settings,
     roles: ["coordonnateur"],
-    enabled: false,
+    enabled: true,
   },
 ];
 

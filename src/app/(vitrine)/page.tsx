@@ -139,7 +139,7 @@ export default function Home() {
           style={{ zIndex: 2 }}
         >
           <div className="text-white space-y-5 py-14 lg:py-20 max-w-xl">
-            <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight uppercase leading-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight uppercase leading-tight lg:w-max lg:whitespace-nowrap lg:max-w-none">
               GROUPE SECRET DE LA RÉUSSITE
             </h1>
             <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-secondary">

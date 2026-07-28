@@ -14,9 +14,12 @@ This repo's working root for the Next.js app is `gsr/` (this directory) — the 
 npm run dev      # start dev server (localhost:3000)
 npm run build    # production build
 npm run lint     # next lint
+npm run test             # Vitest — Levels 1+2 (unit + role-guard), no network required
+npm run test:watch       # Vitest watch mode, Levels 1+2
+npm run test:integration # Vitest — Level 3, real network calls against the Supabase project (needs .env.local + .env.test.local)
 ```
 
-No test framework is configured in this repo (no jest/vitest, no `*.test.*` files).
+Three-tier test strategy (see `*.test.ts` next to the files they cover, and `*.integration.test.ts` for Level 3): Level 1 pure `src/lib/` unit tests, Level 2 Server Action role-guard tests (`@/lib/auth-scope` mocked, no network), Level 3 integration tests against the real (current) Supabase project — treated as the de facto test environment for now; a client-owned project will be created later and migrated via the same `sql/` files.
 
 Seeding the first admin account (one-shot, service-role key required — never run against prod carelessly):
 ```bash
@@ -30,7 +33,12 @@ SQL migrations live in `sql/` and are applied manually to Supabase in numeric or
 Only a subset of `GSR_ARCHITECTURE.md`'s full vision is built. As of now:
 - **Vitrine** (public site): `src/app/(vitrine)/*` — mostly complete.
 - **Admin — élèves module**: login, inscription, liste, modification, suspension/réinscription (`src/app/admin/eleves/*`, `src/actions/eleves.ts`).
-- **Not yet implemented**: portail parents, portail TD, paiements, présences, notes, statistiques, comptabilité, fin-d'année, notifications/Realtime, galerie admin, paramètres/gestion utilisateurs. When asked to build these, treat `GSR_ARCHITECTURE.md` as the spec, but verify current code state first since this file will go stale as features land — don't assume a table, RLS policy, or Server Action described there already exists without checking `sql/` and `src/actions/`.
+- **Admin — paiements module**: enregistrement, historique, à-jour, en-retard (avec relance WhatsApp journalisée), suppression avec mot de passe+motif (`src/app/admin/paiements/*`, `src/actions/paiements.ts`, `src/lib/paiements.ts`).
+- **Admin — paramètres/gestion utilisateurs** (coordonnateur only): créer/modifier/désactiver/réactiver/supprimer un compte, réinitialiser un mot de passe (`src/app/admin/parametres/utilisateurs`, `src/actions/utilisateurs.ts`) — currently untracked in git (not yet committed).
+- **Admin — tableau de bord**: KPIs (élèves actifs, non-à-jour, nouveaux ce mois), répartition par classe (recharts), panneau d'alertes de retard (`src/app/admin/tableau-de-bord/page.tsx`).
+- **Not yet implemented**: portail parents, portail TD, présences, notes, statistiques financières détaillées, comptabilité (dépenses annexes), fin-d'année, notifications/Realtime, galerie admin, **gestion des données scolaires** (sites/classes/frais_td — pas de page Paramètres pour ça ; actuellement seedées à la main via `sql/005_seed.sql`, aucun coordonnateur ne peut créer une classe ou fixer un tarif TD depuis l'interface). When asked to build these, treat `GSR_ARCHITECTURE.md` as the spec, but verify current code state first since this file will go stale as features land — don't assume a table, RLS policy, or Server Action described there already exists without checking `sql/` and `src/actions/`.
+- `classes.classe_suivante_id` models a simple 1:1 promotion chain only. Where a grade level is a genuine decision point (e.g. a "3ème" splitting into multiple séries at "Seconde"), leave it `NULL` and say so in a comment — see `sql/005_seed.sql`'s Jéricho block for the pattern. A future fin-d'année Server Action must treat `NULL` as "needs manual per-student review" (pick a `decisions_passage.nouvelle_classe_id`, possibly cross-site), not auto-assume `sortant` — that assumption only holds for a true end-of-chain level.
+- `npm run build` and `npm run lint` are both clean as of this writing — no known build-breaking issues in the current tree.
 
 ## Architecture
 
