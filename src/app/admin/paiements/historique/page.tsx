@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/admin/EmptyState";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { SupprimerPaiementDialog } from "@/components/admin/paiements/SupprimerPaiementDialog";
 import { MODE_PAIEMENT_LABELS, MOIS_SCOLAIRES, type ModePaiement } from "@/lib/constants";
+import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 
 interface PaiementRow {
   id: number;
@@ -47,8 +48,10 @@ export default async function HistoriquePaiementsPage({
     .order("date_paiement", { ascending: false });
 
   const anneeFiltre = searchParams.annee_scolaire_id ?? (anneeParDefaut ? String(anneeParDefaut) : undefined);
+  const siteIdEffectif =
+    searchParams.site_id ?? (scope.role === "superviseur" ? lireFiltreSiteSuperviseur()?.toString() : undefined);
   if (anneeFiltre) query = query.eq("annee_scolaire_id", anneeFiltre);
-  if (searchParams.site_id) query = query.eq("eleves.classes.site_id", searchParams.site_id);
+  if (siteIdEffectif) query = query.eq("eleves.classes.site_id", siteIdEffectif);
   if (searchParams.classe_id) query = query.eq("eleves.classe_id", searchParams.classe_id);
   if (searchParams.mois) query = query.eq("mois_souscription", searchParams.mois);
 
@@ -107,7 +110,7 @@ export default async function HistoriquePaiementsPage({
         </select>
         <select
           name="site_id"
-          defaultValue={searchParams.site_id ?? ""}
+          defaultValue={siteIdEffectif ?? ""}
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
         >
           <option value="">Tous les sites</option>

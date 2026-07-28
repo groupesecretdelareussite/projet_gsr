@@ -67,7 +67,10 @@ export default function ConnexionParentPage() {
                 <label htmlFor="mot_de_passe" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
                   Mot de passe
                 </label>
-                <span title="Bientôt disponible" className="text-xs text-gray-300 cursor-not-allowed">
+                <span
+                  title="Contactez l'établissement pour une réinitialisation"
+                  className="text-xs text-gray-400 cursor-help"
+                >
                   Mot de passe oublié ?
                 </span>
               </div>

@@ -112,7 +112,7 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/galerie",
     icon: Images,
     roles: ["coordonnateur", "comptable", "superviseur"],
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Agent IA",

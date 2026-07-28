@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,13 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { enregistrerPaiement } from "@/actions/paiements";
 import { MOIS_SCOLAIRES, MODES_PAIEMENT, MODE_PAIEMENT_LABELS, type MoisScolaire, type ModePaiement } from "@/lib/constants";
 import { moisCourant } from "@/lib/paiements";
+import type { QuittanceData } from "@/components/admin/paiements/QuittancePDF";
+
+// @react-pdf/renderer pèse ~480 kB — chargé uniquement quand une quittance existe vraiment (mois soldé), jamais au chargement initial du formulaire.
+const QuittanceDownloadButton = dynamic(
+  () => import("@/components/admin/paiements/QuittanceDownloadButton").then((m) => m.QuittanceDownloadButton),
+  { ssr: false, loading: () => <span className="text-xs text-gray-400">Préparation de la quittance...</span> }
+);
 
 interface EleveResultat {
   id: number;
@@ -37,6 +45,7 @@ export function EnregistrerPaiementForm() {
   const [montant, setMontant] = useState("");
   const [date, setDate] = useState(todayIso());
   const [mode, setMode] = useState<ModePaiement>("Presentiel");
+  const [quittance, setQuittance] = useState<QuittanceData | null>(null);
 
   function rechercher(q: string) {
     setRecherche(q);
@@ -60,6 +69,7 @@ export function EnregistrerPaiementForm() {
     ev.preventDefault();
     if (!eleve) return;
 
+    setQuittance(null);
     startTransition(async () => {
       const result = await enregistrerPaiement({
         eleveId: eleve.id,
@@ -79,6 +89,20 @@ export function EnregistrerPaiementForm() {
           ? `Paiement enregistré — mois de ${mois} soldé`
           : `Paiement enregistré — reste ${result.resteApresPaiement} F pour ${mois}`
       );
+
+      if (result.resteApresPaiement === 0 && result.montantAttendu !== undefined) {
+        setQuittance({
+          nomComplet: `${eleve.nom} ${eleve.prenoms}`,
+          matricule: eleve.matricule,
+          nomClasse: eleve.classes?.nom_classe ?? "—",
+          nomSite: eleve.classes?.sites?.nom_site ?? "—",
+          mois,
+          montantAttendu: result.montantAttendu,
+          datePaiement: date,
+          modePaiement: MODE_PAIEMENT_LABELS[mode],
+        });
+      }
+
       setEleve(null);
       setMontant("");
       router.refresh();
@@ -187,6 +211,15 @@ export function EnregistrerPaiementForm() {
       <Button type="submit" disabled={isPending || !eleve || !montant}>
         {isPending ? "Enregistrement..." : "Enregistrer le paiement"}
       </Button>
+
+      {quittance && (
+        <div className="flex items-center justify-between px-4 py-3 bg-green-50 border border-green-100 rounded-lg">
+          <p className="text-sm text-green-700">
+            Mois de {quittance.mois} soldé pour {quittance.nomComplet}
+          </p>
+          <QuittanceDownloadButton data={quittance} />
+        </div>
+      )}
     </form>
   );
 }

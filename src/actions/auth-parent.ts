@@ -1,7 +1,9 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
+import { getUserScope } from "@/lib/auth-scope";
 import { getParentSession } from "@/lib/session-parent";
 
 const MAX_TENTATIVES = 5;
@@ -119,6 +121,35 @@ export async function creerCompteParent(input: CreerCompteParentInput): Promise<
 export async function deconnexionParent() {
   const session = await getParentSession();
   session.destroy();
+}
+
+/**
+ * §5.7 GSR_ARCHITECTURE.md — les parents n'ont pas de flux natif « mot de
+ * passe oublié » (pas de Supabase Auth). Réinitialisation manuelle,
+ * réservée au coordonnateur.
+ */
+export async function reinitialiserMotDePasseParent(matricule: string, nouveauMdp: string): Promise<{ error?: string }> {
+  const scope = await getUserScope(createClient());
+  if (scope.role !== "coordonnateur") throw new Error("Non autorisé");
+
+  if (nouveauMdp.length < 8) {
+    return { error: "Le mot de passe doit contenir au moins 8 caractères" };
+  }
+
+  const supabaseAdmin = createServiceRoleClient();
+
+  const { data: compte } = await supabaseAdmin
+    .from("comptes_parents")
+    .select("id")
+    .eq("matricule", matricule)
+    .maybeSingle();
+  if (!compte) return { error: "Aucun compte parent pour ce matricule" };
+
+  const hash = await bcrypt.hash(nouveauMdp, 10);
+  const { error } = await supabaseAdmin.from("comptes_parents").update({ mot_de_passe: hash }).eq("matricule", matricule);
+  if (error) return { error: error.message };
+
+  return {};
 }
 
 /**

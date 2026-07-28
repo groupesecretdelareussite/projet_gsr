@@ -7,6 +7,7 @@ import { KpiCard } from "@/components/admin/KpiCard";
 import { EncaissementsMensuelsChart } from "@/components/admin/statistiques/EncaissementsMensuelsChart";
 import { EncaissementsParSiteChart } from "@/components/admin/statistiques/EncaissementsParSiteChart";
 import { moisVisiblesRetard } from "@/lib/paiements";
+import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 import { MOIS_SCOLAIRES, type MoisScolaire } from "@/lib/constants";
 
 interface PaiementRow {
@@ -45,9 +46,12 @@ export default async function StatistiquesPage({
     anneesList.find((a) => a.statut === "en_cours") ??
     anneesList[0];
 
+  const siteIdEffectif =
+    searchParams.site_id ?? (scope.role === "superviseur" ? lireFiltreSiteSuperviseur()?.toString() : undefined);
+
   const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
-  const classesFiltrees = searchParams.site_id
-    ? (classes ?? []).filter((c) => String(c.site_id) === searchParams.site_id)
+  const classesFiltrees = siteIdEffectif
+    ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
     : classes ?? [];
 
   let paiements: PaiementRow[] = [];
@@ -61,7 +65,7 @@ export default async function StatistiquesPage({
       .select("montant_paye, mode_paiement, mois_souscription, eleves!inner(classe_id, classes!inner(site_id, sites(nom_site)))")
       .eq("annee_scolaire_id", anneeSelectionnee.id);
 
-    if (searchParams.site_id) query = query.eq("eleves.classes.site_id", searchParams.site_id);
+    if (siteIdEffectif) query = query.eq("eleves.classes.site_id", siteIdEffectif);
     if (searchParams.classe_id) query = query.eq("eleves.classe_id", searchParams.classe_id);
 
     const { data } = await query;
@@ -89,7 +93,7 @@ export default async function StatistiquesPage({
   let tauxRecouvrement: number | null = null;
   if (anneeSelectionnee?.statut === "en_cours") {
     let queryElevesScope = supabase.from("eleves").select("classe_id, classes!inner(site_id)").eq("statut", "actif");
-    if (searchParams.site_id) queryElevesScope = queryElevesScope.eq("classes.site_id", searchParams.site_id);
+    if (siteIdEffectif) queryElevesScope = queryElevesScope.eq("classes.site_id", siteIdEffectif);
     if (searchParams.classe_id) queryElevesScope = queryElevesScope.eq("classe_id", searchParams.classe_id);
     const [{ data: elevesScope }, { data: fraisTdRows }] = await Promise.all([
       queryElevesScope,
@@ -129,7 +133,7 @@ export default async function StatistiquesPage({
             </option>
           ))}
         </select>
-        <select name="site_id" defaultValue={searchParams.site_id ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+        <select name="site_id" defaultValue={siteIdEffectif ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
           <option value="">Tous les sites</option>
           {sites?.map((s) => (
             <option key={s.id} value={s.id}>
@@ -141,7 +145,7 @@ export default async function StatistiquesPage({
           <option value="">Toutes les classes</option>
           {classesFiltrees.map((c) => (
             <option key={c.id} value={c.id}>
-              {searchParams.site_id ? c.nom_classe : `${c.nom_classe} — ${nomSiteParId.get(c.site_id) ?? "?"}`}
+              {siteIdEffectif ? c.nom_classe : `${c.nom_classe} — ${nomSiteParId.get(c.site_id) ?? "?"}`}
             </option>
           ))}
         </select>

@@ -38,7 +38,7 @@ export interface EnregistrerPaiementInput {
 /** §8.7/§12.5 GSR_ARCHITECTURE.md — le montant payé ne peut jamais dépasser le reste dû. */
 export async function enregistrerPaiement(
   input: EnregistrerPaiementInput
-): Promise<{ error?: string; resteApresPaiement?: number }> {
+): Promise<{ error?: string; resteApresPaiement?: number; montantAttendu?: number }> {
   const scope = await getScopeAndAssert(ROLES_PAIEMENTS);
   const supabaseAdmin = createServiceRoleClient();
 
@@ -95,7 +95,7 @@ export async function enregistrerPaiement(
   if (error) return { error: error.message };
 
   revalidatePaiementsPaths();
-  return { resteApresPaiement: resteAvant - input.montantPaye };
+  return { resteApresPaiement: resteAvant - input.montantPaye, montantAttendu: Number(fraisTd.montant) };
 }
 
 /**

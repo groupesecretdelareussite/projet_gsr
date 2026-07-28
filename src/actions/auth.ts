@@ -71,3 +71,30 @@ export async function logout() {
   const supabase = createClient();
   await supabase.auth.signOut();
 }
+
+/**
+ * Changement de mot de passe en libre-service — n'importe quel rôle
+ * connecté, pour son propre compte uniquement (§6, page
+ * parametres/changer-mot-de-passe). L'ancien mot de passe est re-vérifié via
+ * `signInWithPassword` avant `updateUser`, pour éviter qu'une session
+ * laissée ouverte permette de changer le mot de passe sans le connaître.
+ */
+export async function changerMonMotDePasse(ancienMdp: string, nouveauMdp: string): Promise<{ error?: string }> {
+  if (nouveauMdp.length < 8) {
+    return { error: "Le nouveau mot de passe doit contenir au moins 8 caractères" };
+  }
+
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) return { error: "Non authentifié" };
+
+  const { error: verifError } = await supabase.auth.signInWithPassword({ email: user.email, password: ancienMdp });
+  if (verifError) return { error: "Mot de passe actuel incorrect" };
+
+  const { error } = await supabase.auth.updateUser({ password: nouveauMdp });
+  if (error) return { error: error.message };
+
+  return {};
+}

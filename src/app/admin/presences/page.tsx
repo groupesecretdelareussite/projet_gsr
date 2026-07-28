@@ -4,6 +4,7 @@ import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { PresencesCards, type EleveOption, type PresenceExistante } from "@/components/admin/presences/PresencesCards";
+import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 
 function aujourdhui(): string {
   return new Date().toISOString().slice(0, 10);
@@ -32,9 +33,12 @@ export default async function PresencesPage({
     supabase.from("annees_scolaires").select("id").eq("statut", "en_cours").maybeSingle(),
   ]);
 
+  const siteIdEffectif =
+    searchParams.site_id ?? (scope.role === "superviseur" ? lireFiltreSiteSuperviseur()?.toString() : undefined);
+
   const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
-  const classesFiltrees = searchParams.site_id
-    ? (classes ?? []).filter((c) => String(c.site_id) === searchParams.site_id)
+  const classesFiltrees = siteIdEffectif
+    ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
     : classes ?? [];
 
   const classeId = searchParams.classe_id ? Number(searchParams.classe_id) : undefined;
@@ -73,7 +77,7 @@ export default async function PresencesPage({
       <form method="get" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-2xl">
         <select
           name="site_id"
-          defaultValue={searchParams.site_id ?? ""}
+          defaultValue={siteIdEffectif ?? ""}
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
         >
           <option value="">Tous les sites</option>
@@ -91,7 +95,7 @@ export default async function PresencesPage({
           <option value="">Choisir une classe</option>
           {classesFiltrees.map((c) => (
             <option key={c.id} value={c.id}>
-              {searchParams.site_id ? c.nom_classe : `${c.nom_classe} — ${nomSiteParId.get(c.site_id) ?? "?"}`}
+              {siteIdEffectif ? c.nom_classe : `${c.nom_classe} — ${nomSiteParId.get(c.site_id) ?? "?"}`}
             </option>
           ))}
         </select>
