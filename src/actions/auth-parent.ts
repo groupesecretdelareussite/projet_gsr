@@ -120,3 +120,16 @@ export async function deconnexionParent() {
   const session = await getParentSession();
   session.destroy();
 }
+
+/**
+ * §5.6 GSR_ARCHITECTURE.md — fenêtre glissante de 20 min : le cookie
+ * iron-session a un `maxAge` fixe calculé depuis la connexion, donc sans
+ * appel périodique il expirerait même si le parent reste actif. Appelée par
+ * ParentInactivityWatcher tant qu'il y a de l'activité.
+ */
+export async function prolongerSessionParent(): Promise<{ error?: string }> {
+  const session = await getParentSession();
+  if (!session.matricule) return { error: "Session expirée" };
+  await session.save();
+  return {};
+}

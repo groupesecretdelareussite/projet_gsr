@@ -5,6 +5,7 @@ import { getUserScope } from "@/lib/auth-scope";
 import { ScopeProvider } from "@/components/admin/ScopeProvider";
 import { Sidebar } from "@/components/admin/Sidebar";
 import { Topbar } from "@/components/admin/Topbar";
+import { AdminInactivityWatcher } from "@/components/admin/AdminInactivityWatcher";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
@@ -37,6 +38,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
       </div>
       <Toaster richColors position="top-right" />
+      <AdminInactivityWatcher />
     </ScopeProvider>
   );
 }

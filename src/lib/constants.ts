@@ -47,6 +47,14 @@ export const MODE_PAIEMENT_LABELS: Record<ModePaiement, string> = {
   Presentiel: "Présentiel",
 };
 
+export const DECISIONS_PASSAGE = ["passe", "redouble", "sortant"] as const;
+export type DecisionPassage = (typeof DECISIONS_PASSAGE)[number];
+export const DECISION_PASSAGE_LABELS: Record<DecisionPassage, string> = {
+  passe: "Passe",
+  redouble: "Redouble",
+  sortant: "Sortant",
+};
+
 export const TYPES_NOTE = ["I1", "I2", "I3", "D1", "D2", "Ctrl"] as const;
 export type TypeNote = (typeof TYPES_NOTE)[number];
 

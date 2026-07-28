@@ -120,6 +120,9 @@ export default async function PresencesPage({
           siteId={classeSelectionnee.site_id}
           classeId={classeId}
           anneeScolaireId={anneeEnCours.id}
+          nomClasse={classeSelectionnee.nom_classe}
+          nomSite={nomSiteParId.get(classeSelectionnee.site_id) ?? ""}
+          peutExporter={scope.role !== "chef_site"}
         />
       )}
     </div>

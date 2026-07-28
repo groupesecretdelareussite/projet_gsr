@@ -32,6 +32,18 @@ export function moisPrecedent(mois: MoisScolaire): MoisScolaire | null {
   return index > 0 ? MOIS_SCOLAIRES[index - 1] : null;
 }
 
+/**
+ * §12.3 GSR_ARCHITECTURE.md — mois scolaire à vérifier par la suspension
+ * automatique, exécutée le 1er de chaque mois : le mois calendaire précédent
+ * la date de référence, mappé sur le cycle scolaire. `null` si ce mois
+ * précédent tombe hors Octobre-Mai (ex. le 1er octobre vérifie septembre,
+ * qui n'existe pas côté scolaire → pas d'exécution, cf. "entre novembre et
+ * juin inclus" dans l'archi).
+ */
+export function moisAVerifierSuspensionAuto(dateReference: Date): MoisScolaire | null {
+  return moisCourant(new Date(dateReference.getFullYear(), dateReference.getMonth() - 1, 1));
+}
+
 /** §12.5 — reste dû = montant attendu - somme déjà payée (jamais négatif). */
 export function resteAPayer(montantAttendu: number, paiements: { montant_paye: number }[]): number {
   const total = paiements.reduce((sum, p) => sum + p.montant_paye, 0);

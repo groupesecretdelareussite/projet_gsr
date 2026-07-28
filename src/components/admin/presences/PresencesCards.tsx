@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
+import * as XLSX from "xlsx";
 import { cn } from "@/lib/utils";
 import { upsertPresence, marquerTousPresence } from "@/actions/presences";
 
@@ -58,6 +59,9 @@ export function PresencesCards({
   siteId,
   classeId,
   anneeScolaireId,
+  nomClasse,
+  nomSite,
+  peutExporter,
 }: {
   eleves: EleveOption[];
   presencesExistantes: PresenceExistante[];
@@ -65,6 +69,9 @@ export function PresencesCards({
   siteId: number;
   classeId: number;
   anneeScolaireId: number;
+  nomClasse: string;
+  nomSite: string;
+  peutExporter: boolean;
 }) {
   const [isPending, startTransition] = useTransition();
 
@@ -100,6 +107,20 @@ export function PresencesCards({
       }
       setStatuts((prev) => ({ ...prev, [eleveId]: "idle" }));
     });
+  }
+
+  /** §8.6 GSR_ARCHITECTURE.md — export xlsx côté client, jamais de lecture de fichier importé. */
+  function exporterExcel() {
+    const donnees = eleves.map((e) => ({
+      Nom: e.nom,
+      Prénoms: e.prenoms,
+      Présence: presences[e.id] ? "Présent" : "Absent",
+    }));
+    const feuille = XLSX.utils.json_to_sheet(donnees);
+    const classeur = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(classeur, feuille, "Présences");
+    const nomFichier = `Presences_${nomClasse}_${nomSite}_${datePresence}`.replace(/\s+/g, "_");
+    XLSX.writeFile(classeur, `${nomFichier}.xlsx`);
   }
 
   function marquerTous(present: boolean) {
@@ -140,6 +161,16 @@ export function PresencesCards({
           >
             Tout absent
           </button>
+          {peutExporter && (
+            <button
+              type="button"
+              onClick={exporterExcel}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Exporter
+            </button>
+          )}
         </div>
       </div>
 

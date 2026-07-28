@@ -1,4 +1,4 @@
-import { BarChart3, Wallet, Receipt, Smartphone } from "lucide-react";
+import { BarChart3, Wallet, Receipt, Smartphone, TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/admin/EmptyState";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { EncaissementsMensuelsChart } from "@/components/admin/statistiques/EncaissementsMensuelsChart";
 import { EncaissementsParSiteChart } from "@/components/admin/statistiques/EncaissementsParSiteChart";
+import { moisVisiblesRetard } from "@/lib/paiements";
 import { MOIS_SCOLAIRES, type MoisScolaire } from "@/lib/constants";
 
 interface PaiementRow {
@@ -77,6 +78,32 @@ export default async function StatistiquesPage({
   const totalMomo = paiementsKpi.filter((p) => p.mode_paiement === "MoMo").reduce((s, p) => s + p.montant_paye, 0);
   const pctMomo = totalEncaisse > 0 ? Math.round((totalMomo / totalEncaisse) * 100) : 0;
 
+  // Taux de recouvrement — uniquement calculable pour l'année en_cours : c'est
+  // la seule pour laquelle "élèves actifs aujourd'hui" est une approximation
+  // valable de "qui devait payer". Pour une année en_pause/terminee, le
+  // périmètre des élèves a bougé depuis (passages, sorties) — plutôt afficher
+  // "—" qu'un chiffre trompeur. Approximation assumée même sur l'année en
+  // cours : ne tient pas compte des élèves inscrits en cours d'année (compte
+  // les mois écoulés depuis la rentrée pour tout le monde, pas depuis la date
+  // d'inscription individuelle) — suffisant pour un indicateur de pilotage.
+  let tauxRecouvrement: number | null = null;
+  if (anneeSelectionnee?.statut === "en_cours") {
+    let queryElevesScope = supabase.from("eleves").select("classe_id, classes!inner(site_id)").eq("statut", "actif");
+    if (searchParams.site_id) queryElevesScope = queryElevesScope.eq("classes.site_id", searchParams.site_id);
+    if (searchParams.classe_id) queryElevesScope = queryElevesScope.eq("classe_id", searchParams.classe_id);
+    const [{ data: elevesScope }, { data: fraisTdRows }] = await Promise.all([
+      queryElevesScope,
+      supabase.from("frais_td").select("classe_id, montant"),
+    ]);
+
+    const montantParClasse = new Map((fraisTdRows ?? []).map((f) => [f.classe_id, Number(f.montant)]));
+    const montantMensuelAttendu = (elevesScope ?? []).reduce((s, e) => s + (montantParClasse.get(e.classe_id) ?? 0), 0);
+    const nbMois = searchParams.mois ? 1 : moisVisiblesRetard(new Date()).length;
+    const montantAttendu = montantMensuelAttendu * nbMois;
+
+    tauxRecouvrement = montantAttendu > 0 ? Math.round((totalEncaisse / montantAttendu) * 100) : null;
+  }
+
   const parMois = new Map<MoisScolaire, number>();
   for (const p of paiements) {
     parMois.set(p.mois_souscription, (parMois.get(p.mois_souscription) ?? 0) + p.montant_paye);
@@ -135,11 +162,12 @@ export default async function StatistiquesPage({
         <EmptyState icon={BarChart3} title="Aucune année scolaire" description="Configurez une année scolaire pour voir des statistiques." />
       ) : (
         <>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             <KpiCard icon={Wallet} label="Total encaissé" value={`${totalEncaisse.toLocaleString("fr-FR")} F`} />
             <KpiCard icon={Receipt} label="Paiements enregistrés" value={nbPaiements} />
             <KpiCard icon={Receipt} label="Paiement moyen" value={`${paiementMoyen.toLocaleString("fr-FR")} F`} />
             <KpiCard icon={Smartphone} label="Part MoMo" value={`${pctMomo}%`} />
+            <KpiCard icon={TrendingUp} label="Taux de recouvrement" value={tauxRecouvrement !== null ? `${tauxRecouvrement}%` : "—"} />
           </div>
 
           <div className="grid lg:grid-cols-2 gap-4">

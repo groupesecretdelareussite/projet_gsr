@@ -6,6 +6,7 @@ import { resteAPayer } from "@/lib/paiements";
 import { MOIS_SCOLAIRES, RAISON_LABELS, type MoisScolaire, type RaisonSuspensionManuelle } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { DeconnexionParentButton } from "@/components/parents/DeconnexionParentButton";
+import { ParentInactivityWatcher } from "@/components/parents/ParentInactivityWatcher";
 
 interface EleveDashboard {
   nom: string;
@@ -49,6 +50,7 @@ export default async function DashboardParentPage({
 
   return (
     <div className="min-h-screen bg-surface px-4 sm:px-6 py-10">
+      <ParentInactivityWatcher />
       <div className="max-w-3xl mx-auto">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-4">

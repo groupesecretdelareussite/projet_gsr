@@ -26,7 +26,7 @@ interface RetardRow {
   derniereRelance: string | null;
 }
 
-export default async function PaiementsEnRetardPage() {
+export default async function PaiementsEnRetardPage({ searchParams }: { searchParams: { mois?: string } }) {
   const supabase = createClient();
   const scope = await getUserScope(supabase);
   const peutVoirContact = scope.role !== "chef_site";
@@ -39,6 +39,7 @@ export default async function PaiementsEnRetardPage() {
   );
 
   const moisVisibles = moisVisiblesRetard(new Date());
+  const moisFiltre = moisVisibles.includes(searchParams.mois as MoisScolaire) ? (searchParams.mois as MoisScolaire) : null;
   if (moisVisibles.length === 0) {
     return (
       <div>
@@ -110,7 +111,7 @@ export default async function PaiementsEnRetardPage() {
     const montantAttendu = montantParClasse.get(eleve.classe_id);
     if (montantAttendu === undefined) continue;
 
-    for (const mois of moisVisibles) {
+    for (const mois of moisFiltre ? [moisFiltre] : moisVisibles) {
       const paiementsMois = paiementsParEleveMois.get(`${eleve.id}-${mois}`) ?? [];
       const reste = resteAPayer(montantAttendu, paiementsMois);
       if (reste > 0) {
@@ -166,6 +167,25 @@ export default async function PaiementsEnRetardPage() {
   return (
     <div>
       {header}
+      {moisVisibles.length > 1 && (
+        <form method="get" className="flex items-center gap-2 mb-4">
+          <select
+            name="mois"
+            defaultValue={moisFiltre ?? ""}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+          >
+            <option value="">Tous les mois</option>
+            {moisVisibles.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white hover:bg-gray-50">
+            Filtrer
+          </button>
+        </form>
+      )}
       <DataTable
         columns={columns}
         rows={lignes}

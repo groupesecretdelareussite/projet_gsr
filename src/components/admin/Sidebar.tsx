@@ -98,7 +98,7 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/fin-annee",
     icon: GraduationCap,
     roles: ["coordonnateur"],
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Notifications",

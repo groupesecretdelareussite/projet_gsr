@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { moisCourant, moisVisiblesRetard, moisPrecedent, resteAPayer } from "./paiements";
+import { moisCourant, moisVisiblesRetard, moisPrecedent, resteAPayer, moisAVerifierSuspensionAuto } from "./paiements";
 import { MOIS_SCOLAIRES } from "./constants";
 
 describe("moisCourant", () => {
@@ -54,6 +54,28 @@ describe("moisVisiblesRetard — règle du 15 (§12.4)", () => {
 
   it("hors période scolaire, renvoie tous les mois (pas de référence de mois courant)", () => {
     expect(moisVisiblesRetard(new Date(2026, 6, 1))).toEqual([...MOIS_SCOLAIRES]);
+  });
+});
+
+describe("moisAVerifierSuspensionAuto (§12.3)", () => {
+  it("le 1er novembre, vérifie octobre", () => {
+    expect(moisAVerifierSuspensionAuto(new Date(2026, 10, 1))).toBe("Octobre");
+  });
+
+  it("le 1er juin, vérifie mai (dernier mois scolaire)", () => {
+    expect(moisAVerifierSuspensionAuto(new Date(2026, 5, 1))).toBe("Mai");
+  });
+
+  it("le 1er octobre, ne vérifie rien (septembre n'est pas un mois scolaire)", () => {
+    expect(moisAVerifierSuspensionAuto(new Date(2026, 9, 1))).toBeNull();
+  });
+
+  it("le 1er juillet, ne vérifie rien (hors période)", () => {
+    expect(moisAVerifierSuspensionAuto(new Date(2026, 6, 1))).toBeNull();
+  });
+
+  it("le 1er janvier, vérifie décembre (à cheval sur le changement d'année civile)", () => {
+    expect(moisAVerifierSuspensionAuto(new Date(2027, 0, 1))).toBe("Decembre");
   });
 });
 
