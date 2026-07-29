@@ -1,7 +1,16 @@
+import { cache } from "@/lib/react-cache";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-export function createClient() {
+/**
+ * Mémoïsé par requête (React `cache()`) : `admin/layout.tsx` ET chaque
+ * `page.tsx` appellent `createClient()` puis `getUserScope()` indépendamment
+ * — sans ce cache, ça déclenchait 2x `auth.getUser()` + 2x SELECT `users`
+ * (réseau vers Supabase) à chaque navigation, doublé pour rien. `cache()`
+ * ne fuit jamais entre requêtes/utilisateurs différents, seulement au sein
+ * d'un même rendu serveur.
+ */
+export const createClient = cache(function createClient() {
   const cookieStore = cookies();
 
   return createServerClient(
@@ -25,4 +34,4 @@ export function createClient() {
       },
     }
   );
-}
+});

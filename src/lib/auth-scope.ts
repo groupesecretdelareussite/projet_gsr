@@ -1,3 +1,4 @@
+import { cache } from "@/lib/react-cache";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { UserRole } from "@/lib/constants";
 
@@ -12,9 +13,12 @@ export interface UserScope {
 
 /**
  * §5.4 GSR_ARCHITECTURE.md — chaque Server Action sensible commence par cet
- * appel avant toute lecture/écriture.
+ * appel avant toute lecture/écriture. Mémoïsé par requête (React `cache()`) :
+ * `admin/layout.tsx` et chaque `page.tsx` l'appellent tous les deux à chaque
+ * navigation — sans ce cache (combiné à celui de `createClient()`), c'est
+ * 2x `auth.getUser()` + 2x SELECT `users` en double sur chaque clic.
  */
-export async function getUserScope(supabase: SupabaseClient): Promise<UserScope> {
+export const getUserScope = cache(async function getUserScope(supabase: SupabaseClient): Promise<UserScope> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -48,7 +52,7 @@ export async function getUserScope(supabase: SupabaseClient): Promise<UserScope>
     siteIds,
     isGlobal: ["coordonnateur", "comptable"].includes(profile.role),
   };
-}
+});
 
 /** Un site donné est-il dans le périmètre autorisé de ce scope ? */
 export function siteInScope(scope: UserScope, siteId: number): boolean {

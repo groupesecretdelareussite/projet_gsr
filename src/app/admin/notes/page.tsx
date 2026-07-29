@@ -1,9 +1,12 @@
-import { NotebookText } from "lucide-react";
+import Link from "next/link";
+import { NotebookText, Calculator } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
+import { Button } from "@/components/ui/button";
 import { NotesGrid, type EleveOption, type MatiereOption, type NoteExistante } from "@/components/admin/notes/NotesGrid";
+import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 
 export default async function NotesPage({
@@ -67,7 +70,18 @@ export default async function NotesPage({
 
   return (
     <div>
-      <PageHeader title="Notes" subtitle="Saisie par matière, sauvegarde automatique" />
+      <PageHeader
+        title="Notes"
+        subtitle="Saisie par matière, sauvegarde automatique"
+        actions={
+          <Link href="/admin/notes/moyennes">
+            <Button variant="outline" size="sm">
+              <Calculator className="w-3.5 h-3.5" />
+              Moyennes
+            </Button>
+          </Link>
+        }
+      />
 
       <form method="get" className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 max-w-xl">
         <select
@@ -94,9 +108,7 @@ export default async function NotesPage({
             </option>
           ))}
         </select>
-        <button type="submit" className="hidden">
-          Filtrer
-        </button>
+        <AutoSubmitOnChange />
       </form>
 
       {!classeId ? (

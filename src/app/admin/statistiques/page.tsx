@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/admin/EmptyState";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { EncaissementsMensuelsChart } from "@/components/admin/statistiques/EncaissementsMensuelsChart";
 import { EncaissementsParSiteChart } from "@/components/admin/statistiques/EncaissementsParSiteChart";
+import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { moisVisiblesRetard } from "@/lib/paiements";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 import { MOIS_SCOLAIRES, type MoisScolaire } from "@/lib/constants";
@@ -157,9 +158,7 @@ export default async function StatistiquesPage({
             </option>
           ))}
         </select>
-        <button type="submit" className="hidden">
-          Filtrer
-        </button>
+        <AutoSubmitOnChange />
       </form>
 
       {!anneeSelectionnee ? (

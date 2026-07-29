@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -20,6 +20,8 @@ import {
   CalendarClock,
   UserPlus,
   LogOut,
+  ChevronRight,
+  ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserScope } from "@/hooks/useUserScope";
@@ -80,18 +82,18 @@ const NAV_ITEMS: NavItem[] = [
     enabled: true,
   },
   {
-    label: "Programmation TD",
-    href: "/admin/td/coord/planning",
+    label: "Portail TD",
+    href: "/td/coord/dashboard",
     icon: CalendarClock,
     roles: ["coordonnateur"],
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Comptabilité",
     href: "/admin/comptabilite",
     icon: Calculator,
     roles: ["coordonnateur", "comptable"],
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Fin d'année",
@@ -135,7 +137,16 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [mobileOpen, setMobileOpen] = useState(false);
   const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
+
+  // Empêche le scroll du contenu derrière le panneau déplié sur mobile
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   function handleLogout() {
     startTransition(async () => {
@@ -145,24 +156,9 @@ export function Sidebar() {
     });
   }
 
-  return (
-    <aside className="w-[280px] shrink-0 bg-white border-r border-gray-100 min-h-screen py-6 px-4 hidden lg:flex lg:flex-col">
-      <div className="flex items-center gap-2 px-2 mb-5">
-        <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain" />
-        <span className="font-bold text-gray-900">Admin GSR</span>
-      </div>
-
-      {ROLES_INSCRIPTION.includes(role) && (
-        <Link
-          href="/admin/eleves/inscription"
-          className="flex items-center justify-center gap-2 rounded-lg font-semibold text-sm text-white bg-primary-gradient shadow-sm hover:shadow-md transition-all h-10 mb-5"
-        >
-          <UserPlus className="w-4 h-4" />
-          Nouvelle inscription
-        </Link>
-      )}
-
-      <nav className="space-y-1 flex-1 overflow-y-auto">
+  function renderNav(collapsed: boolean, onNavigate?: () => void) {
+    return (
+      <nav className={cn("space-y-1 flex-1 overflow-y-auto", collapsed && "flex flex-col items-center")}>
         {items.map((item) => {
           const active = pathname.startsWith(item.href.split("/").slice(0, 3).join("/"));
           const Icon = item.icon;
@@ -172,10 +168,13 @@ export function Sidebar() {
               <div
                 key={item.href}
                 title="Bientôt disponible"
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 cursor-not-allowed select-none"
+                className={cn(
+                  "flex items-center gap-3 rounded-lg text-sm text-gray-300 cursor-not-allowed select-none",
+                  collapsed ? "justify-center w-10 h-10" : "px-3 py-2.5"
+                )}
               >
-                <Icon className="w-4 h-4" />
-                {item.label}
+                <Icon className="w-4 h-4 shrink-0" />
+                {!collapsed && item.label}
               </div>
             );
           }
@@ -184,26 +183,114 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              title={collapsed ? item.label : undefined}
+              onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-lg text-sm font-medium transition-colors",
+                collapsed ? "justify-center w-10 h-10" : "px-3 py-2.5",
                 active ? "bg-primary/10 text-primary" : "text-gray-600 hover:bg-gray-50"
               )}
             >
-              <Icon className="w-4 h-4" />
-              {item.label}
+              <Icon className="w-4 h-4 shrink-0" />
+              {!collapsed && item.label}
             </Link>
           );
         })}
       </nav>
+    );
+  }
 
+  function renderInscriptionCta(collapsed: boolean, onNavigate?: () => void) {
+    if (!ROLES_INSCRIPTION.includes(role)) return null;
+    return (
+      <Link
+        href="/admin/eleves/inscription"
+        title={collapsed ? "Nouvelle inscription" : undefined}
+        onClick={onNavigate}
+        className={cn(
+          "flex items-center justify-center gap-2 rounded-lg font-semibold text-sm text-white bg-primary-gradient shadow-sm hover:shadow-md transition-all mb-5",
+          collapsed ? "w-10 h-10" : "h-10"
+        )}
+      >
+        <UserPlus className="w-4 h-4 shrink-0" />
+        {!collapsed && "Nouvelle inscription"}
+      </Link>
+    );
+  }
+
+  function renderLogoutButton(collapsed: boolean) {
+    return (
       <button
         onClick={handleLogout}
         disabled={isPending}
-        className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors mt-4 disabled:opacity-50"
+        title={collapsed ? "Déconnexion" : undefined}
+        className={cn(
+          "flex items-center gap-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors mt-4 disabled:opacity-50",
+          collapsed ? "justify-center w-10 h-10" : "px-3 py-2.5"
+        )}
       >
-        <LogOut className="w-4 h-4" />
-        Déconnexion
+        <LogOut className="w-4 h-4 shrink-0" />
+        {!collapsed && "Déconnexion"}
       </button>
-    </aside>
+    );
+  }
+
+  return (
+    <>
+      {/* Rail icônes seules, visible en dessous de lg (remplace l'ancien sidebar totalement masqué sur mobile) */}
+      <aside className="w-16 shrink-0 bg-white border-r border-gray-100 min-h-screen py-6 px-2 flex flex-col items-center lg:hidden">
+        <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain mb-4" />
+
+        <button
+          onClick={() => setMobileOpen(true)}
+          aria-label="Déplier le menu"
+          className="flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-primary transition-colors mb-3"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+
+        {renderInscriptionCta(true)}
+        {renderNav(true)}
+        {renderLogoutButton(true)}
+      </aside>
+
+      {/* Sidebar complet desktop, comportement inchangé */}
+      <aside className="w-[280px] shrink-0 bg-white border-r border-gray-100 min-h-screen py-6 px-4 hidden lg:flex lg:flex-col">
+        <div className="flex items-center gap-2 px-2 mb-5">
+          <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain" />
+          <span className="font-bold text-gray-900">Admin GSR</span>
+        </div>
+
+        {renderInscriptionCta(false)}
+        {renderNav(false)}
+        {renderLogoutButton(false)}
+      </aside>
+
+      {/* Panneau déplié en overlay au-dessus du contenu, sur mobile uniquement */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} aria-hidden="true" />
+          <aside className="absolute left-0 top-0 h-full w-[280px] bg-white shadow-xl py-6 px-4 flex flex-col">
+            <div className="flex items-center justify-between px-2 mb-5">
+              <div className="flex items-center gap-2">
+                <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain" />
+                <span className="font-bold text-gray-900">Admin GSR</span>
+              </div>
+              <button
+                onClick={() => setMobileOpen(false)}
+                aria-label="Rétracter le menu"
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-primary transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            </div>
+
+            {renderInscriptionCta(false, () => setMobileOpen(false))}
+            {renderNav(false, () => setMobileOpen(false))}
+            {renderLogoutButton(false)}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

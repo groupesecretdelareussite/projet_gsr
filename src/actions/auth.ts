@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 
@@ -96,5 +97,46 @@ export async function changerMonMotDePasse(ancienMdp: string, nouveauMdp: string
   const { error } = await supabase.auth.updateUser({ password: nouveauMdp });
   if (error) return { error: error.message };
 
+  return {};
+}
+
+/**
+ * Flux natif Supabase Auth « mot de passe oublié », demandé explicitement
+ * pour le coordonnateur — mais s'applique techniquement à tout rôle admin,
+ * tous partageant le même mécanisme Supabase Auth (§5.1). Ne révèle jamais
+ * si l'email existe (même logique anti-énumération que le reste de
+ * l'authentification) : toujours un succès générique côté appelant.
+ */
+export async function demanderReinitialisationMotDePasse(email: string): Promise<void> {
+  const supabase = createClient();
+  const h = headers();
+  const host = h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${proto}://${host}/admin/auth/confirm`,
+  });
+}
+
+/**
+ * Étape finale du flux ci-dessus : appelée depuis /admin/reinitialiser-mot-de-passe,
+ * atteinte uniquement après que le Route Handler /admin/auth/confirm ait
+ * échangé le code de récupération contre une vraie session Supabase Auth.
+ */
+export async function definirNouveauMotDePasse(nouveauMdp: string): Promise<{ error?: string }> {
+  if (nouveauMdp.length < 8) {
+    return { error: "Le nouveau mot de passe doit contenir au moins 8 caractères" };
+  }
+
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Session de réinitialisation expirée — recommencez la demande." };
+
+  const { error } = await supabase.auth.updateUser({ password: nouveauMdp });
+  if (error) return { error: error.message };
+
+  await supabase.auth.signOut();
   return {};
 }

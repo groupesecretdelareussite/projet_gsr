@@ -164,10 +164,10 @@ export default function Home() {
                 Portail Parent
               </Link>
               <Link
-                href="/contact"
+                href="/td/login"
                 className="bg-white text-primary hover:bg-gray-100 px-5 py-2.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors shadow-sm"
               >
-                Rejoindre le Groupe
+                Portail Professeurs
               </Link>
             </div>
           </div>

@@ -9,6 +9,7 @@ import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { Button } from "@/components/ui/button";
 import { SuspendreDialog } from "@/components/admin/eleves/SuspendreDialog";
 import { ReinitialiserMotDePasseParentDialog } from "@/components/admin/eleves/ReinitialiserMotDePasseParentDialog";
+import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 
 interface EleveRow {
@@ -153,9 +154,7 @@ export default async function ListeElevesPage({
           placeholder="Nom"
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
         />
-        <button type="submit" className="hidden">
-          Filtrer
-        </button>
+        <AutoSubmitOnChange />
       </form>
 
       <DataTable

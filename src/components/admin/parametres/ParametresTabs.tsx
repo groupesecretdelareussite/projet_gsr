@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { label: "Utilisateurs", href: "/admin/parametres/utilisateurs" },
   { label: "Données scolaires", href: "/admin/parametres/donnees-scolaires" },
+  { label: "Coefficients", href: "/admin/parametres/coefficients" },
 ];
 
 export function ParametresTabs() {

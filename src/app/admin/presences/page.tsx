@@ -4,6 +4,7 @@ import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { PresencesCards, type EleveOption, type PresenceExistante } from "@/components/admin/presences/PresencesCards";
+import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 
 function aujourdhui(): string {
@@ -105,9 +106,7 @@ export default async function PresencesPage({
           defaultValue={datePresence}
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
         />
-        <button type="submit" className="hidden">
-          Filtrer
-        </button>
+        <AutoSubmitOnChange />
       </form>
 
       {!classeId || !classeSelectionnee ? (

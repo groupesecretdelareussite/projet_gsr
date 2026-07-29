@@ -1,0 +1,83 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { ArrowLeft, LayoutDashboard, CalendarClock, Gavel, Wallet, Settings, LogOut } from "lucide-react";
+import { Toaster } from "sonner";
+import { createClient } from "@/lib/supabase/server";
+import { getUserScope } from "@/lib/auth-scope";
+import { logout } from "@/actions/auth";
+
+const NAV = [
+  { label: "Tableau de bord", href: "/td/coord/dashboard", icon: LayoutDashboard },
+  { label: "Planning", href: "/td/coord/planning", icon: CalendarClock },
+  { label: "Arbitrage", href: "/td/coord/arbitrage", icon: Gavel },
+  { label: "Finance", href: "/td/coord/finance", icon: Wallet },
+  { label: "Configuration", href: "/td/coord/config/zones", icon: Settings },
+];
+
+/**
+ * §5.3/§1.1 GSR_ARCHITECTURE.md — le coordonnateur réutilise sa session
+ * Supabase Auth existante (middleware.ts garantit déjà qu'une session existe
+ * ici) ; seul le rôle reste à vérifier, le portail TD n'étant ouvert qu'au
+ * coordonnateur + aux professeurs (jamais comptable/superviseur/chef_site/secretaire).
+ */
+export default async function TdCoordLayout({ children }: { children: React.ReactNode }) {
+  const scope = await getUserScope(createClient());
+
+  if (scope.role !== "coordonnateur") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface px-4">
+        <div className="text-center">
+          <p className="text-gray-900 font-semibold mb-2">Non autorisé</p>
+          <p className="text-gray-500 text-sm mb-6">Le portail TD est réservé au coordonnateur.</p>
+          <Link href="/admin/tableau-de-bord" className="text-primary font-semibold text-sm hover:underline">
+            Retour à l&apos;admin GSR
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  async function handleLogout() {
+    "use server";
+    await logout();
+    redirect("/td/login");
+  }
+
+  return (
+    <div className="min-h-screen bg-surface">
+      <header className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-6 min-w-0">
+            <span className="font-bold text-gray-900 shrink-0">Portail TD</span>
+            <nav className="flex items-center gap-1 overflow-x-auto">
+              {NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors whitespace-nowrap"
+                >
+                  <item.icon className="w-3.5 h-3.5" />
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <Link href="/admin/tableau-de-bord" className="text-xs text-gray-500 hover:text-gray-700 hidden sm:inline">
+              <ArrowLeft className="w-3.5 h-3.5 inline mr-1" />
+              Admin GSR
+            </Link>
+            <form action={handleLogout}>
+              <button type="submit" className="text-xs text-gray-500 hover:text-red-600 flex items-center gap-1">
+                <LogOut className="w-3.5 h-3.5" />
+                Déconnexion
+              </button>
+            </form>
+          </div>
+        </div>
+      </header>
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">{children}</main>
+      <Toaster richColors position="top-right" />
+    </div>
+  );
+}
