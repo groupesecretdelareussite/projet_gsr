@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { Bell } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { marquerNotificationLue, marquerToutesNotificationsLues } from "@/actions/notifications";
@@ -118,6 +119,13 @@ export function NotificationBadge() {
               ))
             )}
           </div>
+          <Link
+            href="/admin/notifications"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2.5 text-center text-xs font-semibold text-primary hover:bg-gray-50 border-t border-gray-100"
+          >
+            Voir toutes les notifications
+          </Link>
         </div>
       )}
     </div>

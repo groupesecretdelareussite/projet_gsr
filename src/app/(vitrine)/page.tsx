@@ -4,6 +4,9 @@ import Link from "next/link";
 import { ChevronRight, Play, BookOpen, Users, Trophy, ChevronDown, CheckCircle, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
 
+/** Images de la page d'accueil hébergées dans le bucket public "galerie" (dossier vitrine/accueil), remplace public/images. */
+const STORAGE_ACCUEIL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie/vitrine/accueil`;
+
 function Counter({ value, suffix="" }: { value: number; suffix?: string }) {
 
   const [count,setCount] = useState(0);
@@ -52,11 +55,11 @@ export default function Home() {
 
 
   const heroImages = [
-    "/images/img_accueil_2.png",
-    "/images/img_accueil_3.png",
-    "/images/img_accueil_4.png",
-    "/images/img_accueil_6.png",
-    "/images/img_accueil_7.png",
+    `${STORAGE_ACCUEIL}/img_accueil_2.png`,
+    `${STORAGE_ACCUEIL}/img_accueil_3.png`,
+    `${STORAGE_ACCUEIL}/img_accueil_4.png`,
+    `${STORAGE_ACCUEIL}/img_accueil_6.png`,
+    `${STORAGE_ACCUEIL}/img_accueil_7.png`,
   ];
 
   useEffect(() => {
@@ -85,7 +88,7 @@ export default function Home() {
         {/* Texture photo discrète, cohérente avec l'en-tête À propos */}
         <div className="absolute inset-0 opacity-10">
           <Image
-            src="/images/imgC.jpg"
+            src={`${STORAGE_ACCUEIL}/imgC.jpg`}
             alt=""
             fill
             className="object-cover blur-sm scale-105"
@@ -220,7 +223,7 @@ export default function Home() {
           {/* Card 1 */}
           <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
             <div className="relative h-56 w-full">
-              <Image src="/images/img_cip.jpg" alt="Cours Intensifs" fill className="object-cover" />
+              <Image src={`${STORAGE_ACCUEIL}/img_cip.jpg`} alt="Cours Intensifs" fill className="object-cover" />
             </div>
             <div className="p-6 flex-grow flex flex-col">
               <div className="flex items-center gap-3 mb-4">
@@ -243,7 +246,7 @@ export default function Home() {
           {/* Card 2 */}
           <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
             <div className="relative h-56 w-full">
-              <Image src="/images/img_pas.jpg" alt="Accompagnement Scolaire" fill className="object-cover" />
+              <Image src={`${STORAGE_ACCUEIL}/img_pas.jpg`} alt="Accompagnement Scolaire" fill className="object-cover" />
             </div>
             <div className="p-6 flex-grow flex flex-col">
               <div className="flex items-center gap-3 mb-4">
@@ -265,7 +268,7 @@ export default function Home() {
           {/* Card 3 */}
           <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
             <div className="relative h-56 w-full">
-              <Image src="/images/img_prepa.jpg" alt="Préparation Examens" fill className="object-cover" />
+              <Image src={`${STORAGE_ACCUEIL}/img_prepa.jpg`} alt="Préparation Examens" fill className="object-cover" />
             </div>
             <div className="p-6 flex-grow flex flex-col">
               <div className="flex items-center gap-3 mb-4">
@@ -354,7 +357,7 @@ export default function Home() {
       <section className="py-24 bg-surface max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-12">Découvrez notre groupe en vidéo</h2>
         <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-video group cursor-pointer border border-gray-100">
-          <Image src="/images/video-poster.jpeg" alt="Vidéo de présentation" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+          <Image src={`${STORAGE_ACCUEIL}/video-poster.jpeg`} alt="Vidéo de présentation" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
           <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
             <div className="w-16 h-16 bg-primary text-white rounded-full flex items-center justify-center shadow-lg transform transition-transform group-hover:scale-110">
               <Play className="w-6 h-6 ml-1" fill="currentColor" />

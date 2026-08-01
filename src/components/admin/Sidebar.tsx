@@ -16,7 +16,6 @@ import {
   Bell,
   Images,
   Settings,
-  Sparkles,
   CalendarClock,
   UserPlus,
   LogOut,
@@ -107,7 +106,7 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/notifications",
     icon: Bell,
     roles: ["coordonnateur", "comptable", "superviseur"],
-    enabled: false,
+    enabled: true,
   },
   {
     label: "Galerie",
@@ -115,13 +114,6 @@ const NAV_ITEMS: NavItem[] = [
     icon: Images,
     roles: ["coordonnateur", "comptable", "superviseur"],
     enabled: true,
-  },
-  {
-    label: "Agent IA",
-    href: "/admin/agent-ia",
-    icon: Sparkles,
-    roles: ["coordonnateur"],
-    enabled: false,
   },
   {
     label: "Paramètres",
