@@ -1,5 +1,9 @@
 import Image from "next/image";
 import { MapPin, Phone, Calendar, Map } from "lucide-react";
+import { CarteSites } from "@/components/vitrine/CarteSites";
+
+/** Photos dédiées par site, hébergées dans le bucket public "galerie" (dossier vitrine/sites), remplace public/images. */
+const STORAGE_SITES = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie/vitrine/sites`;
 
 const SITES = [
   {
@@ -8,7 +12,8 @@ const SITES = [
     adresse: "EPP Jéricho, Cotonou, Bénin",
     telephones: ["+229 01 49 76 16 35", "01 96 08 40 67"],
     horaires: "Mercredi - Samedi - Dimanche",
-    image: "/images/img_cip.jpg",
+    image: `${STORAGE_SITES}/img_site_jericho.jpg`,
+    mapsLink: "https://maps.app.goo.gl/v2pzFdxzzjHmYWhS9",
   },
   {
     nom: "Site Yagbé",
@@ -16,7 +21,8 @@ const SITES = [
     adresse: "EPP Yagbé, Akpakpa, Cotonou, Bénin",
     telephones: ["+229 01 49 76 16 35", "01 96 08 40 67"],
     horaires: "Samedi - Dimanche",
-    image: "/images/img_pas.jpg",
+    image: `${STORAGE_SITES}/img_site_yagbe.jpg`,
+    mapsLink: "https://maps.app.goo.gl/VfjjXX7TPVLqqUXA9",
   },
   {
     nom: "Site Vèdoko",
@@ -24,7 +30,8 @@ const SITES = [
     adresse: "EPP Vèdoko, Cotonou, Bénin",
     telephones: ["+229 01 49 76 16 35", "01 96 08 40 67"],
     horaires: "Samedi - Dimanche",
-    image: "/images/img_prepa.jpg",
+    image: `${STORAGE_SITES}/img_site_vedoko.jpg`,
+    mapsLink: "https://maps.app.goo.gl/m47nSeyaeKkpn3kB6",
   },
 ];
 
@@ -84,7 +91,9 @@ export default function SitesPage() {
 
                 <div className="flex gap-2">
                   <a
-                    href="#"
+                    href={site.mapsLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex-1 inline-flex items-center justify-center gap-2 bg-primary text-white text-sm font-semibold px-4 py-2.5 rounded-lg hover:bg-primary-dark transition-colors"
                   >
                     <Map className="w-4 h-4" /> Voir sur la carte
@@ -123,7 +132,8 @@ export default function SitesPage() {
                 Prendre Rendez-vous
               </a>
               <a
-                href="/programmes"
+                href="/brochure-gsr.pdf"
+                download
                 className="inline-flex items-center gap-2 border border-primary text-primary px-6 py-3 rounded-lg font-semibold text-sm hover:bg-primary/5 transition-colors"
               >
                 Télécharger notre Brochure
@@ -131,13 +141,7 @@ export default function SitesPage() {
             </div>
           </div>
 
-          <div className="bg-gray-100 rounded-2xl h-72 flex flex-col items-center justify-center text-center p-8 border border-gray-200">
-            <Map className="w-10 h-10 text-gray-400 mb-4" />
-            <p className="font-semibold text-gray-700 mb-1">Carte interactive des sites</p>
-            <p className="text-gray-500 text-sm">
-              Cliquez pour explorer nos localisations sur Google Maps
-            </p>
-          </div>
+          <CarteSites />
         </div>
       </section>
     </div>
