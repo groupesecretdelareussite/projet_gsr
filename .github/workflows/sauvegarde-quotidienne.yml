@@ -1,0 +1,76 @@
+name: Sauvegarde quotidienne de la base
+
+# Cron horaire UTC — 2h UTC = 3h du matin heure du Bénin (Africa/Porto-Novo).
+# workflow_dispatch permet de déclencher manuellement depuis l'onglet Actions,
+# indispensable pour tester avant de compter sur le déclenchement planifié.
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write # nécessaire pour pousser la sauvegarde sur la branche `backups`
+
+jobs:
+  sauvegarder-et-verifier:
+    runs-on: ubuntu-latest
+
+    # Base Postgres jetable, propre à cette exécution : sert uniquement à
+    # prouver que le dump du jour se restaure sans erreur avant de le publier.
+    services:
+      postgres-verification:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: verification
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer pg_dump/psql en version récente (dépôt officiel PGDG)
+        run: |
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-16
+
+      - name: Exporter les schémas public + td (données GSR, hors comptes Auth/Storage)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          mkdir -p backups
+          FICHIER="backups/gsr-$(date -u +%F).sql.gz"
+          pg_dump "$DATABASE_URL" -n public -n td --no-owner --no-privileges | gzip > "$FICHIER"
+          echo "FICHIER=$FICHIER" >> "$GITHUB_ENV"
+          echo "Taille de la sauvegarde : $(du -h "$FICHIER" | cut -f1)"
+
+      - name: Vérifier que la sauvegarde se restaure réellement (pas juste "au cas où")
+        run: |
+          gunzip -c "$FICHIER" | PGPASSWORD=verification psql -h localhost -U postgres -v ON_ERROR_STOP=1 -q
+          echo "Restauration de test réussie — la sauvegarde du $(date -u +%F) est valide."
+
+      - name: Publier la sauvegarde sur la branche backups (jamais sur main, pour ne pas déclencher Vercel)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin backups > /dev/null 2>&1; then
+            git fetch origin backups
+            git checkout backups
+          else
+            # Première exécution : la branche backups n'existe pas encore.
+            # --orphan garde tout le contenu de main dans l'index — on le
+            # détache pour ne publier que le dossier backups/.
+            git checkout --orphan backups
+            git rm -rf --cached . > /dev/null
+          fi
+          find backups -name "*.sql.gz" -mtime +30 -delete
+          git add "$FICHIER"
+          git commit -m "Sauvegarde automatique $(date -u +%F)"
+          git push origin backups
