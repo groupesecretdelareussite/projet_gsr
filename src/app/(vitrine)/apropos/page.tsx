@@ -1,6 +1,9 @@
 import Image from "next/image";
 import { Target, Award, BookOpen, Users, Shield } from "lucide-react";
 
+/** Images dédiées à la page À propos, hébergées dans le bucket public "galerie" (dossier vitrine/apropos), remplace public/images. */
+const STORAGE_APROPOS = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie/vitrine/apropos`;
+
 export default function AProposPage() {
   return (
     <div>
@@ -12,7 +15,7 @@ export default function AProposPage() {
         {/* Overlay image floue en fond */}
         <div className="absolute inset-0 opacity-10">
           <Image
-            src="/images/imgC.jpg"
+            src={`${STORAGE_APROPOS}/img_hero_apropos.jpg`}
             alt=""
             fill
             className="object-cover"
@@ -78,12 +81,15 @@ export default function AProposPage() {
             </div>
 
             {/* Image */}
-            <div className="relative h-[340px] sm:h-[420px] rounded-2xl overflow-hidden shadow-xl">
+            <div
+              className="relative h-[340px] sm:h-[420px] rounded-2xl overflow-hidden shadow-xl"
+              style={{ background: "linear-gradient(135deg, #12AA00, #0e8f00)" }}
+            >
               <Image
-                src="/images/galerie2.jpg"
-                alt="Élèves en classe au GSR"
+                src={`${STORAGE_APROPOS}/img_apropos.png`}
+                alt="Élève du GSR"
                 fill
-                className="object-cover"
+                className="object-contain object-bottom"
               />
               {/* Badge flottant */}
               <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur rounded-xl px-4 py-2 shadow-lg flex items-center gap-2">

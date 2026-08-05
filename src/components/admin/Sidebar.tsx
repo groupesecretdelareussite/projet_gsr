@@ -15,6 +15,7 @@ import {
   GraduationCap,
   Bell,
   Images,
+  Newspaper,
   Settings,
   CalendarClock,
   UserPlus,
@@ -113,6 +114,13 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/galerie",
     icon: Images,
     roles: ["coordonnateur", "comptable", "superviseur"],
+    enabled: true,
+  },
+  {
+    label: "Actualités",
+    href: "/admin/actualites",
+    icon: Newspaper,
+    roles: ["coordonnateur"],
     enabled: true,
   },
   {
