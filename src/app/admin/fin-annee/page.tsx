@@ -25,7 +25,7 @@ interface EleveActifRow {
 }
 
 export default async function FinAnneePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
   if (scope.role !== "coordonnateur") {

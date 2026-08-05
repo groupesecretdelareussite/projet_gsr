@@ -37,6 +37,8 @@ function ToggleSiteSuperviseur({ sites }: { sites: { id: number; nom_site: strin
 
   useEffect(() => {
     const match = document.cookie.match(new RegExp(`(?:^|; )${COOKIE_FILTRE_SITE_SUPERVISEUR}=([^;]*)`));
+    // document.cookie n'existe pas côté serveur — lu uniquement après montage pour éviter un mismatch d'hydratation.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setValeur(match ? decodeURIComponent(match[1]) : "");
   }, []);
 

@@ -43,8 +43,9 @@ const STATUT_CRENEAU_BADGE: Record<CreneauRow["statut_creneau"], { label: string
   cloture: { label: "Clôturé", variant: "danger" },
 };
 
-export default async function PlanningTDPage({ searchParams }: { searchParams: { semaine?: string } }) {
-  await getUserScope(createClient());
+export default async function PlanningTDPage(props: { searchParams: Promise<{ semaine?: string }> }) {
+  const searchParams = await props.searchParams;
+  await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
 
   const { data: semaines } = await supabaseAdmin

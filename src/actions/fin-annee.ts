@@ -7,7 +7,7 @@ import { getUserScope, type UserScope } from "@/lib/auth-scope";
 import { DECISIONS_PASSAGE, type DecisionPassage } from "@/lib/constants";
 
 async function getScopeAndAssert(): Promise<UserScope> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
   if (scope.role !== "coordonnateur") {
     throw new Error("Non autorisé");
@@ -185,7 +185,7 @@ export async function validerFinAnnee(input: ValiderFinAnneeInput): Promise<{ er
     return { error: `${enAttente} élève(s) sans décision de passage — la revue n'est pas terminée` };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.rpc("valider_fin_annee", {
     p_nouvelle_libelle: input.libelle.trim(),
     p_nouvelle_date_debut: input.dateDebut,

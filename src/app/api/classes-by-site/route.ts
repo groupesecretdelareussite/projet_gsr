@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "siteId requis" }, { status: 400 });
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   let scope;
   try {
     scope = await getUserScope(supabase);

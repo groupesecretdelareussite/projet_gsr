@@ -24,5 +24,5 @@ const sessionOptions: SessionOptions = {
 };
 
 export async function getTdProfesseurSession(): Promise<IronSession<TdProfesseurSessionData>> {
-  return getIronSession<TdProfesseurSessionData>(cookies(), sessionOptions);
+  return getIronSession<TdProfesseurSessionData>(await cookies(), sessionOptions);
 }

@@ -10,8 +10,9 @@ import type { Categorie } from "@/actions/actualites";
 
 const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie`;
 
-export default async function ModifierActualitePage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+export default async function ModifierActualitePage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
   if (scope.role !== "coordonnateur") {

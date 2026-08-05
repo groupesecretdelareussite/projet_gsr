@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -12,18 +12,12 @@ interface ArticleModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-/** Popup de lecture d'article — carrousel d'images en tête (fixe), corps défilant, bouton fermer toujours accessible (hérité de DialogContent, jamais emporté par le scroll). */
-export function ArticleModal({ article, onOpenChange }: ArticleModalProps) {
+/** Remonté à chaque nouvel article via `key` sur l'appelant — réinitialise `indexImage` naturellement, sans effet dédié. */
+function ArticleModalContent({ article }: { article: Article }) {
   const [indexImage, setIndexImage] = useState(0);
 
-  useEffect(() => {
-    setIndexImage(0);
-  }, [article?.id]);
-
   return (
-    <Dialog open={article !== null} onOpenChange={onOpenChange}>
-      {article && (
-        <DialogContent className="max-w-2xl w-[calc(100%-2rem)] max-h-[85vh] flex flex-col gap-0 p-0">
+    <DialogContent className="max-w-2xl w-[calc(100%-2rem)] max-h-[85vh] flex flex-col gap-0 p-0">
           <div className="relative h-56 sm:h-72 shrink-0 bg-gray-100">
             <Image src={article.images[indexImage]} alt={article.title} fill className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -78,8 +72,14 @@ export function ArticleModal({ article, onOpenChange }: ArticleModalProps) {
               ))}
             </div>
           </div>
-        </DialogContent>
-      )}
+    </DialogContent>
+  );
+}
+
+export function ArticleModal({ article, onOpenChange }: ArticleModalProps) {
+  return (
+    <Dialog open={article !== null} onOpenChange={onOpenChange}>
+      {article && <ArticleModalContent key={article.id} article={article} />}
     </Dialog>
   );
 }

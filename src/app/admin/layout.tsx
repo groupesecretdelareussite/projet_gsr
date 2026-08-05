@@ -9,7 +9,7 @@ import { Topbar } from "@/components/admin/Topbar";
 import { AdminInactivityWatcher } from "@/components/admin/AdminInactivityWatcher";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();

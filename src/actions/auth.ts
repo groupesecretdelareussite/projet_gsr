@@ -29,7 +29,7 @@ export async function login(username: string, password: string): Promise<{ error
     return { error: "Identifiants invalides" };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email: profile.email,
     password,
@@ -45,7 +45,7 @@ export async function login(username: string, password: string): Promise<{ error
 }
 
 export async function logout() {
-  const supabase = createClient();
+  const supabase = await createClient();
   await supabase.auth.signOut();
 }
 
@@ -61,7 +61,7 @@ export async function changerMonMotDePasse(ancienMdp: string, nouveauMdp: string
     return { error: "Le nouveau mot de passe doit contenir au moins 8 caractères" };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -84,8 +84,8 @@ export async function changerMonMotDePasse(ancienMdp: string, nouveauMdp: string
  * l'authentification) : toujours un succès générique côté appelant.
  */
 export async function demanderReinitialisationMotDePasse(email: string): Promise<void> {
-  const supabase = createClient();
-  const h = headers();
+  const supabase = await createClient();
+  const h = await headers();
   const host = h.get("host");
   const proto = h.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
 
@@ -104,7 +104,7 @@ export async function definirNouveauMotDePasse(nouveauMdp: string): Promise<{ er
     return { error: "Le nouveau mot de passe doit contenir au moins 8 caractères" };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

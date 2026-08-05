@@ -31,7 +31,7 @@ interface PaiementSupprimeRow {
  * avant d'utiliser le service role, qui lui bypass RLS entièrement.
  */
 export default async function PaiementsSupprimesPage() {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
 
   if (scope.role !== "coordonnateur" && scope.role !== "comptable") {
     return (

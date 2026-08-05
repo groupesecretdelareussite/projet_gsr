@@ -30,8 +30,9 @@ function dateComplete(dateIso: string): string {
  * comptable voient tout, superviseur uniquement ses sites — client RLS
  * suffit ici, pas besoin de service role pour la lecture.
  */
-export default async function NotificationsPage({ searchParams }: { searchParams: { statut?: string } }) {
-  const supabase = createClient();
+export default async function NotificationsPage(props: { searchParams: Promise<{ statut?: string }> }) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
   if (!["coordonnateur", "comptable", "superviseur"].includes(scope.role)) {

@@ -11,12 +11,13 @@ function aujourdhui(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default async function PresencesPage({
-  searchParams,
-}: {
-  searchParams: { site_id?: string; classe_id?: string; date?: string };
-}) {
-  const supabase = createClient();
+export default async function PresencesPage(
+  props: {
+    searchParams: Promise<{ site_id?: string; classe_id?: string; date?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
   if (!["coordonnateur", "comptable", "superviseur", "chef_site"].includes(scope.role)) {
@@ -35,7 +36,7 @@ export default async function PresencesPage({
   ]);
 
   const siteIdEffectif =
-    searchParams.site_id ?? (scope.role === "superviseur" ? lireFiltreSiteSuperviseur()?.toString() : undefined);
+    searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
 
   const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
   const classesFiltrees = siteIdEffectif

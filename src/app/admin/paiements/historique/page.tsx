@@ -24,12 +24,13 @@ interface PaiementRow {
   } | null;
 }
 
-export default async function HistoriquePaiementsPage({
-  searchParams,
-}: {
-  searchParams: { annee_scolaire_id?: string; site_id?: string; classe_id?: string; mois?: string };
-}) {
-  const supabase = createClient();
+export default async function HistoriquePaiementsPage(
+  props: {
+    searchParams: Promise<{ annee_scolaire_id?: string; site_id?: string; classe_id?: string; mois?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
   const peutSupprimer = scope.role === "coordonnateur" || scope.role === "comptable";
 
@@ -50,7 +51,7 @@ export default async function HistoriquePaiementsPage({
 
   const anneeFiltre = searchParams.annee_scolaire_id ?? (anneeParDefaut ? String(anneeParDefaut) : undefined);
   const siteIdEffectif =
-    searchParams.site_id ?? (scope.role === "superviseur" ? lireFiltreSiteSuperviseur()?.toString() : undefined);
+    searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
   if (anneeFiltre) query = query.eq("annee_scolaire_id", anneeFiltre);
   if (siteIdEffectif) query = query.eq("eleves.classes.site_id", siteIdEffectif);
   if (searchParams.classe_id) query = query.eq("eleves.classe_id", searchParams.classe_id);

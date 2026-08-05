@@ -13,7 +13,7 @@ import { getUserScope, type UserScope } from "@/lib/auth-scope";
  * all" côté RLS, cf. sql/009_td_module.sql).
  */
 async function getScopeAndAssert(): Promise<UserScope> {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
   if (scope.role !== "coordonnateur") {
     throw new Error("Non autorisé");
   }

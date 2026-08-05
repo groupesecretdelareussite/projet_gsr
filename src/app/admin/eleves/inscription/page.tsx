@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { EleveForm } from "@/components/admin/eleves/EleveForm";
 
 export default async function InscriptionElevePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: sites } = await supabase.from("sites").select("id, nom_site").order("nom_site");
 
   return (

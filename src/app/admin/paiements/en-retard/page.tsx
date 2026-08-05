@@ -26,8 +26,9 @@ interface RetardRow {
   derniereRelance: string | null;
 }
 
-export default async function PaiementsEnRetardPage({ searchParams }: { searchParams: { mois?: string } }) {
-  const supabase = createClient();
+export default async function PaiementsEnRetardPage(props: { searchParams: Promise<{ mois?: string }> }) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
   const peutVoirContact = scope.role !== "chef_site";
 

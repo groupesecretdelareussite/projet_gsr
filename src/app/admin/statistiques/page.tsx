@@ -18,12 +18,13 @@ interface PaiementRow {
   eleves: { classe_id: number; classes: { site_id: number; sites: { nom_site: string } | null } | null } | null;
 }
 
-export default async function StatistiquesPage({
-  searchParams,
-}: {
-  searchParams: { annee_id?: string; site_id?: string; classe_id?: string; mois?: string };
-}) {
-  const supabase = createClient();
+export default async function StatistiquesPage(
+  props: {
+    searchParams: Promise<{ annee_id?: string; site_id?: string; classe_id?: string; mois?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
   if (!["coordonnateur", "comptable", "superviseur"].includes(scope.role)) {
@@ -48,7 +49,7 @@ export default async function StatistiquesPage({
     anneesList[0];
 
   const siteIdEffectif =
-    searchParams.site_id ?? (scope.role === "superviseur" ? lireFiltreSiteSuperviseur()?.toString() : undefined);
+    searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
 
   const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
   const classesFiltrees = siteIdEffectif

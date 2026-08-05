@@ -26,7 +26,7 @@ interface PostulationRow {
 
 /** §10.4 GSR_ARCHITECTURE.md — créneaux publiés encore ouverts, avec au moins une candidature à trancher. */
 export default async function ArbitrageTDPage() {
-  await getUserScope(createClient());
+  await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
 
   const [{ data: creneaux }, { data: classes }, { data: matieres }, { data: professeurs }] = await Promise.all([

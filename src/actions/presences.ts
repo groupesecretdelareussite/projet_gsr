@@ -7,7 +7,7 @@ import type { UserRole } from "@/lib/constants";
 const ROLES_PRESENCES: UserRole[] = ["coordonnateur", "comptable", "superviseur", "chef_site"];
 
 async function getScopeAndAssert(): Promise<UserScope> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
   if (!ROLES_PRESENCES.includes(scope.role)) {
     throw new Error("Non autorisé");
@@ -32,7 +32,7 @@ export interface UpsertPresenceInput {
 export async function upsertPresence(input: UpsertPresenceInput): Promise<{ error?: string }> {
   await getScopeAndAssert();
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("presences").upsert(
     {
       eleve_id: input.eleveId,
@@ -64,7 +64,7 @@ export async function marquerTousPresence(input: MarquerTousInput): Promise<{ er
 
   if (input.eleveIds.length === 0) return {};
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const rows = input.eleveIds.map((eleveId) => ({
     eleve_id: eleveId,
     date_presence: input.datePresence,

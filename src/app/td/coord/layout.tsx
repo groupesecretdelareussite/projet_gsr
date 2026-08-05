@@ -21,7 +21,7 @@ const NAV = [
  * coordonnateur + aux professeurs (jamais comptable/superviseur/chef_site/secretaire).
  */
 export default async function TdCoordLayout({ children }: { children: React.ReactNode }) {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
 
   if (scope.role !== "coordonnateur") {
     return (

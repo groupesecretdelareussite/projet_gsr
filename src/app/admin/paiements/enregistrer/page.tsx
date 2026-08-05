@@ -5,7 +5,7 @@ import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EnregistrerPaiementForm } from "@/components/admin/paiements/EnregistrerPaiementForm";
 
 export default async function EnregistrerPaiementPage() {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
 
   return (
     <div>

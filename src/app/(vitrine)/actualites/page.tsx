@@ -30,7 +30,7 @@ function versArticle(row: ActualiteRow): Article {
 
 /** §discussion 2026-08-05 — lecture publique (RLS ouverte aux articles statut='publie'), gestion depuis /admin/actualites. */
 export default async function ActualitesPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data } = await supabase
     .from("actualites")
     .select("id, titre, categorie, extrait, contenu, date_publication, a_la_une_jusqu_au, actualites_images(storage_path, ordre)")

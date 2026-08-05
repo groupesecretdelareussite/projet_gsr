@@ -7,7 +7,7 @@ import { getUserScope, type UserScope } from "@/lib/auth-scope";
 
 /** Réservé au coordonnateur — même convention que donnees-scolaires.ts. */
 async function getScopeAndAssert(): Promise<UserScope> {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
   if (scope.role !== "coordonnateur") {
     throw new Error("Non autorisé");
   }

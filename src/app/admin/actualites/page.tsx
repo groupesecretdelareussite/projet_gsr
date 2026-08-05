@@ -32,7 +32,7 @@ function estALaUne(dateISO: string | null): boolean {
 
 /** §discussion 2026-08-05 — gestion des actualités vitrine, coordonnateur uniquement. */
 export default async function ActualitesAdminPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
   if (scope.role !== "coordonnateur") {

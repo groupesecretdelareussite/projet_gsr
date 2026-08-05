@@ -24,7 +24,7 @@ interface ProfesseurRow {
 }
 
 export default async function ProfesseursTDPage() {
-  await getUserScope(createClient());
+  await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
 
   const [{ data: professeurs }, { data: zones }, { data: matieres }] = await Promise.all([

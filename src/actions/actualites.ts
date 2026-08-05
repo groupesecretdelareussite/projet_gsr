@@ -14,7 +14,7 @@ export const CATEGORIES = ["Vie scolaire", "Événement", "Réussite", "Cours", 
 export type Categorie = (typeof CATEGORIES)[number];
 
 async function getScopeAndAssert(): Promise<UserScope> {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
   if (scope.role !== "coordonnateur") {
     throw new Error("Non autorisé");
   }

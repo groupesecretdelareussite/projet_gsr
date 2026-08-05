@@ -5,7 +5,7 @@ import { EntiteSimpleTD } from "@/components/td/EntiteSimpleTD";
 import { creerZoneTD, modifierZoneTD, supprimerZoneTD } from "@/actions/td-config";
 
 export default async function ZonesTDPage() {
-  await getUserScope(createClient());
+  await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
   const { data } = await supabaseAdmin.schema("td").from("zones").select("id, nom_zone").order("nom_zone");
   const rows = (data ?? []).map((z) => ({ id: z.id, nom: z.nom_zone }));

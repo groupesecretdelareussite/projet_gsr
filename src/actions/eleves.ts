@@ -18,7 +18,7 @@ export interface InscrireEleveInput {
 }
 
 async function getScopeAndAssert() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
   if (!ROLES_GESTION_ELEVES.includes(scope.role as (typeof ROLES_GESTION_ELEVES)[number])) {
     throw new Error("Non autorisé");

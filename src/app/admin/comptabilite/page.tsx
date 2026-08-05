@@ -24,12 +24,13 @@ interface DepenseRow {
 }
 
 /** §11 GSR_ARCHITECTURE.md — Comptabilité globale, accès coordonnateur + comptable uniquement. */
-export default async function ComptabilitePage({
-  searchParams,
-}: {
-  searchParams: { annee_id?: string; mois?: string };
-}) {
-  const scope = await getUserScope(createClient());
+export default async function ComptabilitePage(
+  props: {
+    searchParams: Promise<{ annee_id?: string; mois?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const scope = await getUserScope(await createClient());
 
   if (!["coordonnateur", "comptable"].includes(scope.role)) {
     return (

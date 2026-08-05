@@ -8,7 +8,8 @@ export const COOKIE_FILTRE_SITE_SUPERVISEUR = "superviseur_site_filter";
  * `user_sites`) : sert uniquement de valeur par défaut pour le filtre
  * `site_id` de chaque page quand aucun `?site_id=` explicite n'est fourni.
  */
-export function lireFiltreSiteSuperviseur(): number | undefined {
-  const valeur = cookies().get(COOKIE_FILTRE_SITE_SUPERVISEUR)?.value;
+export async function lireFiltreSiteSuperviseur(): Promise<number | undefined> {
+  const cookieStore = await cookies();
+  const valeur = cookieStore.get(COOKIE_FILTRE_SITE_SUPERVISEUR)?.value;
   return valeur ? Number(valeur) : undefined;
 }

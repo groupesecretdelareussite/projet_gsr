@@ -3,8 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EleveForm } from "@/components/admin/eleves/EleveForm";
 
-export default async function ModifierElevePage({ params }: { params: { id: string } }) {
-  const supabase = createClient();
+export default async function ModifierElevePage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const supabase = await createClient();
 
   const [{ data: sites }, { data: eleve }] = await Promise.all([
     supabase.from("sites").select("id, nom_site").order("nom_site"),

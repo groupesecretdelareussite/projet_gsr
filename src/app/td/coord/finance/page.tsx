@@ -27,8 +27,9 @@ interface CreneauFinance {
  * créneau clôturé sans professeur validé (jamais pourvu) n'est pas compté
  * comme une dépense, même raisonnement que la Comptabilité globale.
  */
-export default async function FinanceTDPage({ searchParams }: { searchParams: { semaine?: string } }) {
-  await getUserScope(createClient());
+export default async function FinanceTDPage(props: { searchParams: Promise<{ semaine?: string }> }) {
+  const searchParams = await props.searchParams;
+  await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
 
   const { data: semaines } = await supabaseAdmin

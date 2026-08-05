@@ -7,7 +7,7 @@ import { getUserScope, type UserScope } from "@/lib/auth-scope";
 
 /** §11 GSR_ARCHITECTURE.md — Comptabilité globale, accès coordonnateur + comptable. */
 async function getScopeAndAssert(): Promise<UserScope> {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
   if (!["coordonnateur", "comptable"].includes(scope.role)) {
     throw new Error("Non autorisé");
   }
