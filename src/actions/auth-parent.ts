@@ -5,32 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope } from "@/lib/auth-scope";
 import { getParentSession } from "@/lib/session-parent";
-
-const MAX_TENTATIVES = 5;
-const FENETRE_MINUTES = 15;
-
-/** Même politique anti-brute-force que l'admin (§5.6), portail "parent" au lieu de "admin". */
-async function tropDeTentatives(supabaseAdmin: ReturnType<typeof createServiceRoleClient>, identifiant: string) {
-  const depuis = new Date(Date.now() - FENETRE_MINUTES * 60 * 1000).toISOString();
-
-  const { count } = await supabaseAdmin
-    .from("login_attempts")
-    .select("*", { count: "exact", head: true })
-    .eq("identifiant", identifiant)
-    .eq("portail", "parent")
-    .eq("reussi", false)
-    .gte("date_tentative", depuis);
-
-  return (count ?? 0) >= MAX_TENTATIVES;
-}
-
-async function enregistrerTentative(
-  supabaseAdmin: ReturnType<typeof createServiceRoleClient>,
-  identifiant: string,
-  reussi: boolean
-) {
-  await supabaseAdmin.from("login_attempts").insert({ identifiant, portail: "parent", reussi });
-}
+import { tropDeTentatives, enregistrerTentative } from "@/lib/brute-force";
 
 /**
  * §9 Écran A. Service role obligatoire : les parents n'ont pas de session
@@ -40,7 +15,7 @@ async function enregistrerTentative(
 export async function connexionParent(matricule: string, motDePasse: string): Promise<{ error?: string }> {
   const supabaseAdmin = createServiceRoleClient();
 
-  if (await tropDeTentatives(supabaseAdmin, matricule)) {
+  if (await tropDeTentatives(supabaseAdmin, matricule, "parent")) {
     return { error: "Trop de tentatives, réessayez dans 15 minutes." };
   }
 
@@ -51,12 +26,12 @@ export async function connexionParent(matricule: string, motDePasse: string): Pr
     .maybeSingle();
 
   if (!compte) {
-    await enregistrerTentative(supabaseAdmin, matricule, false);
+    await enregistrerTentative(supabaseAdmin, matricule, "parent", false);
     return { error: "Identifiants invalides" };
   }
 
   const valide = await bcrypt.compare(motDePasse, compte.mot_de_passe);
-  await enregistrerTentative(supabaseAdmin, matricule, valide);
+  await enregistrerTentative(supabaseAdmin, matricule, "parent", valide);
 
   if (!valide) {
     return { error: "Identifiants invalides" };

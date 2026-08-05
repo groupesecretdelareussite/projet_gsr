@@ -20,10 +20,14 @@ export async function marquerNotificationLue(id: number): Promise<{ error?: stri
 
 export async function marquerToutesNotificationsLues(ids: number[]): Promise<{ error?: string }> {
   if (ids.length === 0) return {};
-  await getUserScope(createClient());
+  const scope = await getUserScope(createClient());
   const supabaseAdmin = createServiceRoleClient();
 
-  const { error } = await supabaseAdmin.from("notifications").update({ lu: true }).in("id", ids);
+  const { data: notifs } = await supabaseAdmin.from("notifications").select("id, site_id").in("id", ids);
+  const idsAutorises = (notifs ?? []).filter((n) => siteInScope(scope, n.site_id)).map((n) => n.id);
+  if (idsAutorises.length === 0) return {};
+
+  const { error } = await supabaseAdmin.from("notifications").update({ lu: true }).in("id", idsAutorises);
   if (error) return { error: error.message };
   return {};
 }
