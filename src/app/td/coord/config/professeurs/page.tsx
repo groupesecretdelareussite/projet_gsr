@@ -11,6 +11,7 @@ import { NouveauProfesseurDialog } from "@/components/td/NouveauProfesseurDialog
 import { ModifierProfesseurDialog } from "@/components/td/ModifierProfesseurDialog";
 import { ReinitialiserMotDePasseProfDialog } from "@/components/td/ReinitialiserMotDePasseProfDialog";
 import { DesactiverProfesseurButton } from "@/components/td/DesactiverProfesseurButton";
+import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 
 interface ProfesseurRow {
   id: number;
@@ -65,7 +66,7 @@ export default async function ProfesseursTDPage() {
       key: "actions",
       label: "Actions",
       render: (p) => (
-        <div className="flex flex-wrap gap-2">
+        <div className={`flex flex-wrap gap-2 ${ACTIONS_HOVER_REVEAL}`}>
           <ModifierProfesseurDialog
             professeurId={p.id}
             initialNom={p.nom}

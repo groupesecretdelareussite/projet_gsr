@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { desactiverUtilisateur, reactiverUtilisateur } from "@/actions/utilisateurs";
 
 /** §5.1 GSR_ARCHITECTURE.md — la désactivation révoque immédiatement la session (auth.admin.signOut). */
@@ -48,7 +49,7 @@ export function DesactiverUtilisateurButton({
       <DialogTrigger asChild>
         <Button variant={actif ? "destructive" : "outline"} size="sm">
           {actif ? <UserX className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}
-          {actif ? "Désactiver" : "Réactiver"}
+          <span className={HOVER_ONLY_LABEL}>{actif ? "Désactiver" : "Réactiver"}</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

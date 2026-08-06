@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { reinitialiserMotDePasseParent } from "@/actions/auth-parent";
 
 /** §5.7 GSR_ARCHITECTURE.md — réinitialisation manuelle par le coordonnateur du compte du portail parents d'un élève. */
@@ -45,7 +46,7 @@ export function ReinitialiserMotDePasseParentDialog({ matricule, nomComplet }: {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <KeyRound className="w-3.5 h-3.5" />
-          Mdp parent
+          <span className={HOVER_ONLY_LABEL}>Mdp parent</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

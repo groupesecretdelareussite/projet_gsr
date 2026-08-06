@@ -7,6 +7,7 @@ import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { RelancerWhatsAppButton } from "@/components/admin/paiements/RelancerWhatsAppButton";
+import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import type { MoisScolaire } from "@/lib/constants";
 
 interface EleveRow {
@@ -152,13 +153,15 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
             key: "actions",
             label: "Actions",
             render: (l: RetardRow) => (
-              <RelancerWhatsAppButton
-                matricule={l.eleve.matricule}
-                nomComplet={`${l.eleve.nom} ${l.eleve.prenoms}`}
-                moisSouscription={l.mois}
-                montantRestant={l.resteDu}
-                contactParent={l.eleve.contact_parent}
-              />
+              <div className={ACTIONS_HOVER_REVEAL}>
+                <RelancerWhatsAppButton
+                  matricule={l.eleve.matricule}
+                  nomComplet={`${l.eleve.nom} ${l.eleve.prenoms}`}
+                  moisSouscription={l.mois}
+                  montantRestant={l.resteDu}
+                  contactParent={l.eleve.contact_parent}
+                />
+              </div>
             ),
           },
         ]

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Users, UserPlus, UserX as UserXIcon } from "lucide-react";
+import { Users, UserPlus, UserX as UserXIcon, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -7,6 +7,7 @@ import { ActionsBar } from "@/components/admin/ActionsBar";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { Button } from "@/components/ui/button";
+import { ACTIONS_HOVER_REVEAL, HOVER_ONLY_LABEL, cn } from "@/lib/utils";
 import { SuspendreDialog } from "@/components/admin/eleves/SuspendreDialog";
 import { ReinitialiserMotDePasseParentDialog } from "@/components/admin/eleves/ReinitialiserMotDePasseParentDialog";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
@@ -62,7 +63,15 @@ export default async function ListeElevesPage(
 
   const columns: DataTableColumn<EleveRow>[] = [
     { key: "matricule", label: "Matricule", render: (e) => <span className="font-mono text-xs">{e.matricule}</span> },
-    { key: "nom", label: "Nom", render: (e) => <span className="font-medium">{e.nom}</span> },
+    {
+      key: "nom",
+      label: "Nom",
+      render: (e) => (
+        <Link href={`/admin/eleves/${e.id}`} className="font-medium text-gray-900 hover:text-primary hover:underline">
+          {e.nom}
+        </Link>
+      ),
+    },
     { key: "prenoms", label: "Prénoms", render: (e) => e.prenoms },
     { key: "classe", label: "Classe", render: (e) => e.classes?.nom_classe ?? "—" },
     { key: "site", label: "Site", render: (e) => e.classes?.sites?.nom_site ?? "—" },
@@ -75,10 +84,11 @@ export default async function ListeElevesPage(
             key: "actions",
             label: "Actions",
             render: (e: EleveRow) => (
-              <div className="flex gap-2 flex-wrap">
+              <div className={cn("flex gap-2 flex-wrap", ACTIONS_HOVER_REVEAL)}>
                 <Link href={`/admin/eleves/${e.id}/modifier`}>
                   <Button variant="outline" size="sm">
-                    Modifier
+                    <Pencil className="w-3.5 h-3.5" />
+                    <span className={HOVER_ONLY_LABEL}>Modifier</span>
                   </Button>
                 </Link>
                 <SuspendreDialog eleveId={e.id} nomComplet={`${e.nom} ${e.prenoms}`} />

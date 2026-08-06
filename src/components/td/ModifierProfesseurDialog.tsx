@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { modifierProfesseurTD } from "@/actions/td-config";
 
 interface Option {
@@ -85,7 +86,7 @@ export function ModifierProfesseurDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Pencil className="w-3.5 h-3.5" />
-          Modifier
+          <span className={HOVER_ONLY_LABEL}>Modifier</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

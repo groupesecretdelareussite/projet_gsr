@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Newspaper, Plus } from "lucide-react";
+import { Newspaper, Plus, Pencil } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope } from "@/lib/auth-scope";
@@ -11,6 +11,7 @@ import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SupprimerActualiteButton } from "@/components/admin/actualites/SupprimerActualiteButton";
+import { ACTIONS_HOVER_REVEAL, HOVER_ONLY_LABEL, cn } from "@/lib/utils";
 import type { Categorie } from "@/actions/actualites";
 
 const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie`;
@@ -90,10 +91,11 @@ export default async function ActualitesAdminPage() {
       key: "actions",
       label: "Actions",
       render: (a) => (
-        <div className="flex items-center gap-2">
+        <div className={cn("flex items-center gap-2", ACTIONS_HOVER_REVEAL)}>
           <Link href={`/admin/actualites/${a.id}/modifier`}>
             <Button variant="outline" size="sm">
-              Modifier
+              <Pencil className="w-3.5 h-3.5" />
+              <span className={HOVER_ONLY_LABEL}>Modifier</span>
             </Button>
           </Link>
           <SupprimerActualiteButton id={a.id} titre={a.titre} />

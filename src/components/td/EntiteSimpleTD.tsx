@@ -19,6 +19,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { TdConfigTabs } from "@/components/td/TdConfigTabs";
+import { ACTIONS_HOVER_REVEAL, HOVER_ONLY_LABEL } from "@/lib/utils";
 
 interface LigneSimple {
   id: number;
@@ -86,14 +87,14 @@ export function EntiteSimpleTD({ titre, titrePage, colonneLabel, rows, onCreer, 
       key: "actions",
       label: "Actions",
       render: (l) => (
-        <div className="flex flex-wrap gap-2">
+        <div className={`flex flex-wrap gap-2 ${ACTIONS_HOVER_REVEAL}`}>
           <Button variant="outline" size="sm" onClick={() => ouvrirModifier(l)}>
             <Pencil className="w-3.5 h-3.5" />
-            Modifier
+            <span className={HOVER_ONLY_LABEL}>Modifier</span>
           </Button>
           <Button variant="outline" size="sm" onClick={() => supprimer(l)} disabled={isPending}>
             <Trash2 className="w-3.5 h-3.5" />
-            Supprimer
+            <span className={HOVER_ONLY_LABEL}>Supprimer</span>
           </Button>
         </div>
       ),

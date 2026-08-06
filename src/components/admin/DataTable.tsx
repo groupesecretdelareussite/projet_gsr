@@ -37,7 +37,7 @@ export function DataTable<T>({ columns, rows, rowKey, emptyState }: DataTablePro
         </thead>
         <tbody className="divide-y divide-gray-100">
           {rows.map((row) => (
-            <tr key={rowKey(row)} className="hover:bg-gray-50">
+            <tr key={rowKey(row)} className="hover:bg-gray-50 group">
               {columns.map((col) => (
                 <td key={col.key} className="px-4 py-3 text-gray-700">
                   {col.render(row)}

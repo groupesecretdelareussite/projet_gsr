@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { supprimerClasse } from "@/actions/donnees-scolaires";
 
 export function SupprimerClasseDialog({ classeId, nomClasse }: { classeId: number; nomClasse: string }) {
@@ -39,7 +40,7 @@ export function SupprimerClasseDialog({ classeId, nomClasse }: { classeId: numbe
       <DialogTrigger asChild>
         <Button variant="destructive" size="sm">
           <Trash2 className="w-3.5 h-3.5" />
-          Supprimer
+          <span className={HOVER_ONLY_LABEL}>Supprimer</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { marquerNotificationLue } from "@/actions/notifications";
 
 export function MarquerLuButton({ id }: { id: number }) {
@@ -25,7 +26,7 @@ export function MarquerLuButton({ id }: { id: number }) {
   return (
     <Button variant="outline" size="sm" onClick={handleClick} disabled={isPending}>
       <Check className="w-3.5 h-3.5" />
-      Marquer lu
+      <span className={HOVER_ONLY_LABEL}>Marquer lu</span>
     </Button>
   );
 }

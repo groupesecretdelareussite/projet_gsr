@@ -6,6 +6,7 @@ import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { ReinscrireButton } from "@/components/admin/eleves/ReinscrireButton";
 import { RAISON_LABELS } from "@/lib/constants";
+import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 
 interface EleveSuspenduRow {
   id: number;
@@ -53,7 +54,11 @@ export default async function ElevesSuspendusPage() {
     {
       key: "actions",
       label: "Actions",
-      render: (e) => <ReinscrireButton eleveId={e.id} montantDu={e.eleves_suspendus[0]?.montant_du ?? 0} />,
+      render: (e) => (
+        <div className={ACTIONS_HOVER_REVEAL}>
+          <ReinscrireButton eleveId={e.id} montantDu={e.eleves_suspendus[0]?.montant_du ?? 0} />
+        </div>
+      ),
     },
   ];
 

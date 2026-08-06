@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { enregistrerRelanceWhatsapp } from "@/actions/paiements";
 import { genererLienWhatsApp } from "@/lib/whatsapp";
 import type { MoisScolaire } from "@/lib/constants";
@@ -37,7 +38,7 @@ export function RelancerWhatsAppButton({
   return (
     <Button variant="outline" size="sm" onClick={handleClick} disabled={isPending}>
       <MessageCircle className="w-3.5 h-3.5" />
-      Relancer
+      <span className={HOVER_ONLY_LABEL}>Relancer</span>
     </Button>
   );
 }

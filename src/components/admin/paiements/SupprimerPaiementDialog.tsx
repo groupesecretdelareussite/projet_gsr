@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { supprimerPaiement } from "@/actions/paiements";
 
 /**
@@ -55,7 +56,7 @@ export function SupprimerPaiementDialog({ paiementId, description }: { paiementI
       <DialogTrigger asChild>
         <Button variant="destructive" size="sm">
           <Trash2 className="w-3.5 h-3.5" />
-          Supprimer
+          <span className={HOVER_ONLY_LABEL}>Supprimer</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

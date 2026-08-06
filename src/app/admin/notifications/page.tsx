@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { MarquerLuButton } from "@/components/admin/notifications/MarquerLuButton";
 import { ToutMarquerLuButton } from "@/components/admin/notifications/ToutMarquerLuButton";
+import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 
 interface NotificationRow {
   id: number;
@@ -74,7 +75,7 @@ export default async function NotificationsPage(props: { searchParams: Promise<{
     {
       key: "actions",
       label: "Actions",
-      render: (n) => (!n.lu ? <MarquerLuButton id={n.id} /> : null),
+      render: (n) => (!n.lu ? <div className={ACTIONS_HOVER_REVEAL}><MarquerLuButton id={n.id} /></div> : null),
     },
   ];
 

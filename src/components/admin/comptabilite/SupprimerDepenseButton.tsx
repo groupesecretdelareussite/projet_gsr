@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { supprimerDepense } from "@/actions/depenses";
 
 export function SupprimerDepenseButton({ depenseId, libelle }: { depenseId: number; libelle: string }) {
@@ -27,7 +28,7 @@ export function SupprimerDepenseButton({ depenseId, libelle }: { depenseId: numb
   return (
     <Button variant="outline" size="sm" onClick={handleClick} disabled={isPending}>
       <Trash2 className="w-3.5 h-3.5" />
-      Supprimer
+      <span className={HOVER_ONLY_LABEL}>Supprimer</span>
     </Button>
   );
 }

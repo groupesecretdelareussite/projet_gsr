@@ -17,6 +17,7 @@ import {
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { suspendreEleve } from "@/actions/eleves";
 import { RAISON_LABELS } from "@/lib/constants";
 
@@ -52,7 +53,7 @@ export function SuspendreDialog({ eleveId, nomComplet }: { eleveId: number; nomC
       <DialogTrigger asChild>
         <Button variant="destructive" size="sm">
           <UserX className="w-3.5 h-3.5" />
-          Suspendre
+          <span className={HOVER_ONLY_LABEL}>Suspendre</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

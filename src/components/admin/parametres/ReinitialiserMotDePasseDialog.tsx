@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { reinitialiserMotDePasseUtilisateur } from "@/actions/utilisateurs";
 
 /** §5.7 GSR_ARCHITECTURE.md — réinitialisation manuelle par le coordonnateur, ici pour un autre compte staff. */
@@ -45,7 +46,7 @@ export function ReinitialiserMotDePasseDialog({ userId, username }: { userId: st
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <KeyRound className="w-3.5 h-3.5" />
-          Mot de passe
+          <span className={HOVER_ONLY_LABEL}>Mot de passe</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

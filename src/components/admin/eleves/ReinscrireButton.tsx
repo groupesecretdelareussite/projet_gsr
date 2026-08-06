@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { reinscrireEleve } from "@/actions/eleves";
 
 export function ReinscrireButton({ eleveId, montantDu }: { eleveId: number; montantDu: number }) {
@@ -33,7 +34,7 @@ export function ReinscrireButton({ eleveId, montantDu }: { eleveId: number; mont
   return (
     <Button size="sm" onClick={handleClick} disabled={isPending}>
       <UserCheck className="w-3.5 h-3.5" />
-      {isPending ? "..." : "Réinscrire"}
+      {isPending ? "..." : <span className={HOVER_ONLY_LABEL}>Réinscrire</span>}
     </Button>
   );
 }

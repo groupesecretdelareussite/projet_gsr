@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { AjouterCategorieDialog } from "@/components/admin/comptabilite/AjouterCategorieDialog";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { modifierDepense } from "@/actions/depenses";
 
 interface Categorie {
@@ -77,7 +78,7 @@ export function ModifierDepenseDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Pencil className="w-3.5 h-3.5" />
-          Modifier
+          <span className={HOVER_ONLY_LABEL}>Modifier</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

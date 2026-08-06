@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RoleSiteFields } from "@/components/admin/parametres/RoleSiteFields";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { modifierUtilisateur } from "@/actions/utilisateurs";
 import type { UserRole } from "@/lib/constants";
 
@@ -84,7 +85,7 @@ export function ModifierUtilisateurDialog({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Pencil className="w-3.5 h-3.5" />
-          Modifier
+          <span className={HOVER_ONLY_LABEL}>Modifier</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

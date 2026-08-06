@@ -12,6 +12,7 @@ import { SiteSelector } from "@/components/admin/parametres/SiteSelector";
 import { NouvelleClasseDialog, type ClasseOption } from "@/components/admin/parametres/NouvelleClasseDialog";
 import { ModifierClasseDialog } from "@/components/admin/parametres/ModifierClasseDialog";
 import { SupprimerClasseDialog } from "@/components/admin/parametres/SupprimerClasseDialog";
+import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 
 interface SiteRow {
   id: number;
@@ -103,7 +104,7 @@ export default async function DonneesScolairesPage(
       key: "actions",
       label: "Actions",
       render: (s) => (
-        <div className="flex flex-wrap gap-2">
+        <div className={`flex flex-wrap gap-2 ${ACTIONS_HOVER_REVEAL}`}>
           <ModifierSiteDialog siteId={s.id} initialNomSite={s.nom_site} initialInitiale={s.initiale} />
           <SupprimerSiteDialog siteId={s.id} nomSite={s.nom_site} />
         </div>
@@ -130,7 +131,7 @@ export default async function DonneesScolairesPage(
       key: "actions",
       label: "Actions",
       render: (c) => (
-        <div className="flex flex-wrap gap-2">
+        <div className={`flex flex-wrap gap-2 ${ACTIONS_HOVER_REVEAL}`}>
           <ModifierClasseDialog
             classeId={c.id}
             initialNomClasse={c.nom_classe}

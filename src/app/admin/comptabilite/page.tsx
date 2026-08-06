@@ -11,6 +11,7 @@ import { NouvelleDepenseDialog } from "@/components/admin/comptabilite/NouvelleD
 import { ModifierDepenseDialog } from "@/components/admin/comptabilite/ModifierDepenseDialog";
 import { SupprimerDepenseButton } from "@/components/admin/comptabilite/SupprimerDepenseButton";
 import { EntreesSortiesChart } from "@/components/admin/comptabilite/EntreesSortiesChart";
+import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import { moisCourant } from "@/lib/paiements";
 import { MOIS_SCOLAIRES, type MoisScolaire } from "@/lib/constants";
 
@@ -128,7 +129,7 @@ export default async function ComptabilitePage(
       key: "actions",
       label: "Actions",
       render: (d) => (
-        <div className="flex flex-wrap gap-2">
+        <div className={`flex flex-wrap gap-2 ${ACTIONS_HOVER_REVEAL}`}>
           <ModifierDepenseDialog
             depenseId={d.id}
             initialCategorieId={d.categorie_id}

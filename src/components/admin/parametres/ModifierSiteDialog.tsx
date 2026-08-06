@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { modifierSite } from "@/actions/donnees-scolaires";
 
 interface ModifierSiteDialogProps {
@@ -53,7 +54,7 @@ export function ModifierSiteDialog({ siteId, initialNomSite, initialInitiale }: 
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Pencil className="w-3.5 h-3.5" />
-          Modifier
+          <span className={HOVER_ONLY_LABEL}>Modifier</span>
         </Button>
       </DialogTrigger>
       <DialogContent>

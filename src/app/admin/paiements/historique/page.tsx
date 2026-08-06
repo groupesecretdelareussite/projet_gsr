@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/admin/EmptyState";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { SupprimerPaiementDialog } from "@/components/admin/paiements/SupprimerPaiementDialog";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
+import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import { MODE_PAIEMENT_LABELS, MOIS_SCOLAIRES, type ModePaiement } from "@/lib/constants";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 
@@ -83,10 +84,12 @@ export default async function HistoriquePaiementsPage(
             key: "actions",
             label: "Actions",
             render: (p: PaiementRow) => (
-              <SupprimerPaiementDialog
-                paiementId={p.id}
-                description={`${p.eleves?.nom} ${p.eleves?.prenoms} — ${p.mois_souscription} — ${p.montant_paye} F`}
-              />
+              <div className={ACTIONS_HOVER_REVEAL}>
+                <SupprimerPaiementDialog
+                  paiementId={p.id}
+                  description={`${p.eleves?.nom} ${p.eleves?.prenoms} — ${p.mois_souscription} — ${p.montant_paye} F`}
+                />
+              </div>
             ),
           },
         ]

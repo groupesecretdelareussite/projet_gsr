@@ -11,6 +11,7 @@ import { ModifierUtilisateurDialog } from "@/components/admin/parametres/Modifie
 import { ReinitialiserMotDePasseDialog } from "@/components/admin/parametres/ReinitialiserMotDePasseDialog";
 import { DesactiverUtilisateurButton } from "@/components/admin/parametres/DesactiverUtilisateurButton";
 import { SupprimerUtilisateurDialog } from "@/components/admin/parametres/SupprimerUtilisateurDialog";
+import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import { ROLE_LABELS, type UserRole } from "@/lib/constants";
 
 interface UtilisateurRow {
@@ -83,7 +84,7 @@ export default async function UtilisateursPage() {
       key: "actions",
       label: "Actions",
       render: (u) => (
-        <div className="flex flex-wrap gap-2">
+        <div className={`flex flex-wrap gap-2 ${ACTIONS_HOVER_REVEAL}`}>
           <ModifierUtilisateurDialog
             userId={u.id}
             initialUsername={u.username}

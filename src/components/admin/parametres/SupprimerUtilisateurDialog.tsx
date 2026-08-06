@@ -14,6 +14,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { supprimerUtilisateur } from "@/actions/utilisateurs";
 
 export function SupprimerUtilisateurDialog({ userId, username }: { userId: string; username: string }) {
@@ -39,7 +40,7 @@ export function SupprimerUtilisateurDialog({ userId, username }: { userId: strin
       <DialogTrigger asChild>
         <Button variant="destructive" size="sm">
           <Trash2 className="w-3.5 h-3.5" />
-          Supprimer
+          <span className={HOVER_ONLY_LABEL}>Supprimer</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
