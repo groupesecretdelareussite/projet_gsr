@@ -15,7 +15,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   } = await supabase.auth.getSession();
 
   // Pas de session : soit la page /admin/login (rendue sans habillage), soit
-  // une route protégée déjà interceptée par middleware.ts avant d'arriver ici.
+  // une route protégée déjà interceptée par proxy.ts avant d'arriver ici.
   if (!session) {
     return <>{children}</>;
   }

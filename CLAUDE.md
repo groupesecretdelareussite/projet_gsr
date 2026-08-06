@@ -13,7 +13,7 @@ This repo's working root for the Next.js app is `gsr/` (this directory) — the 
 ```bash
 npm run dev      # start dev server (localhost:3000)
 npm run build    # production build
-npm run lint     # next lint
+npm run lint     # eslint .
 npm run test             # Vitest — Levels 1+2 (unit + role-guard), no network required
 npm run test:watch       # Vitest watch mode, Levels 1+2
 npm run test:integration # Vitest — Level 3, real network calls against the Supabase project (needs .env.local + .env.test.local)
@@ -43,7 +43,7 @@ Only a subset of `GSR_ARCHITECTURE.md`'s full vision is built. As of now:
 
 ## Architecture
 
-**Stack**: Next.js 14 (App Router) + Supabase (Postgres + Auth + Storage) + Tailwind + shadcn/ui-style components, deployed on Vercel.
+**Stack**: Next.js 16 (App Router) + React 19 + Supabase (Postgres + Auth + Storage) + Tailwind + shadcn/ui-style components, deployed on Vercel.
 
 ### Two Postgres schemas in one Supabase project
 `public` holds all GSR data (élèves, paiements, users, sites…); `td` will hold the separate TD (professeur scheduling) portal data. **Never join across schemas in a single Supabase JS query** — issue two separate queries and combine in TypeScript (this is absolute prohibition #8 in the architecture doc).

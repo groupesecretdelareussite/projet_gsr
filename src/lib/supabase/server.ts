@@ -27,7 +27,7 @@ export const createClient = cache(async function createClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // Appelé depuis un Server Component : ignorable, le middleware
+            // Appelé depuis un Server Component : ignorable, le proxy
             // rafraîchit déjà la session à chaque requête.
           }
         },
