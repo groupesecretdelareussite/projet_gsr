@@ -1,4 +1,4 @@
-import { Calculator, Wallet, TrendingDown, TrendingUp, Receipt } from "lucide-react";
+import { Calculator, Wallet, TrendingDown, TrendingUp, Receipt, BadgePercent } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope } from "@/lib/auth-scope";
@@ -64,8 +64,9 @@ export default async function ComptabilitePage(
     );
   }
 
-  const [{ data: paiements }, { data: creneaux }, { data: postulations }, { data: depenses }] = await Promise.all([
+  const [{ data: paiements }, { data: penalites }, { data: creneaux }, { data: postulations }, { data: depenses }] = await Promise.all([
     supabaseAdmin.from("paiements").select("montant_paye, mois_souscription").eq("annee_scolaire_id", anneeSelectionnee.id),
+    supabaseAdmin.from("penalites_reinscription").select("montant, date_paiement").eq("annee_scolaire_id", anneeSelectionnee.id),
     // §8 CLAUDE.md prohibition #8 — pas de JOIN cross-schéma : td.creneaux/td.postulations sont dans le même schéma td,
     // combinés séparément en TypeScript avec public.annees_scolaires ci-dessous.
     supabaseAdmin
@@ -90,11 +91,18 @@ export default async function ComptabilitePage(
   const moisFiltre = (searchParams.mois as MoisScolaire | undefined) ?? undefined;
 
   // --- KPI / synthèse — respectent le filtre "mois" s'il est présent ---
+  // Les pénalités n'ont pas de mois_souscription (forfait hors-mois, §013) —
+  // filtrées comme les dépenses/rémunérations, via moisCourant(date_paiement).
   const paiementsKpi = moisFiltre ? (paiements ?? []).filter((p) => p.mois_souscription === moisFiltre) : paiements ?? [];
+  const penalitesKpi = moisFiltre
+    ? (penalites ?? []).filter((p) => moisCourant(new Date(p.date_paiement)) === moisFiltre)
+    : penalites ?? [];
   const creneauxKpi = moisFiltre ? creneauxRemuneres.filter((c) => moisCourant(new Date(c.date_td)) === moisFiltre) : creneauxRemuneres;
   const depensesKpi = moisFiltre ? depensesRows.filter((d) => moisCourant(new Date(d.date_depense)) === moisFiltre) : depensesRows;
 
-  const totalEntrees = paiementsKpi.reduce((s, p) => s + p.montant_paye, 0);
+  const totalPaiementsTd = paiementsKpi.reduce((s, p) => s + p.montant_paye, 0);
+  const totalPenalites = penalitesKpi.reduce((s, p) => s + Number(p.montant), 0);
+  const totalEntrees = totalPaiementsTd + totalPenalites;
   const totalRemunerations = creneauxKpi.reduce((s, c) => s + Number(c.montant_prevu), 0);
   const totalDepensesAnnexes = depensesKpi.reduce((s, d) => s + Number(d.montant), 0);
   const totalSorties = totalRemunerations + totalDepensesAnnexes;
@@ -104,6 +112,10 @@ export default async function ComptabilitePage(
   const entreesParMois = new Map<MoisScolaire, number>();
   for (const p of paiements ?? []) {
     entreesParMois.set(p.mois_souscription, (entreesParMois.get(p.mois_souscription) ?? 0) + p.montant_paye);
+  }
+  for (const p of penalites ?? []) {
+    const m = moisCourant(new Date(p.date_paiement));
+    if (m) entreesParMois.set(m, (entreesParMois.get(m) ?? 0) + Number(p.montant));
   }
   const sortiesParMois = new Map<MoisScolaire, number>();
   for (const c of creneauxRemuneres) {
@@ -171,8 +183,9 @@ export default async function ComptabilitePage(
         <AutoSubmitOnChange />
       </form>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <KpiCard icon={Wallet} label="Entrées" value={`${totalEntrees.toLocaleString("fr-FR")} F`} />
+        <KpiCard icon={BadgePercent} label="Dont pénalités" value={`${totalPenalites.toLocaleString("fr-FR")} F`} />
         <KpiCard icon={TrendingDown} label="Sorties (total)" value={`${totalSorties.toLocaleString("fr-FR")} F`} />
         <KpiCard icon={Receipt} label="Dont dépenses annexes" value={`${totalDepensesAnnexes.toLocaleString("fr-FR")} F`} />
         <KpiCard icon={TrendingUp} label="Résultat net" value={`${resultatNet.toLocaleString("fr-FR")} F`} />
@@ -184,6 +197,14 @@ export default async function ComptabilitePage(
           <div className="flex justify-between">
             <span className="text-gray-500">Entrées</span>
             <span className="font-semibold text-gray-900">{totalEntrees.toLocaleString("fr-FR")} F</span>
+          </div>
+          <div className="flex justify-between pl-4">
+            <span className="text-gray-400">Paiements TD</span>
+            <span className="text-gray-600">{totalPaiementsTd.toLocaleString("fr-FR")} F</span>
+          </div>
+          <div className="flex justify-between pl-4">
+            <span className="text-gray-400">Pénalités de réinscription</span>
+            <span className="text-gray-600">{totalPenalites.toLocaleString("fr-FR")} F</span>
           </div>
           <div className="flex justify-between pl-4">
             <span className="text-gray-400">Rémunérations professeurs</span>

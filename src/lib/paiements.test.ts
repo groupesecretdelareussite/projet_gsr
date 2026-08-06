@@ -34,26 +34,36 @@ describe("moisPrecedent", () => {
 });
 
 describe("moisVisiblesRetard — règle du 15 (§12.4)", () => {
+  const anneeScolaire = { dateDebut: "2025-10-01", dateFin: "2026-05-31" };
+
   it("exclut le mois courant avant le 16 du mois", () => {
-    const visibles = moisVisiblesRetard(new Date(2026, 1, 10)); // 10 février
+    const visibles = moisVisiblesRetard(new Date(2026, 1, 10), anneeScolaire); // 10 février
     expect(visibles).toEqual(["Octobre", "Novembre", "Decembre", "Janvier"]);
   });
 
   it("inclut le mois courant à partir du 16", () => {
-    const visibles = moisVisiblesRetard(new Date(2026, 1, 16)); // 16 février
+    const visibles = moisVisiblesRetard(new Date(2026, 1, 16), anneeScolaire); // 16 février
     expect(visibles).toEqual(["Octobre", "Novembre", "Decembre", "Janvier", "Fevrier"]);
   });
 
   it("renvoie une liste vide avant le 16 octobre (aucun mois précédent dans l'année scolaire)", () => {
-    expect(moisVisiblesRetard(new Date(2025, 9, 10))).toEqual([]);
+    expect(moisVisiblesRetard(new Date(2025, 9, 10), anneeScolaire)).toEqual([]);
   });
 
   it("inclut Octobre à partir du 16 octobre", () => {
-    expect(moisVisiblesRetard(new Date(2025, 9, 16))).toEqual(["Octobre"]);
+    expect(moisVisiblesRetard(new Date(2025, 9, 16), anneeScolaire)).toEqual(["Octobre"]);
   });
 
-  it("hors période scolaire, renvoie tous les mois (pas de référence de mois courant)", () => {
-    expect(moisVisiblesRetard(new Date(2026, 6, 1))).toEqual([...MOIS_SCOLAIRES]);
+  it("avant le début de l'année scolaire (ex. août, préparation de rentrée), renvoie une liste vide", () => {
+    expect(moisVisiblesRetard(new Date(2025, 7, 1), anneeScolaire)).toEqual([]);
+  });
+
+  it("après la fin de l'année scolaire (ex. juillet, bilan de fin d'année), renvoie tous les mois", () => {
+    expect(moisVisiblesRetard(new Date(2026, 6, 1), anneeScolaire)).toEqual([...MOIS_SCOLAIRES]);
+  });
+
+  it("sans année scolaire en cours, renvoie une liste vide", () => {
+    expect(moisVisiblesRetard(new Date(2026, 6, 1), null)).toEqual([]);
   });
 });
 

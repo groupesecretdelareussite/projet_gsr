@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope, siteInScope } from "@/lib/auth-scope";
 import { genererMatricule } from "@/lib/matricule";
+import { estVenuDansLeMois, PENALITE_REINSCRIPTION_MONTANT } from "@/lib/reinscription";
+import type { MoisScolaire, ModePaiement } from "@/lib/constants";
 
 const ROLES_GESTION_ELEVES = ["coordonnateur", "comptable", "superviseur"] as const;
 
@@ -198,8 +200,29 @@ export async function suspendreEleve(
   return {};
 }
 
-/** §8.4 v2.1 — UPDATE statut='actif' + suppression de la ligne eleves_suspendus. */
-export async function reinscrireEleve(eleveId: number): Promise<{ error?: string }> {
+export interface ReinscrireInput {
+  modePaiement: ModePaiement;
+  datePaiement: string; // YYYY-MM-DD
+}
+
+export interface ReinscrireResultat {
+  error?: string;
+  montantDuPaye?: number;
+  moisExonere?: MoisScolaire | null;
+  penalite?: number;
+}
+
+/**
+ * §8.4 v2.1 + règle métier 2026-08-06 (pénalité de réinscription) — flux
+ * transactionnel : encaisse la pénalité forfaitaire (toute raison), et pour
+ * une suspension `defaut_paiement` avec montant dû, détermine via
+ * `presences` si l'élève a fréquenté le mois suspendu — Cas B (venu quand
+ * même) : montant dû payé et rattaché au bon `mois_souscription` dans
+ * `paiements` ; Cas C (absent tout le mois) : montant dû exonéré, tracé
+ * dans `mois_exoneres` plutôt que simulé comme payé. Puis seulement
+ * UPDATE statut='actif' + suppression de la ligne eleves_suspendus.
+ */
+export async function reinscrireEleve(eleveId: number, input: ReinscrireInput): Promise<ReinscrireResultat> {
   const scope = await getScopeAndAssert();
   const supabaseAdmin = createServiceRoleClient();
 
@@ -212,6 +235,59 @@ export async function reinscrireEleve(eleveId: number): Promise<{ error?: string
   if (!eleve || eleve.statut !== "suspendu") return { error: "Élève introuvable ou non suspendu" };
   const siteId = (eleve as unknown as { classes: { site_id: number } }).classes.site_id;
   if (!siteInScope(scope, siteId)) return { error: "Non autorisé" };
+
+  const { data: suspension } = await supabaseAdmin
+    .from("eleves_suspendus")
+    .select("raison, montant_du, mois_souscription, annee_scolaire_id")
+    .eq("eleve_id", eleveId)
+    .single();
+
+  if (!suspension) return { error: "Suspension introuvable" };
+
+  let moisExonere: MoisScolaire | null = null;
+
+  if (suspension.raison === "defaut_paiement" && suspension.montant_du > 0 && suspension.mois_souscription) {
+    const mois = suspension.mois_souscription as MoisScolaire;
+
+    const { data: anneeScolaire } = await supabaseAdmin
+      .from("annees_scolaires")
+      .select("date_debut")
+      .eq("id", suspension.annee_scolaire_id)
+      .single();
+
+    const estVenu = anneeScolaire ? await estVenuDansLeMois(supabaseAdmin, eleveId, mois, anneeScolaire.date_debut) : false;
+
+    if (estVenu) {
+      const { error: paiementError } = await supabaseAdmin.from("paiements").insert({
+        eleve_id: eleveId,
+        mois_souscription: mois,
+        montant_paye: suspension.montant_du,
+        date_paiement: input.datePaiement,
+        mode_paiement: input.modePaiement,
+        annee_scolaire_id: suspension.annee_scolaire_id,
+      });
+      if (paiementError) return { error: paiementError.message };
+    } else {
+      moisExonere = mois;
+      const { error: exonereError } = await supabaseAdmin.from("mois_exoneres").insert({
+        eleve_id: eleveId,
+        mois_souscription: mois,
+        annee_scolaire_id: suspension.annee_scolaire_id,
+        exonere_par: scope.userId,
+      });
+      if (exonereError) return { error: exonereError.message };
+    }
+  }
+
+  const { error: penaliteError } = await supabaseAdmin.from("penalites_reinscription").insert({
+    eleve_id: eleveId,
+    montant: PENALITE_REINSCRIPTION_MONTANT,
+    mode_paiement: input.modePaiement,
+    date_paiement: input.datePaiement,
+    enregistre_par: scope.userId,
+    annee_scolaire_id: suspension.annee_scolaire_id,
+  });
+  if (penaliteError) return { error: penaliteError.message };
 
   const { error: updateError } = await supabaseAdmin
     .from("eleves")
@@ -227,5 +303,15 @@ export async function reinscrireEleve(eleveId: number): Promise<{ error?: string
 
   revalidatePath("/admin/eleves/liste");
   revalidatePath("/admin/eleves/suspendus");
-  return {};
+  revalidatePath(`/admin/eleves/${eleveId}`);
+  revalidatePath("/admin/paiements/historique");
+  revalidatePath("/admin/paiements/en-retard");
+  revalidatePath("/admin/comptabilite");
+  revalidatePath("/admin/tableau-de-bord");
+
+  return {
+    montantDuPaye: moisExonere ? 0 : suspension.montant_du,
+    moisExonere,
+    penalite: PENALITE_REINSCRIPTION_MONTANT,
+  };
 }

@@ -8,10 +8,11 @@ import { EmptyState } from "@/components/admin/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SuspendreDialog } from "@/components/admin/eleves/SuspendreDialog";
-import { ReinscrireButton } from "@/components/admin/eleves/ReinscrireButton";
+import { ReinscrireDialog } from "@/components/admin/eleves/ReinscrireDialog";
 import { ReinitialiserMotDePasseParentDialog } from "@/components/admin/eleves/ReinitialiserMotDePasseParentDialog";
 import { calculerMoyenneMatiere, calculerMoyenneGenerale, type NoteMatiere } from "@/lib/moyennes";
-import { RAISON_LABELS, MODE_PAIEMENT_LABELS } from "@/lib/constants";
+import { estVenuDansLeMois } from "@/lib/reinscription";
+import { RAISON_LABELS, MODE_PAIEMENT_LABELS, type MoisScolaire } from "@/lib/constants";
 
 const ROLES_ELEVES = ["coordonnateur", "comptable", "superviseur", "chef_site"];
 const ROLES_PAIEMENTS = ["coordonnateur", "comptable", "superviseur"];
@@ -58,40 +59,112 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
 
   const classeInfo = eleve.classes as unknown as { nom_classe: string; site_id: number; sites: { nom_site: string } | null } | null;
 
-  const [suspensionResult, paiementsResult, compteParentResult, matieresResult, coefficientsResult, anneeEnCoursResult] =
-    await Promise.all([
-      eleve.statut === "suspendu"
-        ? supabase
-            .from("eleves_suspendus")
-            .select("raison, motif, montant_du, date_suspension")
-            .eq("eleve_id", eleve.id)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-      ROLES_PAIEMENTS.includes(scope.role)
-        ? supabase
-            .from("paiements")
-            .select("mois_souscription, montant_paye, date_paiement, mode_paiement")
-            .eq("eleve_id", eleve.id)
-            .order("date_paiement", { ascending: false })
-        : Promise.resolve({ data: null }),
-      scope.role === "coordonnateur"
-        ? supabase.from("comptes_parents").select("matricule").eq("matricule", eleve.matricule).maybeSingle()
-        : Promise.resolve({ data: null }),
-      ROLES_NOTES_PRESENCES.includes(scope.role)
-        ? supabase.from("matieres").select("id, nom").eq("actif", true).order("ordre")
-        : Promise.resolve({ data: null }),
-      ROLES_NOTES_PRESENCES.includes(scope.role)
-        ? supabase.from("coefficients").select("matiere_id, coefficient").eq("classe_id", eleve.classe_id)
-        : Promise.resolve({ data: null }),
-      ROLES_NOTES_PRESENCES.includes(scope.role)
-        ? supabase.from("annees_scolaires").select("id").eq("statut", "en_cours").maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
+  const [
+    suspensionResult,
+    paiementsResult,
+    penalitesResult,
+    moisExoneresResult,
+    compteParentResult,
+    matieresResult,
+    coefficientsResult,
+    anneeEnCoursResult,
+  ] = await Promise.all([
+    eleve.statut === "suspendu"
+      ? supabase
+          .from("eleves_suspendus")
+          .select("raison, motif, montant_du, mois_souscription, date_suspension")
+          .eq("eleve_id", eleve.id)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
+    ROLES_PAIEMENTS.includes(scope.role)
+      ? supabase
+          .from("paiements")
+          .select("mois_souscription, montant_paye, date_paiement, mode_paiement")
+          .eq("eleve_id", eleve.id)
+          .order("date_paiement", { ascending: false })
+      : Promise.resolve({ data: null }),
+    ROLES_PAIEMENTS.includes(scope.role)
+      ? supabase
+          .from("penalites_reinscription")
+          .select("montant, mode_paiement, date_paiement")
+          .eq("eleve_id", eleve.id)
+          .order("date_paiement", { ascending: false })
+      : Promise.resolve({ data: null }),
+    ROLES_PAIEMENTS.includes(scope.role)
+      ? supabase
+          .from("mois_exoneres")
+          .select("mois_souscription, date_exoneration")
+          .eq("eleve_id", eleve.id)
+          .order("date_exoneration", { ascending: false })
+      : Promise.resolve({ data: null }),
+    scope.role === "coordonnateur"
+      ? supabase.from("comptes_parents").select("matricule").eq("matricule", eleve.matricule).maybeSingle()
+      : Promise.resolve({ data: null }),
+    ROLES_NOTES_PRESENCES.includes(scope.role)
+      ? supabase.from("matieres").select("id, nom").eq("actif", true).order("ordre")
+      : Promise.resolve({ data: null }),
+    ROLES_NOTES_PRESENCES.includes(scope.role)
+      ? supabase.from("coefficients").select("matiere_id, coefficient").eq("classe_id", eleve.classe_id)
+      : Promise.resolve({ data: null }),
+    ROLES_NOTES_PRESENCES.includes(scope.role)
+      ? supabase.from("annees_scolaires").select("id, date_debut").eq("statut", "en_cours").maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
 
-  const suspension = suspensionResult.data as { raison: string; motif: string; montant_du: number; date_suspension: string } | null;
+  const suspension = suspensionResult.data as {
+    raison: string;
+    motif: string;
+    montant_du: number;
+    mois_souscription: string | null;
+    date_suspension: string;
+  } | null;
   const paiements = (paiementsResult.data ?? []) as { mois_souscription: string; montant_paye: number; date_paiement: string; mode_paiement: string }[];
+  const penalites = (penalitesResult.data ?? []) as { montant: number; mode_paiement: string; date_paiement: string }[];
+  const moisExoneresListe = (moisExoneresResult.data ?? []) as { mois_souscription: string; date_exoneration: string }[];
   const aUnCompteParent = !!compteParentResult.data;
-  const anneeEnCours = anneeEnCoursResult.data as { id: number } | null;
+  const anneeEnCours = anneeEnCoursResult.data as { id: number; date_debut: string } | null;
+
+  let estVenuDansLeMoisSuspendu: boolean | null = null;
+  if (suspension?.raison === "defaut_paiement" && suspension.montant_du > 0 && suspension.mois_souscription && anneeEnCours) {
+    estVenuDansLeMoisSuspendu = await estVenuDansLeMois(
+      supabase,
+      eleve.id,
+      suspension.mois_souscription as MoisScolaire,
+      anneeEnCours.date_debut
+    );
+  }
+
+  interface LigneHistoriquePaiement {
+    key: string;
+    libelle: string;
+    montant: number | null;
+    mode: string | null;
+    date: string;
+  }
+
+  const historiquePaiements: LigneHistoriquePaiement[] = [
+    ...paiements.map((p, i) => ({
+      key: `paiement-${i}`,
+      libelle: p.mois_souscription,
+      montant: p.montant_paye,
+      mode: p.mode_paiement,
+      date: p.date_paiement,
+    })),
+    ...moisExoneresListe.map((m, i) => ({
+      key: `exonere-${i}`,
+      libelle: `${m.mois_souscription} — Exonéré (absence)`,
+      montant: null,
+      mode: null,
+      date: m.date_exoneration,
+    })),
+    ...penalites.map((p, i) => ({
+      key: `penalite-${i}`,
+      libelle: "Pénalité de réinscription",
+      montant: p.montant,
+      mode: p.mode_paiement,
+      date: p.date_paiement,
+    })),
+  ].sort((a, b) => (a.date < b.date ? 1 : -1));
 
   let moyenneGeneraleAffichage: string | null = null;
   let matieresMoyennes: { nom: string; coefficient: number | null; moyenne: number | null }[] = [];
@@ -186,7 +259,18 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
         {eleve.statut === "suspendu" && suspension && (
           <Bloc
             titre="Suspension en cours"
-            action={peutGererSuspension && <ReinscrireButton eleveId={eleve.id} montantDu={suspension.montant_du} />}
+            action={
+              peutGererSuspension && (
+                <ReinscrireDialog
+                  eleveId={eleve.id}
+                  nomComplet={`${eleve.nom} ${eleve.prenoms}`}
+                  raison={suspension.raison}
+                  montantDu={suspension.montant_du}
+                  moisSouscription={suspension.mois_souscription}
+                  estVenuDansLeMois={estVenuDansLeMoisSuspendu}
+                />
+              )
+            }
           >
             <dl className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm mb-2">
               <div>
@@ -196,7 +280,11 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
               <div>
                 <dt className="text-gray-400">Montant dû</dt>
                 <dd className={suspension.montant_du > 0 ? "text-red-600 font-semibold" : "text-gray-700"}>
-                  {suspension.montant_du} F
+                  {estVenuDansLeMoisSuspendu === false ? (
+                    <span className="text-gray-400 italic font-normal">Sera exonéré (absence)</span>
+                  ) : (
+                    `${suspension.montant_du} F`
+                  )}
                 </dd>
               </div>
               <div>
@@ -269,29 +357,33 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
 
         {ROLES_PAIEMENTS.includes(scope.role) && (
           <Bloc titre="Paiements" action={<Link href="/admin/paiements/enregistrer" className="text-xs text-primary-dark font-medium hover:underline">Enregistrer un paiement</Link>}>
-            {paiements.length === 0 ? (
+            {historiquePaiements.length === 0 ? (
               <p className="text-sm text-gray-500">Aucun paiement enregistré.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="text-xs text-gray-400 uppercase tracking-wide">
-                      <th className="text-left font-medium py-1.5">Mois</th>
+                      <th className="text-left font-medium py-1.5">Mois / Libellé</th>
                       <th className="text-left font-medium py-1.5">Montant</th>
                       <th className="text-left font-medium py-1.5">Mode</th>
                       <th className="text-left font-medium py-1.5">Date</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {paiements.map((p, i) => (
-                      <tr key={i}>
-                        <td className="py-1.5 text-gray-700 flex items-center gap-1.5">
+                    {historiquePaiements.map((l) => (
+                      <tr key={l.key}>
+                        <td className={`py-1.5 flex items-center gap-1.5 ${l.montant === null ? "text-gray-400 italic" : "text-gray-700"}`}>
                           <Wallet className="w-3.5 h-3.5 text-gray-300 shrink-0" />
-                          {p.mois_souscription}
+                          {l.libelle}
                         </td>
-                        <td className="py-1.5 text-gray-700">{p.montant_paye} F</td>
-                        <td className="py-1.5 text-gray-700">{MODE_PAIEMENT_LABELS[p.mode_paiement as keyof typeof MODE_PAIEMENT_LABELS]}</td>
-                        <td className="py-1.5 text-gray-500">{new Date(p.date_paiement).toLocaleDateString("fr-FR")}</td>
+                        <td className={`py-1.5 ${l.montant === null ? "text-gray-400 italic" : "text-gray-700"}`}>
+                          {l.montant === null ? "Exonéré" : `${l.montant} F`}
+                        </td>
+                        <td className="py-1.5 text-gray-700">
+                          {l.mode ? MODE_PAIEMENT_LABELS[l.mode as keyof typeof MODE_PAIEMENT_LABELS] : "—"}
+                        </td>
+                        <td className="py-1.5 text-gray-500">{new Date(l.date).toLocaleDateString("fr-FR")}</td>
                       </tr>
                     ))}
                   </tbody>

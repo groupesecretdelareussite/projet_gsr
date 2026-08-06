@@ -37,7 +37,7 @@ export default async function StatistiquesPage(
   }
 
   const [{ data: annees }, { data: sites }, { data: classes }] = await Promise.all([
-    supabase.from("annees_scolaires").select("id, libelle, statut").order("date_debut", { ascending: false }),
+    supabase.from("annees_scolaires").select("id, libelle, statut, date_debut, date_fin").order("date_debut", { ascending: false }),
     supabase.from("sites").select("id, nom_site").order("nom_site"),
     supabase.from("classes").select("id, nom_classe, site_id").order("ordre"),
   ]);
@@ -104,7 +104,9 @@ export default async function StatistiquesPage(
 
     const montantParClasse = new Map((fraisTdRows ?? []).map((f) => [f.classe_id, Number(f.montant)]));
     const montantMensuelAttendu = (elevesScope ?? []).reduce((s, e) => s + (montantParClasse.get(e.classe_id) ?? 0), 0);
-    const nbMois = searchParams.mois ? 1 : moisVisiblesRetard(new Date()).length;
+    const nbMois = searchParams.mois
+      ? 1
+      : moisVisiblesRetard(new Date(), { dateDebut: anneeSelectionnee.date_debut, dateFin: anneeSelectionnee.date_fin }).length;
     const montantAttendu = montantMensuelAttendu * nbMois;
 
     tauxRecouvrement = montantAttendu > 0 ? Math.round((totalEncaisse / montantAttendu) * 100) : null;

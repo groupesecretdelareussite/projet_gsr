@@ -40,26 +40,32 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
     </div>
   );
 
-  const moisVisibles = moisVisiblesRetard(new Date());
-  const moisFiltre = moisVisibles.includes(searchParams.mois as MoisScolaire) ? (searchParams.mois as MoisScolaire) : null;
+  const { data: anneeEnCours } = await supabase
+    .from("annees_scolaires")
+    .select("id, date_debut, date_fin")
+    .eq("statut", "en_cours")
+    .single();
+
+  const moisVisibles = moisVisiblesRetard(
+    new Date(),
+    anneeEnCours ? { dateDebut: anneeEnCours.date_debut, dateFin: anneeEnCours.date_fin } : null
+  );
+  const moisParDefaut = moisVisibles[moisVisibles.length - 1];
+  const moisFiltre: MoisScolaire = moisVisibles.includes(searchParams.mois as MoisScolaire)
+    ? (searchParams.mois as MoisScolaire)
+    : moisParDefaut;
   if (moisVisibles.length === 0) {
     return (
       <div>
         {header}
         <EmptyState
           icon={AlertTriangle}
-          title="Rien à afficher avant le 16"
-          description="Avant le 16 du mois, les retards du mois en cours ne sont pas encore affichés."
+          title="Rien à afficher"
+          description="Avant le 16 du mois (règle du 15), ou avant le début de l'année scolaire en cours, il n'y a rien à afficher."
         />
       </div>
     );
   }
-
-  const { data: anneeEnCours } = await supabase
-    .from("annees_scolaires")
-    .select("id")
-    .eq("statut", "en_cours")
-    .single();
 
   const { data: eleves } = await supabase
     .from("eleves")
@@ -83,47 +89,56 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
 
   const { data: paiements } = await supabase
     .from("paiements")
-    .select("eleve_id, montant_paye, mois_souscription")
+    .select("eleve_id, montant_paye")
     .eq("annee_scolaire_id", anneeEnCours.id)
-    .in("mois_souscription", moisVisibles);
+    .eq("mois_souscription", moisFiltre);
 
-  const paiementsParEleveMois = new Map<string, { montant_paye: number }[]>();
+  const paiementsParEleve = new Map<number, { montant_paye: number }[]>();
   for (const p of paiements ?? []) {
-    const cle = `${p.eleve_id}-${p.mois_souscription}`;
-    const liste = paiementsParEleveMois.get(cle) ?? [];
+    const liste = paiementsParEleve.get(p.eleve_id) ?? [];
     liste.push({ montant_paye: p.montant_paye });
-    paiementsParEleveMois.set(cle, liste);
+    paiementsParEleve.set(p.eleve_id, liste);
   }
+
+  // Un mois exonéré (réinscription — absence totale durant le mois suspendu,
+  // §013) n'est jamais réclamé : sans quoi il réapparaîtrait indéfiniment ici
+  // une fois l'élève réinscrit, resteAPayer restant > 0 pour toujours.
+  const { data: exonerations } = await supabase
+    .from("mois_exoneres")
+    .select("eleve_id")
+    .eq("annee_scolaire_id", anneeEnCours.id)
+    .eq("mois_souscription", moisFiltre);
+  const elevesExoneresCeMois = new Set((exonerations ?? []).map((e) => e.eleve_id));
 
   const matricules = elevesActifs.map((e) => e.matricule);
   const { data: relances } = await supabase
     .from("log_whatsapp")
-    .select("matricule, mois_souscription, date_envoi")
+    .select("matricule, date_envoi")
     .in("matricule", matricules)
+    .eq("mois_souscription", moisFiltre)
     .order("date_envoi", { ascending: false });
 
-  const derniereRelanceParEleveMois = new Map<string, string>();
+  const derniereRelanceParEleve = new Map<string, string>();
   for (const r of relances ?? []) {
-    const cle = `${r.matricule}-${r.mois_souscription}`;
-    if (!derniereRelanceParEleveMois.has(cle)) derniereRelanceParEleveMois.set(cle, r.date_envoi);
+    if (!derniereRelanceParEleve.has(r.matricule)) derniereRelanceParEleve.set(r.matricule, r.date_envoi);
   }
 
   const lignes: RetardRow[] = [];
   for (const eleve of elevesActifs) {
+    if (elevesExoneresCeMois.has(eleve.id)) continue;
+
     const montantAttendu = montantParClasse.get(eleve.classe_id);
     if (montantAttendu === undefined) continue;
 
-    for (const mois of moisFiltre ? [moisFiltre] : moisVisibles) {
-      const paiementsMois = paiementsParEleveMois.get(`${eleve.id}-${mois}`) ?? [];
-      const reste = resteAPayer(montantAttendu, paiementsMois);
-      if (reste > 0) {
-        lignes.push({
-          eleve,
-          mois,
-          resteDu: reste,
-          derniereRelance: derniereRelanceParEleveMois.get(`${eleve.matricule}-${mois}`) ?? null,
-        });
-      }
+    const paiementsMois = paiementsParEleve.get(eleve.id) ?? [];
+    const reste = resteAPayer(montantAttendu, paiementsMois);
+    if (reste > 0) {
+      lignes.push({
+        eleve,
+        mois: moisFiltre,
+        resteDu: reste,
+        derniereRelance: derniereRelanceParEleve.get(eleve.matricule) ?? null,
+      });
     }
   }
 
@@ -175,10 +190,9 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
         <form method="get" className="flex items-center gap-2 mb-4">
           <select
             name="mois"
-            defaultValue={moisFiltre ?? ""}
+            defaultValue={moisFiltre}
             className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
           >
-            <option value="">Tous les mois</option>
             {moisVisibles.map((m) => (
               <option key={m} value={m}>
                 {m}

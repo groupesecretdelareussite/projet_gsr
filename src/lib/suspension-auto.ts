@@ -101,6 +101,7 @@ export async function executerSuspensionAutomatique(dateReference: Date): Promis
       raison: "defaut_paiement",
       motif: `Defaut de paiement — ${montantDu} F restants pour le mois de ${moisVerifie}`,
       montant_du: montantDu,
+      mois_souscription: moisVerifie,
       suspendu_par: coordo.id,
       annee_scolaire_id: anneeEnCours.id,
     });

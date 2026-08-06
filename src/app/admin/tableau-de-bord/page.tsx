@@ -71,7 +71,7 @@ export default async function TableauDeBordPage() {
 
   const { data: anneeEnCours } = await supabase
     .from("annees_scolaires")
-    .select("id, libelle")
+    .select("id, libelle, date_debut, date_fin")
     .eq("statut", "en_cours")
     .single();
 
@@ -83,7 +83,10 @@ export default async function TableauDeBordPage() {
   if (peutVoirKpiPaiements && mois && elevesActifs.length > 0) {
     if (anneeEnCours) {
       const moisPrec = moisPrecedent(mois);
-      const moisVisiblesRetardCourant = moisVisiblesRetard(maintenant);
+      const moisVisiblesRetardCourant = moisVisiblesRetard(maintenant, {
+        dateDebut: anneeEnCours.date_debut,
+        dateFin: anneeEnCours.date_fin,
+      });
 
       // Union des mois nécessaires aux deux calculs (KPI + alerte) — une seule requête paiements.
       const moisNecessaires = Array.from(
