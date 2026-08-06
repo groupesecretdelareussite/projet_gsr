@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, LayoutDashboard, CalendarClock, Gavel, Wallet, Settings, LogOut } from "lucide-react";
+import { ArrowLeft, LayoutDashboard, CalendarClock, Gavel, Wallet, Settings, HelpCircle, LogOut } from "lucide-react";
 import { Toaster } from "sonner";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
@@ -63,6 +63,9 @@ export default async function TdCoordLayout({ children }: { children: React.Reac
             </nav>
           </div>
           <div className="flex items-center gap-3 shrink-0">
+            <Link href="/admin/aide" title="Aide" className="text-gray-500 hover:text-gray-700">
+              <HelpCircle className="w-4 h-4" />
+            </Link>
             <Link href="/admin/tableau-de-bord" className="text-xs text-gray-500 hover:text-gray-700 hidden sm:inline">
               <ArrowLeft className="w-3.5 h-3.5 inline mr-1" />
               Admin GSR

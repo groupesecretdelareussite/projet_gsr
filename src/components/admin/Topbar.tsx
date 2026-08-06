@@ -100,7 +100,13 @@ export function Topbar({ sitesSuperviseur = [] }: { sitesSuperviseur?: { id: num
         ) : (
           <IconPlaceholder icon={Settings} />
         )}
-        <IconPlaceholder icon={HelpCircle} />
+        <Link
+          href="/admin/aide"
+          title="Aide"
+          className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+        >
+          <HelpCircle className="w-4 h-4" />
+        </Link>
       </div>
 
       <Link

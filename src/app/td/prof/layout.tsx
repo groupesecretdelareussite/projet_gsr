@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { LayoutDashboard, ClipboardList, LogOut } from "lucide-react";
+import { LayoutDashboard, ClipboardList, HelpCircle, LogOut } from "lucide-react";
 import { Toaster } from "sonner";
 import { getTdProfesseurSession } from "@/lib/session-td";
 import { deconnexionProfesseurTD } from "@/actions/auth-td";
@@ -46,12 +46,17 @@ export default async function TdProfLayout({ children }: { children: React.React
               ))}
             </nav>
           </div>
-          <form action={handleLogout}>
-            <button type="submit" className="text-xs text-gray-500 hover:text-red-600 flex items-center gap-1 shrink-0">
-              <LogOut className="w-3.5 h-3.5" />
-              Déconnexion
-            </button>
-          </form>
+          <div className="flex items-center gap-3 shrink-0">
+            <Link href="/td/prof/aide" title="Aide" className="text-gray-500 hover:text-gray-700">
+              <HelpCircle className="w-4 h-4" />
+            </Link>
+            <form action={handleLogout}>
+              <button type="submit" className="text-xs text-gray-500 hover:text-red-600 flex items-center gap-1">
+                <LogOut className="w-3.5 h-3.5" />
+                Déconnexion
+              </button>
+            </form>
+          </div>
         </div>
       </header>
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-6">{children}</main>
