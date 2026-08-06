@@ -109,14 +109,18 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # git switch (pas checkout) : le dossier backups/ créé à l'étape
+          # précédente porte le même nom que la branche — checkout devient
+          # ambigu ("could be both a local file and a tracking branch"),
+          # switch ne travaille jamais que sur des branches.
           if git ls-remote --exit-code --heads origin backups > /dev/null 2>&1; then
             git fetch origin backups
-            git checkout backups
+            git switch backups
           else
             # Première exécution : la branche backups n'existe pas encore.
             # --orphan garde tout le contenu de main dans l'index — on le
             # détache pour ne publier que le dossier backups/.
-            git checkout --orphan backups
+            git switch --orphan backups
             git rm -rf --cached . > /dev/null
           fi
           find backups -name "*.sql.gz" -mtime +30 -delete
