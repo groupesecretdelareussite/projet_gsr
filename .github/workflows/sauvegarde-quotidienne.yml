@@ -82,6 +82,17 @@ jobs:
           # projet Supabase) a déjà un schéma "public" par défaut, incompatible
           # avec un simple rejeu du dump sans nettoyage préalable.
           "$PSQL" -h localhost -U postgres -v ON_ERROR_STOP=1 -q -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS td CASCADE;"
+          # Les policies RLS de public/td référencent auth.uid()/auth.role() —
+          # on stub le strict nécessaire du schéma Supabase Auth (non dumpé,
+          # voir plus haut) pour que la restauration de structure passe. Sur
+          # un vrai projet Supabase cible, ce schéma existe déjà réellement.
+          "$PSQL" -h localhost -U postgres -v ON_ERROR_STOP=1 -q -c "
+            CREATE SCHEMA IF NOT EXISTS auth;
+            CREATE TABLE IF NOT EXISTS auth.users (id uuid PRIMARY KEY);
+            CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS 'SELECT NULL::uuid';
+            CREATE OR REPLACE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS 'SELECT NULL::text';
+            CREATE OR REPLACE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS 'SELECT NULL::jsonb';
+          "
           gunzip -c "$FICHIER" | "$PSQL" -h localhost -U postgres -v ON_ERROR_STOP=1 -q
           echo "Restauration de test réussie — la sauvegarde du $(date -u +%F) est valide."
 
