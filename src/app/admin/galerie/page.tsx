@@ -19,7 +19,7 @@ interface PhotoRow {
 
 /** §5.4 GSR_ARCHITECTURE.md — archive interne (coordonnateur/comptable/superviseur), distincte de la galerie vitrine publique. */
 export default async function GalerieAdminPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
   if (!["coordonnateur", "comptable", "superviseur"].includes(scope.role)) {

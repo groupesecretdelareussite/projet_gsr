@@ -23,11 +23,12 @@ function estDansLeMoisCourant(dateIso: string): boolean {
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
 }
 
-export default async function DashboardParentPage({
-  searchParams,
-}: {
-  searchParams: { annee_id?: string };
-}) {
+export default async function DashboardParentPage(
+  props: {
+    searchParams: Promise<{ annee_id?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
   const session = await getParentSession();
   if (!session.matricule) {
     redirect("/portail-parents");

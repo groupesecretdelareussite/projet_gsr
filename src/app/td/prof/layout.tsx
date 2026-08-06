@@ -11,7 +11,7 @@ const NAV = [
   { label: "Candidatures", href: "/td/prof/candidatures", icon: ClipboardList },
 ];
 
-/** §5.3/§9 — même schéma de garde que le portail parents : vérification directe de la session, pas de middleware (session custom, pas Supabase Auth). */
+/** §5.3/§9 — même schéma de garde que le portail parents : vérification directe de la session, pas de proxy (session custom, pas Supabase Auth). */
 export default async function TdProfLayout({ children }: { children: React.ReactNode }) {
   const session = await getTdProfesseurSession();
   if (!session.professeurId) {

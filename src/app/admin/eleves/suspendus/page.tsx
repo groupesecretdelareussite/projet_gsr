@@ -17,7 +17,7 @@ interface EleveSuspenduRow {
 }
 
 export default async function ElevesSuspendusPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: eleves } = await supabase
     .from("eleves")

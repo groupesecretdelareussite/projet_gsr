@@ -52,14 +52,13 @@ export function EleveForm({ sites, mode, eleveId, initialValues, matricule }: El
   const [confirmationRequise, setConfirmationRequise] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!siteId) {
-      setClasses([]);
-      return;
-    }
+    if (!siteId) return;
     fetch(`/api/classes-by-site?siteId=${siteId}`)
       .then((r) => r.json())
       .then((data) => setClasses(Array.isArray(data) ? data : []));
   }, [siteId]);
+
+  const classesDisponibles = siteId ? classes : [];
 
   function submit(force = false) {
     startTransition(async () => {
@@ -172,7 +171,7 @@ export function EleveForm({ sites, mode, eleveId, initialValues, matricule }: El
               <SelectValue placeholder={siteId ? "Choisir une classe" : "Choisir un site d'abord"} />
             </SelectTrigger>
             <SelectContent>
-              {classes.map((c) => (
+              {classesDisponibles.map((c) => (
                 <SelectItem key={c.id} value={String(c.id)}>
                   {c.nom_classe}
                 </SelectItem>

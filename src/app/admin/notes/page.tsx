@@ -9,12 +9,13 @@ import { NotesGrid, type EleveOption, type MatiereOption, type NoteExistante } f
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 
-export default async function NotesPage({
-  searchParams,
-}: {
-  searchParams: { site_id?: string; classe_id?: string };
-}) {
-  const supabase = createClient();
+export default async function NotesPage(
+  props: {
+    searchParams: Promise<{ site_id?: string; classe_id?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
   if (!["coordonnateur", "comptable", "superviseur", "chef_site"].includes(scope.role)) {
@@ -34,7 +35,7 @@ export default async function NotesPage({
   ]);
 
   const siteIdEffectif =
-    searchParams.site_id ?? (scope.role === "superviseur" ? lireFiltreSiteSuperviseur()?.toString() : undefined);
+    searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
 
   const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
   const classesFiltrees = siteIdEffectif

@@ -45,13 +45,13 @@ export function NotesGrid({
   const [matiereActiveId, setMatiereActiveId] = useState(matieres[0]?.id);
   const [isPending, startTransition] = useTransition();
 
-  const valeursInitiales = useRef<Record<string, string>>(
-    Object.fromEntries(notesExistantes.map((n) => [cellKey(n.eleve_id, n.matiere_id, n.type_note), String(n.valeur)]))
+  const valeursInitiales = Object.fromEntries(
+    notesExistantes.map((n) => [cellKey(n.eleve_id, n.matiere_id, n.type_note), String(n.valeur)])
   );
-  const [valeurs, setValeurs] = useState<Record<string, string>>(() => ({ ...valeursInitiales.current }));
+  const [valeurs, setValeurs] = useState<Record<string, string>>(() => ({ ...valeursInitiales }));
   // Dernière valeur réellement sauvegardée par cellule — distincte de `valeurs`
   // (qui reflète la saisie en direct) pour pouvoir détecter un vrai changement au blur.
-  const dernieresValeursSauvegardees = useRef<Record<string, string>>({ ...valeursInitiales.current });
+  const dernieresValeursSauvegardees = useRef<Record<string, string>>({ ...valeursInitiales });
   const [statuts, setStatuts] = useState<Record<string, CellStatut>>({});
   const timers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 

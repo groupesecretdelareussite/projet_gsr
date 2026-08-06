@@ -10,8 +10,8 @@ import { cookies } from "next/headers";
  * ne fuit jamais entre requêtes/utilisateurs différents, seulement au sein
  * d'un même rendu serveur.
  */
-export const createClient = cache(function createClient() {
-  const cookieStore = cookies();
+export const createClient = cache(async function createClient() {
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,7 +27,7 @@ export const createClient = cache(function createClient() {
               cookieStore.set(name, value, options)
             );
           } catch {
-            // Appelé depuis un Server Component : ignorable, le middleware
+            // Appelé depuis un Server Component : ignorable, le proxy
             // rafraîchit déjà la session à chaque requête.
           }
         },

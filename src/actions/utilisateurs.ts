@@ -7,7 +7,7 @@ import { getUserScope, type UserScope } from "@/lib/auth-scope";
 import type { UserRole } from "@/lib/constants";
 
 async function getScopeAndAssert(): Promise<UserScope> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
   if (scope.role !== "coordonnateur") {
     throw new Error("Non autorisé");
@@ -64,7 +64,7 @@ export async function creerUtilisateur(input: CreerUtilisateurInput): Promise<{ 
 
   if (input.role === "superviseur" && input.siteIds && input.siteIds.length > 0) {
     // §8.9 — assigner_sites_superviseur() se base sur auth.uid() : appel via le client RLS, pas service role.
-    const supabase = createClient();
+    const supabase = await createClient();
     const { error: rpcError } = await supabase.rpc("assigner_sites_superviseur", {
       p_user_id: authUser.user.id,
       p_site_ids: input.siteIds,
@@ -105,7 +105,7 @@ export async function modifierUtilisateur(input: ModifierUtilisateurInput): Prom
   if (updateError) return { error: updateError.message };
 
   if (input.role === "superviseur") {
-    const supabase = createClient();
+    const supabase = await createClient();
     const { error: rpcError } = await supabase.rpc("assigner_sites_superviseur", {
       p_user_id: input.id,
       p_site_ids: input.siteIds ?? [],

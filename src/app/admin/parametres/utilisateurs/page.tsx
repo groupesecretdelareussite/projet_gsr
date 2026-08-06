@@ -29,7 +29,7 @@ interface UtilisateurRow {
  * raisonnement que `paiements/supprimes/page.tsx`.
  */
 export default async function UtilisateursPage() {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
 
   if (scope.role !== "coordonnateur") {
     return (

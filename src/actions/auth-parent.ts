@@ -104,7 +104,7 @@ export async function deconnexionParent() {
  * réservée au coordonnateur.
  */
 export async function reinitialiserMotDePasseParent(matricule: string, nouveauMdp: string): Promise<{ error?: string }> {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
   if (scope.role !== "coordonnateur") throw new Error("Non autorisé");
 
   if (nouveauMdp.length < 8) {

@@ -17,7 +17,7 @@ interface EleveRow {
 }
 
 export default async function PaiementsAJourPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
   const mois = moisCourant(new Date());
 

@@ -9,13 +9,13 @@ import { Topbar } from "@/components/admin/Topbar";
 import { AdminInactivityWatcher } from "@/components/admin/AdminInactivityWatcher";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
   // Pas de session : soit la page /admin/login (rendue sans habillage), soit
-  // une route protégée déjà interceptée par middleware.ts avant d'arriver ici.
+  // une route protégée déjà interceptée par proxy.ts avant d'arriver ici.
   if (!session) {
     return <>{children}</>;
   }

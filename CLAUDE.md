@@ -13,7 +13,7 @@ This repo's working root for the Next.js app is `gsr/` (this directory) — the 
 ```bash
 npm run dev      # start dev server (localhost:3000)
 npm run build    # production build
-npm run lint     # next lint
+npm run lint     # eslint .
 npm run test             # Vitest — Levels 1+2 (unit + role-guard), no network required
 npm run test:watch       # Vitest watch mode, Levels 1+2
 npm run test:integration # Vitest — Level 3, real network calls against the Supabase project (needs .env.local + .env.test.local)
@@ -43,7 +43,7 @@ Only a subset of `GSR_ARCHITECTURE.md`'s full vision is built. As of now:
 
 ## Architecture
 
-**Stack**: Next.js 14 (App Router) + Supabase (Postgres + Auth + Storage) + Tailwind + shadcn/ui-style components, deployed on Vercel.
+**Stack**: Next.js 16 (App Router) + React 19 + Supabase (Postgres + Auth + Storage) + Tailwind + shadcn/ui-style components, deployed on Vercel.
 
 ### Two Postgres schemas in one Supabase project
 `public` holds all GSR data (élèves, paiements, users, sites…); `td` will hold the separate TD (professeur scheduling) portal data. **Never join across schemas in a single Supabase JS query** — issue two separate queries and combine in TypeScript (this is absolute prohibition #8 in the architecture doc).
@@ -76,3 +76,13 @@ Client-side, `useUserScope()` (`src/hooks/useUserScope.ts`) reads scope from `Sc
 - Admin/TD portals use system font stack (`Segoe UI, Tahoma, Geneva, Verdana, sans-serif`); vitrine/parents portal uses `Inter`.
 - Brand green `#12AA00` / `#0e8f00` gradient on primary buttons, page headers, and the admin sidebar; `#f6b40a` accent is vitrine-only.
 - Recurring admin patterns to follow when adding pages: gradient `PageHeader`, `ActionsBar` (icon+label buttons, label hidden on mobile), responsive `DataTable` (cards on mobile via `data-label`), `EmptyState`, colored pill `Badge`s — all already implemented in `src/components/admin/`.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

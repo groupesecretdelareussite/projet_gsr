@@ -24,12 +24,13 @@ interface MatiereRef {
  * actuellement saisies (pas d'attente de fin de semestre). Réservé aux mêmes
  * rôles que Notes (coordonnateur/comptable/superviseur/chef_site).
  */
-export default async function MoyennesPage({
-  searchParams,
-}: {
-  searchParams: { site_id?: string; classe_id?: string };
-}) {
-  const supabase = createClient();
+export default async function MoyennesPage(
+  props: {
+    searchParams: Promise<{ site_id?: string; classe_id?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
   if (!["coordonnateur", "comptable", "superviseur", "chef_site"].includes(scope.role)) {
@@ -49,7 +50,7 @@ export default async function MoyennesPage({
   ]);
 
   const siteIdEffectif =
-    searchParams.site_id ?? (scope.role === "superviseur" ? lireFiltreSiteSuperviseur()?.toString() : undefined);
+    searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
 
   const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
   const classesFiltrees = siteIdEffectif

@@ -33,12 +33,13 @@ function dansPeriodeEnCours(dateDebut: string, dateFin: string): boolean {
   return aujourdhui >= dateDebut && aujourdhui <= dateFin;
 }
 
-export default async function DonneesScolairesPage({
-  searchParams,
-}: {
-  searchParams: { site?: string };
-}) {
-  const scope = await getUserScope(createClient());
+export default async function DonneesScolairesPage(
+  props: {
+    searchParams: Promise<{ site?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const scope = await getUserScope(await createClient());
 
   if (scope.role !== "coordonnateur") {
     return (

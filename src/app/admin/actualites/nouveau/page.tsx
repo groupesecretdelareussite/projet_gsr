@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/admin/EmptyState";
 import { ActualiteForm } from "@/components/admin/actualites/ActualiteForm";
 
 export default async function NouvelleActualitePage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
   if (scope.role !== "coordonnateur") {

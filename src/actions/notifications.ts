@@ -6,7 +6,7 @@ import { getUserScope, siteInScope } from "@/lib/auth-scope";
 
 /** Pas de policy UPDATE sur `notifications` (lecture seule côté RLS, §5.8) — service role nécessaire, scope revérifié ici. */
 export async function marquerNotificationLue(id: number): Promise<{ error?: string }> {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
 
   const { data: notif } = await supabaseAdmin.from("notifications").select("site_id").eq("id", id).maybeSingle();
@@ -20,7 +20,7 @@ export async function marquerNotificationLue(id: number): Promise<{ error?: stri
 
 export async function marquerToutesNotificationsLues(ids: number[]): Promise<{ error?: string }> {
   if (ids.length === 0) return {};
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
 
   const { data: notifs } = await supabaseAdmin.from("notifications").select("id, site_id").in("id", ids);

@@ -16,12 +16,12 @@ const NAV = [
 
 /**
  * §5.3/§1.1 GSR_ARCHITECTURE.md — le coordonnateur réutilise sa session
- * Supabase Auth existante (middleware.ts garantit déjà qu'une session existe
+ * Supabase Auth existante (proxy.ts garantit déjà qu'une session existe
  * ici) ; seul le rôle reste à vérifier, le portail TD n'étant ouvert qu'au
  * coordonnateur + aux professeurs (jamais comptable/superviseur/chef_site/secretaire).
  */
 export default async function TdCoordLayout({ children }: { children: React.ReactNode }) {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
 
   if (scope.role !== "coordonnateur") {
     return (

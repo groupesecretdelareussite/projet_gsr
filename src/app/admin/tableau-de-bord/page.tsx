@@ -45,7 +45,7 @@ function compterNonAJour(
  * besoin de service role ni de filtre manuel supplémentaire ici.
  */
 export default async function TableauDeBordPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
   const nomAffiche = scope.username.charAt(0).toUpperCase() + scope.username.slice(1);
 

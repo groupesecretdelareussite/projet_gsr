@@ -20,7 +20,7 @@ export function InactivityWatcher({
   onTimeout: () => void;
   onActivite?: () => void;
 }) {
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const dernierSignal = useRef(0);
   const onTimeoutRef = useRef(onTimeout);
   const onActiviteRef = useRef(onActivite);

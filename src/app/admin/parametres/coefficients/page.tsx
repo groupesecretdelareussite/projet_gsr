@@ -13,8 +13,9 @@ import { CoefficientsTable } from "@/components/admin/parametres/CoefficientsTab
  * `coefficients` = "non configuré", affiché explicitement plutôt que
  * silencieusement traité comme 1 (qui est une valeur réelle possible).
  */
-export default async function CoefficientsPage({ searchParams }: { searchParams: { site_id?: string; classe_id?: string } }) {
-  const scope = await getUserScope(createClient());
+export default async function CoefficientsPage(props: { searchParams: Promise<{ site_id?: string; classe_id?: string }> }) {
+  const searchParams = await props.searchParams;
+  const scope = await getUserScope(await createClient());
 
   if (scope.role !== "coordonnateur") {
     return (

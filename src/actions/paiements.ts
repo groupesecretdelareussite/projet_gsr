@@ -19,7 +19,7 @@ function revalidatePaiementsPaths() {
 }
 
 async function getScopeAndAssert(roles: readonly UserRole[]): Promise<UserScope> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
   if (!roles.includes(scope.role)) {
     throw new Error("Non autorisé");
@@ -114,7 +114,7 @@ export async function supprimerPaiement(
   const scope = await getScopeAndAssert(ROLES_SUPPRESSION);
   if (!motif.trim()) return { error: "Motif obligatoire" };
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

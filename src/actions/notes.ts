@@ -7,7 +7,7 @@ import type { UserRole, TypeNote } from "@/lib/constants";
 const ROLES_NOTES: UserRole[] = ["coordonnateur", "comptable", "superviseur", "chef_site"];
 
 async function getScopeAndAssert(): Promise<UserScope> {
-  const supabase = createClient();
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
   if (!ROLES_NOTES.includes(scope.role)) {
     throw new Error("Non autorisé");
@@ -36,7 +36,7 @@ export async function upsertNote(input: UpsertNoteInput): Promise<{ error?: stri
     return { error: "La note doit être comprise entre 0 et 20" };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.from("notes").upsert(
     {
       eleve_id: input.eleveId,

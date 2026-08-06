@@ -21,5 +21,5 @@ const sessionOptions: SessionOptions = {
 };
 
 export async function getParentSession(): Promise<IronSession<ParentSessionData>> {
-  return getIronSession<ParentSessionData>(cookies(), sessionOptions);
+  return getIronSession<ParentSessionData>(await cookies(), sessionOptions);
 }

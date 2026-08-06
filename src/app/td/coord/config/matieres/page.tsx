@@ -5,7 +5,7 @@ import { EntiteSimpleTD } from "@/components/td/EntiteSimpleTD";
 import { creerMatiereTD, modifierMatiereTD, supprimerMatiereTD } from "@/actions/td-config";
 
 export default async function MatieresTDPage() {
-  await getUserScope(createClient());
+  await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
   const { data } = await supabaseAdmin.schema("td").from("matieres_td").select("id, nom_matiere").order("nom_matiere");
   const rows = (data ?? []).map((m) => ({ id: m.id, nom: m.nom_matiere }));

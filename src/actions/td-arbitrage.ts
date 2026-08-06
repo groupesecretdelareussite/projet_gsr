@@ -12,12 +12,12 @@ import { getUserScope } from "@/lib/auth-scope";
  * client service role qui n'a pas de session utilisateur à vérifier.
  */
 export async function traiterArbitrageTD(creneauId: number, professeurId: number): Promise<{ error?: string }> {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
   if (scope.role !== "coordonnateur") {
     throw new Error("Non autorisé");
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.schema("td").rpc("arbitrer_creneau", {
     p_creneau_id: creneauId,
     p_professeur_id: professeurId,

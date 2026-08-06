@@ -10,7 +10,7 @@ const TYPES_AUTORISES = ["image/png", "image/jpeg", "image/webp"];
 const TAILLE_MAX = 10 * 1024 * 1024;
 
 async function getScopeAndAssert(): Promise<UserScope> {
-  const scope = await getUserScope(createClient());
+  const scope = await getUserScope(await createClient());
   if (!ROLES_GALERIE_ADMIN.includes(scope.role as (typeof ROLES_GALERIE_ADMIN)[number])) {
     throw new Error("Non autorisé");
   }
@@ -20,7 +20,7 @@ async function getScopeAndAssert(): Promise<UserScope> {
 /** Archive interne de fichiers précieux — distincte de la galerie vitrine publique. RLS sur le bucket "galerie-admin" fait déjà l'essentiel du travail (sql/008). */
 export async function uploaderPhotoGalerieAdmin(formData: FormData): Promise<{ error?: string }> {
   const scope = await getScopeAndAssert();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const fichier = formData.get("fichier");
   if (!(fichier instanceof File) || fichier.size === 0) {
@@ -56,7 +56,7 @@ export async function uploaderPhotoGalerieAdmin(formData: FormData): Promise<{ e
 
 export async function supprimerPhotoGalerieAdmin(id: number, storagePath: string): Promise<{ error?: string }> {
   await getScopeAndAssert();
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error: storageError } = await supabase.storage.from(BUCKET).remove([storagePath]);
   if (storageError) return { error: storageError.message };

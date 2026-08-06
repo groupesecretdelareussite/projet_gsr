@@ -22,17 +22,18 @@ interface EleveRow {
   classes: { nom_classe: string; site_id: number; sites: { nom_site: string } | null } | null;
 }
 
-export default async function ListeElevesPage({
-  searchParams,
-}: {
-  searchParams: { site_id?: string; classe_id?: string; college?: string; nom?: string };
-}) {
-  const supabase = createClient();
+export default async function ListeElevesPage(
+  props: {
+    searchParams: Promise<{ site_id?: string; classe_id?: string; college?: string; nom?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const scope = await getUserScope(supabase);
   const peutGerer = scope.role !== "chef_site";
 
   const siteIdEffectif =
-    searchParams.site_id ?? (scope.role === "superviseur" ? lireFiltreSiteSuperviseur()?.toString() : undefined);
+    searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
 
   const [{ data: sites }, { data: classes }] = await Promise.all([
     supabase.from("sites").select("id, nom_site").order("nom_site"),

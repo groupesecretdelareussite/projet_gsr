@@ -20,7 +20,7 @@ interface CreneauRow {
 
 /** §10.2 GSR_ARCHITECTURE.md — vue rapide de la semaine active. */
 export default async function DashboardCoordTDPage() {
-  await getUserScope(createClient());
+  await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
 
   const { data: semaines } = await supabaseAdmin
