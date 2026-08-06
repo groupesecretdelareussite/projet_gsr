@@ -4,133 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import {
-  LayoutDashboard,
-  Users,
-  ClipboardCheck,
-  NotebookText,
-  Wallet,
-  BarChart3,
-  Calculator,
-  GraduationCap,
-  Bell,
-  Images,
-  Newspaper,
-  Settings,
-  CalendarClock,
-  UserPlus,
-  LogOut,
-  ChevronRight,
-  ChevronLeft,
-} from "lucide-react";
+import { UserPlus, LogOut, ChevronRight, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserScope } from "@/hooks/useUserScope";
 import { logout } from "@/actions/auth";
-import type { UserRole } from "@/lib/constants";
-
-interface NavItem {
-  label: string;
-  href: string;
-  icon: typeof LayoutDashboard;
-  roles: UserRole[];
-  enabled: boolean; // false = fonctionnalité pas encore construite (milestone à venir)
-}
-
-const ROLES_INSCRIPTION: UserRole[] = ["coordonnateur", "comptable", "superviseur"];
-
-const NAV_ITEMS: NavItem[] = [
-  {
-    label: "Tableau de bord",
-    href: "/admin/tableau-de-bord",
-    icon: LayoutDashboard,
-    roles: ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"],
-    enabled: true,
-  },
-  {
-    label: "Élèves",
-    href: "/admin/eleves/liste",
-    icon: Users,
-    roles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
-    enabled: true,
-  },
-  {
-    label: "Notes",
-    href: "/admin/notes",
-    icon: NotebookText,
-    roles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
-    enabled: true,
-  },
-  {
-    label: "Présences",
-    href: "/admin/presences",
-    icon: ClipboardCheck,
-    roles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
-    enabled: true,
-  },
-  {
-    label: "Paiements",
-    href: "/admin/paiements/enregistrer",
-    icon: Wallet,
-    roles: ["coordonnateur", "comptable", "superviseur"],
-    enabled: true,
-  },
-  {
-    label: "Statistiques",
-    href: "/admin/statistiques",
-    icon: BarChart3,
-    roles: ["coordonnateur", "comptable", "superviseur"],
-    enabled: true,
-  },
-  {
-    label: "Portail TD",
-    href: "/td/coord/dashboard",
-    icon: CalendarClock,
-    roles: ["coordonnateur"],
-    enabled: true,
-  },
-  {
-    label: "Comptabilité",
-    href: "/admin/comptabilite",
-    icon: Calculator,
-    roles: ["coordonnateur", "comptable"],
-    enabled: true,
-  },
-  {
-    label: "Fin d'année",
-    href: "/admin/fin-annee",
-    icon: GraduationCap,
-    roles: ["coordonnateur"],
-    enabled: true,
-  },
-  {
-    label: "Notifications",
-    href: "/admin/notifications",
-    icon: Bell,
-    roles: ["coordonnateur", "comptable", "superviseur"],
-    enabled: true,
-  },
-  {
-    label: "Galerie",
-    href: "/admin/galerie",
-    icon: Images,
-    roles: ["coordonnateur", "comptable", "superviseur"],
-    enabled: true,
-  },
-  {
-    label: "Actualités",
-    href: "/admin/actualites",
-    icon: Newspaper,
-    roles: ["coordonnateur"],
-    enabled: true,
-  },
-  {
-    label: "Paramètres",
-    href: "/admin/parametres/utilisateurs",
-    icon: Settings,
-    roles: ["coordonnateur"],
-    enabled: true,
-  },
-];
+import { NAV_ITEMS, ROLES_INSCRIPTION } from "@/lib/admin-nav";
 
 export function Sidebar() {
   const { role } = useUserScope();
@@ -238,7 +116,7 @@ export function Sidebar() {
   return (
     <>
       {/* Rail icônes seules, visible en dessous de lg (remplace l'ancien sidebar totalement masqué sur mobile) */}
-      <aside className="w-16 shrink-0 bg-white border-r border-gray-100 min-h-screen py-6 px-2 flex flex-col items-center lg:hidden">
+      <aside className="w-16 shrink-0 bg-white border-r border-gray-100 sticky top-0 h-screen py-6 px-2 flex flex-col items-center lg:hidden">
         <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain mb-4" />
 
         <button
@@ -255,7 +133,7 @@ export function Sidebar() {
       </aside>
 
       {/* Sidebar complet desktop, comportement inchangé */}
-      <aside className="w-[280px] shrink-0 bg-white border-r border-gray-100 min-h-screen py-6 px-4 hidden lg:flex lg:flex-col">
+      <aside className="w-[280px] shrink-0 bg-white border-r border-gray-100 sticky top-0 h-screen py-6 px-4 hidden lg:flex lg:flex-col">
         <div className="flex items-center gap-2 px-2 mb-5">
           <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain" />
           <span className="font-bold text-gray-900">Admin GSR</span>
