@@ -93,11 +93,12 @@ jobs:
             CREATE OR REPLACE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS 'SELECT NULL::text';
             CREATE OR REPLACE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS 'SELECT NULL::jsonb';
           "
-          # session_replication_role=replica : désactive la vérification des
-          # clés étrangères/déclencheurs le temps du chargement — public.users
-          # référence auth.users(id), volontairement absent de la sauvegarde
-          # (comptes Supabase Auth, hors périmètre, voir plus haut).
-          (echo "SET session_replication_role = replica;"; gunzip -c "$FICHIER") | "$PSQL" -h localhost -U postgres -v ON_ERROR_STOP=1 -q
+          # public.users référence auth.users(id) par clé étrangère — schéma
+          # volontairement absent de la sauvegarde (comptes Supabase Auth,
+          # hors périmètre). On retire cette contrainte précise du flux avant
+          # restauration : elle ne peut structurellement pas être satisfaite
+          # par une sauvegarde qui exclut auth par design.
+          gunzip -c "$FICHIER" | grep -vi "references auth\." | "$PSQL" -h localhost -U postgres -v ON_ERROR_STOP=1 -q
           echo "Restauration de test réussie — la sauvegarde du $(date -u +%F) est valide."
 
       - name: Publier la sauvegarde sur la branche backups (jamais sur main, pour ne pas déclencher Vercel)
