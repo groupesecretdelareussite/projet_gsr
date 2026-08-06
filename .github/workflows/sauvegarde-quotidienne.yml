@@ -45,19 +45,35 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
+          set -euo pipefail
           mkdir -p backups
           FICHIER="backups/gsr-$(date -u +%F).sql.gz"
           pg_dump "$DATABASE_URL" -n public -n td --no-owner --no-privileges | gzip > "$FICHIER"
+          STATUT_PG_DUMP=${PIPESTATUS[0]}
+          if [ "$STATUT_PG_DUMP" -ne 0 ]; then
+            echo "::error::pg_dump a échoué (code $STATUT_PG_DUMP) — voir le message d'erreur ci-dessus dans les logs."
+            exit 1
+          fi
+          # Garde-fou explicite : un pg_dump qui "réussit" mais n'exporte rien
+          # (mauvais identifiants, mauvaise base, permissions) ne doit jamais
+          # passer pour une sauvegarde valide.
+          TAILLE_OCTETS=$(stat -c%s "$FICHIER")
+          if [ "$TAILLE_OCTETS" -lt 200 ]; then
+            echo "::error::Le fichier de sauvegarde ne fait que $TAILLE_OCTETS octets — quasi certainement vide."
+            exit 1
+          fi
           echo "FICHIER=$FICHIER" >> "$GITHUB_ENV"
           echo "Taille de la sauvegarde : $(du -h "$FICHIER" | cut -f1)"
 
       - name: Vérifier que la sauvegarde se restaure réellement (pas juste "au cas où")
         run: |
+          set -euo pipefail
           gunzip -c "$FICHIER" | PGPASSWORD=verification psql -h localhost -U postgres -v ON_ERROR_STOP=1 -q
           echo "Restauration de test réussie — la sauvegarde du $(date -u +%F) est valide."
 
       - name: Publier la sauvegarde sur la branche backups (jamais sur main, pour ne pas déclencher Vercel)
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if git ls-remote --exit-code --heads origin backups > /dev/null 2>&1; then
