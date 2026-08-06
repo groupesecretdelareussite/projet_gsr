@@ -97,8 +97,11 @@ jobs:
           # volontairement absent de la sauvegarde (comptes Supabase Auth,
           # hors périmètre). On retire cette contrainte précise du flux avant
           # restauration : elle ne peut structurellement pas être satisfaite
-          # par une sauvegarde qui exclut auth par design.
-          gunzip -c "$FICHIER" | grep -vi "references auth\." | "$PSQL" -h localhost -U postgres -v ON_ERROR_STOP=1 -q
+          # par une sauvegarde qui exclut auth par design. Suppression de
+          # l'instruction ALTER TABLE complète (souvent multi-lignes chez
+          # pg_dump), pas juste de la ligne contenant "auth." — un filtre
+          # ligne à ligne couperait l'instruction en plein milieu.
+          gunzip -c "$FICHIER" | perl -0777 -pe 's/ALTER TABLE[^;]*REFERENCES auth\.[^;]*;\n?//gs' | "$PSQL" -h localhost -U postgres -v ON_ERROR_STOP=1 -q
           echo "Restauration de test réussie — la sauvegarde du $(date -u +%F) est valide."
 
       - name: Publier la sauvegarde sur la branche backups (jamais sur main, pour ne pas déclencher Vercel)
