@@ -1,6 +1,18 @@
+import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import type { Article, Categorie } from "@/lib/actualites";
 import { ActualitesContent } from "@/components/vitrine/ActualitesContent";
+
+export const metadata: Metadata = {
+  title: "Actualités et vie scolaire | Groupe Secret de la Réussite",
+  description: "Suivez les dernières actualités, événements et temps forts de la vie scolaire chez GSR.",
+  alternates: { canonical: "/actualites" },
+  openGraph: {
+    title: "Actualités et vie scolaire | Groupe Secret de la Réussite",
+    description: "Les dernières actualités et temps forts de la vie scolaire chez GSR.",
+    url: "/actualites",
+  },
+};
 
 const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie`;
 

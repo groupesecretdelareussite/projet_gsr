@@ -1,8 +1,21 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { Target, Award, BookOpen, Users, Shield } from "lucide-react";
 
 /** Images dédiées à la page À propos, hébergées dans le bucket public "galerie" (dossier vitrine/apropos), remplace public/images. */
 const STORAGE_APROPOS = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie/vitrine/apropos`;
+
+export const metadata: Metadata = {
+  title: "Qui sommes-nous — Notre engagement pour la réussite scolaire | GSR",
+  description:
+    "GSR accompagne les élèves béninois vers la réussite au BEPC et au BAC avec un encadrement rigoureux et personnalisé.",
+  alternates: { canonical: "/apropos" },
+  openGraph: {
+    title: "Qui sommes-nous — Notre engagement pour la réussite scolaire | GSR",
+    description: "GSR accompagne les élèves béninois vers la réussite au BEPC et au BAC.",
+    url: "/apropos",
+  },
+};
 
 export default function AProposPage() {
   return (
@@ -18,6 +31,7 @@ export default function AProposPage() {
             src={`${STORAGE_APROPOS}/img_hero_apropos.jpg`}
             alt=""
             fill
+            sizes="100vw"
             className="object-cover"
           />
         </div>
@@ -89,6 +103,7 @@ export default function AProposPage() {
                 src={`${STORAGE_APROPOS}/img_apropos.png`}
                 alt="Élève du GSR"
                 fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
                 className="object-contain object-bottom"
               />
               {/* Badge flottant */}
@@ -185,6 +200,7 @@ export default function AProposPage() {
                 src="/images/img_accueil_1.png"
                 alt="Enfants qui réussissent"
                 fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
                 className="object-contain object-bottom"
                 style={{ background: "linear-gradient(to bottom, #e8f5e9, #c8e6c9)" }}
               />

@@ -16,7 +16,14 @@ export function ActualitesContent({ aLaUne, autresArticles }: { aLaUne: Article 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-16">
           <div className="grid grid-cols-1 lg:grid-cols-12">
             <div className="relative h-[250px] sm:h-[350px] lg:h-auto lg:col-span-7 min-h-[300px]">
-              <Image src={aLaUne.images[0]} alt={aLaUne.title} fill className="object-cover" priority />
+              <Image
+                src={aLaUne.images[0]}
+                alt={aLaUne.title}
+                fill
+                sizes="(min-width: 1024px) 58vw, 100vw"
+                className="object-cover"
+                priority
+              />
             </div>
 
             <div className="p-6 sm:p-8 lg:p-12 lg:col-span-5 flex flex-col justify-center">
@@ -58,7 +65,13 @@ export function ActualitesContent({ aLaUne, autresArticles }: { aLaUne: Article 
             className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col hover:shadow-md transition-shadow"
           >
             <div className="relative h-48 w-full bg-gray-100">
-              <Image src={article.images[0]} alt={article.title} fill className="object-cover" />
+              <Image
+                src={article.images[0]}
+                alt={article.title}
+                fill
+                sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                className="object-cover"
+              />
             </div>
 
             <div className="p-6 flex-grow flex flex-col justify-between">

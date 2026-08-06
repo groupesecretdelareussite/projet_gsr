@@ -1,10 +1,22 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen, CheckCircle, Trophy, Home, Gift, CalendarClock, Phone, ChevronRight } from "lucide-react";
 
+export const metadata: Metadata = {
+  title: "Tarifs des cours de soutien scolaire | GSR Bénin",
+  description:
+    "Grille tarifaire transparente pour nos cours de renfort et cours à domicile, de la 6ème à la Terminale.",
+  alternates: { canonical: "/tarifs" },
+  openGraph: {
+    title: "Tarifs des cours de soutien scolaire | GSR Bénin",
+    description: "Grille tarifaire transparente, de la 6ème à la Terminale.",
+    url: "/tarifs",
+  },
+};
+
 const CIP_TARIFS = [
-  { classes: "6ème", montant: "3 000 F" },
-  { classes: "5ème", montant: "4 000 F" },
-  { classes: "4ème et 3ème", montant: "5 500 F" },
+  { classes: "6ème et 5ème", montant: "3 500 F" },
+  { classes: "4ème et 3ème", montant: "5 000 F" },
   { classes: "2nde et 1ère", montant: "6 000 F" },
   { classes: "Terminale", montant: "8 000 F" },
 ];
@@ -13,8 +25,10 @@ const TD_TARIFS = [
   { classes: "6ème", montant: "2 000 F" },
   { classes: "5ème et 4ème", montant: "3 000 F" },
   { classes: "3ème", montant: "5 000 F" },
-  { classes: "2nde", montant: "5 000 F" },
-  { classes: "1ère", montant: "6 000 F" },
+  { classes: "2nde AB et 2nde CD", montant: "5 000 F" },
+  { classes: "1ère B et 1ère CD", montant: "6 000 F" },
+  { classes: "Terminale D", montant: "8 000 F" },
+  { classes: "Terminale C", montant: "10 000 F" },
 ];
 
 function TarifTable({ data }: { data: { classes: string; montant: string }[] }) {
@@ -146,13 +160,22 @@ export default function TarifsPage() {
             <span className="font-bold text-gray-900">2 500 F l&apos;heure</span>, discutable
             selon les moyens des parents.
           </p>
-          <a
-            href="tel:+2290196084067"
-            className="inline-flex items-center gap-2 bg-dark text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-dark/90 transition-colors shadow-sm"
-          >
-            <Phone className="w-4 h-4" />
-            Prendre contact avec nous
-          </a>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="tel:+2290196084067"
+              className="inline-flex items-center gap-2 bg-dark text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-dark/90 transition-colors shadow-sm"
+            >
+              <Phone className="w-4 h-4" />
+              Appeler MTN
+            </a>
+            <a
+              href="tel:+2290149761635"
+              className="inline-flex items-center gap-2 bg-dark text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-dark/90 transition-colors shadow-sm"
+            >
+              <Phone className="w-4 h-4" />
+              Appeler Celtiis
+            </a>
+          </div>
         </section>
       </div>
     </div>

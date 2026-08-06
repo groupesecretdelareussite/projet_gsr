@@ -19,7 +19,13 @@ function ArticleModalContent({ article }: { article: Article }) {
   return (
     <DialogContent className="max-w-2xl w-[calc(100%-2rem)] max-h-[85vh] flex flex-col gap-0 p-0">
           <div className="relative h-56 sm:h-72 shrink-0 bg-gray-100">
-            <Image src={article.images[indexImage]} alt={article.title} fill className="object-cover" />
+            <Image
+              src={article.images[indexImage]}
+              alt={article.title}
+              fill
+              sizes="(min-width: 640px) 672px, 100vw"
+              className="object-cover"
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
             <span
               className={`absolute top-4 left-4 inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${CATEGORY_STYLES[article.category]}`}

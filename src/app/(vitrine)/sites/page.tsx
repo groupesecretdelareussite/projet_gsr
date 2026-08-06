@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { MapPin, Phone, Calendar, Map } from "lucide-react";
 import { CarteSites } from "@/components/vitrine/CarteSites";
@@ -5,10 +6,22 @@ import { CarteSites } from "@/components/vitrine/CarteSites";
 /** Photos dédiées par site, hébergées dans le bucket public "galerie" (dossier vitrine/sites), remplace public/images. */
 const STORAGE_SITES = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie/vitrine/sites`;
 
+export const metadata: Metadata = {
+  title: "Nos centres à Cotonou — Akpakpa Yagbé, Jéricho, Vèdoko | GSR",
+  description:
+    "Retrouvez le centre GSR le plus proche de chez vous à Cotonou : adresses, contacts et horaires de nos 3 sites.",
+  alternates: { canonical: "/sites" },
+  openGraph: {
+    title: "Nos centres à Cotonou — Akpakpa Yagbé, Jéricho, Vèdoko | GSR",
+    description: "Adresses, contacts et horaires de nos 3 sites à Cotonou.",
+    url: "/sites",
+  },
+};
+
 const SITES = [
   {
     nom: "Site Jéricho",
-    badge: "Siège social",
+    badge: "Siège",
     adresse: "EPP Jéricho, Cotonou, Bénin",
     telephones: ["+229 01 49 76 16 35", "01 96 08 40 67"],
     horaires: "Mercredi - Samedi - Dimanche",
@@ -29,7 +42,7 @@ const SITES = [
     badge: null,
     adresse: "EPP Vèdoko, Cotonou, Bénin",
     telephones: ["+229 01 49 76 16 35", "01 96 08 40 67"],
-    horaires: "Samedi - Dimanche",
+    horaires: "Samedi",
     image: `${STORAGE_SITES}/img_site_vedoko.jpg`,
     mapsLink: "https://maps.app.goo.gl/m47nSeyaeKkpn3kB6",
   },
@@ -63,7 +76,13 @@ export default function SitesPage() {
               className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
             >
               <div className="relative h-48">
-                <Image src={site.image} alt={site.nom} fill className="object-cover" />
+                <Image
+                  src={site.image}
+                  alt={site.nom}
+                  fill
+                  sizes="(min-width: 768px) 33vw, 100vw"
+                  className="object-cover"
+                />
                 {site.badge && (
                   <span className="absolute top-3 left-3 bg-primary text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wide">
                     {site.badge}
@@ -126,7 +145,7 @@ export default function SitesPage() {
             </p>
             <div className="flex flex-wrap gap-4">
               <a
-                href="tel:+22901497616"
+                href="tel:+2290149761635"
                 className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-primary-dark transition-colors shadow-sm"
               >
                 Prendre Rendez-vous
