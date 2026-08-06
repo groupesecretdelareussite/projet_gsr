@@ -52,7 +52,11 @@ jobs:
           FICHIER="backups/gsr-$(date -u +%F).sql.gz"
           # Chemin explicite : le runner a déjà un pg_dump 16 préinstallé qui
           # passe avant le 17 fraîchement installé dans le PATH par défaut.
-          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" -n public -n td --no-owner --no-privileges | gzip > "$FICHIER"
+          # --clean --if-exists : rend le dump auto-nettoyant (DROP IF EXISTS
+          # avant chaque CREATE) — indispensable car toute base Postgres,
+          # y compris un nouveau projet Supabase, a déjà un schéma "public"
+          # par défaut ; sans ça, la restauration échoue systématiquement.
+          /usr/lib/postgresql/17/bin/pg_dump "$DATABASE_URL" -n public -n td --no-owner --no-privileges --clean --if-exists | gzip > "$FICHIER"
           STATUT_PG_DUMP=${PIPESTATUS[0]}
           if [ "$STATUT_PG_DUMP" -ne 0 ]; then
             echo "::error::pg_dump a échoué (code $STATUT_PG_DUMP) — voir le message d'erreur ci-dessus dans les logs."
@@ -72,7 +76,13 @@ jobs:
       - name: Vérifier que la sauvegarde se restaure réellement (pas juste "au cas où")
         run: |
           set -euo pipefail
-          gunzip -c "$FICHIER" | PGPASSWORD=verification /usr/lib/postgresql/17/bin/psql -h localhost -U postgres -v ON_ERROR_STOP=1 -q
+          export PGPASSWORD=verification
+          PSQL=/usr/lib/postgresql/17/bin/psql
+          # Remise à zéro explicite : une base Postgres neuve (comme un futur
+          # projet Supabase) a déjà un schéma "public" par défaut, incompatible
+          # avec un simple rejeu du dump sans nettoyage préalable.
+          "$PSQL" -h localhost -U postgres -v ON_ERROR_STOP=1 -q -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS td CASCADE;"
+          gunzip -c "$FICHIER" | "$PSQL" -h localhost -U postgres -v ON_ERROR_STOP=1 -q
           echo "Restauration de test réussie — la sauvegarde du $(date -u +%F) est valide."
 
       - name: Publier la sauvegarde sur la branche backups (jamais sur main, pour ne pas déclencher Vercel)
