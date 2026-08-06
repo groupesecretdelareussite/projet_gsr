@@ -1,12 +1,93 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Settings, HelpCircle, type LucideIcon } from "lucide-react";
 import { useUserScope } from "@/hooks/useUserScope";
 import { NotificationBadge } from "@/components/admin/NotificationBadge";
-import { ROLE_LABELS } from "@/lib/constants";
+import { ROLE_LABELS, type UserRole } from "@/lib/constants";
+
+// Même périmètre que /api/eleves-recherche et la fiche élève /admin/eleves/[id].
+const ROLES_RECHERCHE_ELEVES: UserRole[] = ["coordonnateur", "comptable", "superviseur", "chef_site"];
+
+interface EleveResultat {
+  id: number;
+  matricule: string;
+  nom: string;
+  prenoms: string;
+  classes: { nom_classe: string; sites: { nom_site: string } | null } | null;
+}
+
+function RechercheElevesTopbar() {
+  const router = useRouter();
+  const conteneurRef = useRef<HTMLDivElement>(null);
+  const [requete, setRequete] = useState("");
+  const [resultats, setResultats] = useState<EleveResultat[]>([]);
+  const [ouvert, setOuvert] = useState(false);
+
+  useEffect(() => {
+    function handleClicExterieur(e: MouseEvent) {
+      if (conteneurRef.current && !conteneurRef.current.contains(e.target as Node)) setOuvert(false);
+    }
+    document.addEventListener("mousedown", handleClicExterieur);
+    return () => document.removeEventListener("mousedown", handleClicExterieur);
+  }, []);
+
+  function rechercher(q: string) {
+    setRequete(q);
+    setOuvert(true);
+    if (q.trim().length < 2) {
+      setResultats([]);
+      return;
+    }
+    fetch(`/api/eleves-recherche?q=${encodeURIComponent(q)}`)
+      .then((r) => r.json())
+      .then((data) => setResultats(Array.isArray(data) ? data : []));
+  }
+
+  function choisirEleve(id: number) {
+    setOuvert(false);
+    setRequete("");
+    setResultats([]);
+    router.push(`/admin/eleves/${id}`);
+  }
+
+  return (
+    <div ref={conteneurRef} className="relative flex-1 max-w-sm">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+      <input
+        value={requete}
+        onChange={(e) => rechercher(e.target.value)}
+        onFocus={() => setOuvert(true)}
+        placeholder="Rechercher un élève…"
+        className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"
+      />
+      {ouvert && requete.trim().length >= 2 && (
+        <div className="absolute z-20 top-full mt-1 w-full bg-white border border-gray-100 rounded-lg shadow-lg max-h-72 overflow-y-auto">
+          {resultats.length === 0 ? (
+            <p className="px-3 py-2.5 text-sm text-gray-400">Aucun élève trouvé.</p>
+          ) : (
+            resultats.map((e) => (
+              <button
+                key={e.id}
+                type="button"
+                onClick={() => choisirEleve(e.id)}
+                className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
+              >
+                <span className="font-medium text-gray-800">{e.nom} {e.prenoms}</span>{" "}
+                <span className="text-gray-400 font-mono text-xs">{e.matricule}</span>
+                <div className="text-xs text-gray-500">
+                  {e.classes?.nom_classe ?? "—"} — {e.classes?.sites?.nom_site ?? "—"}
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // Dupliqué depuis lib/site-filter-cookie.ts (server-only, importe next/headers) —
 // un composant client ne peut pas importer ce module même pour la seule constante.
@@ -75,15 +156,19 @@ export function Topbar({ sitesSuperviseur = [] }: { sitesSuperviseur?: { id: num
 
   return (
     <header className="h-16 border-b border-gray-100 bg-white flex items-center justify-between px-6 gap-4">
-      <div className="relative flex-1 max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
-        <input
-          disabled
-          title="Bientôt disponible"
-          placeholder="Rechercher un élève…"
-          className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-400 bg-gray-50 cursor-not-allowed placeholder:text-gray-300"
-        />
-      </div>
+      {ROLES_RECHERCHE_ELEVES.includes(role) ? (
+        <RechercheElevesTopbar />
+      ) : (
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
+          <input
+            disabled
+            title="Non applicable à votre rôle"
+            placeholder="Rechercher un élève…"
+            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-400 bg-gray-50 cursor-not-allowed placeholder:text-gray-300"
+          />
+        </div>
+      )}
 
       {role === "superviseur" && <ToggleSiteSuperviseur sites={sitesSuperviseur} />}
 
