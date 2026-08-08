@@ -5,6 +5,7 @@ import { Toaster } from "sonner";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { logout } from "@/actions/auth";
+import { AdminInactivityWatcher } from "@/components/admin/AdminInactivityWatcher";
 
 const NAV = [
   { label: "Tableau de bord", href: "/td/coord/dashboard", icon: LayoutDashboard },
@@ -81,6 +82,7 @@ export default async function TdCoordLayout({ children }: { children: React.Reac
       </header>
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6">{children}</main>
       <Toaster richColors position="top-right" />
+      <AdminInactivityWatcher loginPath="/td/login" />
     </div>
   );
 }

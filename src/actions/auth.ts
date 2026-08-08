@@ -1,9 +1,10 @@
 "use server";
 
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { tropDeTentatives, enregistrerTentative } from "@/lib/brute-force";
+import { ADMIN_ACTIVITY_COOKIE, ADMIN_ACTIVITY_COOKIE_OPTIONS } from "@/lib/admin-activity-cookie";
 
 /**
  * §5.1 GSR_ARCHITECTURE.md — l'écran /admin/login ne demande que
@@ -41,12 +42,29 @@ export async function login(username: string, password: string): Promise<{ error
     return { error: "Identifiants invalides" };
   }
 
+  const c = await cookies();
+  c.set(ADMIN_ACTIVITY_COOKIE, "1", ADMIN_ACTIVITY_COOKIE_OPTIONS);
+
   return {};
 }
 
 export async function logout() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  const c = await cookies();
+  c.delete(ADMIN_ACTIVITY_COOKIE);
+}
+
+/**
+ * Rafraîchit le backstop serveur du timeout d'inactivité (§5.6) — appelée
+ * par AdminInactivityWatcher à chaque signe d'activité détecté (throttlé à
+ * une fois par minute). Sans cet appel, le cookie expire 20 min après la
+ * connexion même si l'utilisateur reste actif ; voir proxy.ts pour la
+ * vérification côté serveur qui en dépend.
+ */
+export async function prolongerSessionAdmin() {
+  const c = await cookies();
+  c.set(ADMIN_ACTIVITY_COOKIE, "1", ADMIN_ACTIVITY_COOKIE_OPTIONS);
 }
 
 /**

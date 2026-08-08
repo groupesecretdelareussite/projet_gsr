@@ -16,7 +16,7 @@ const sessionOptions: SessionOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 1200, // 20 min — durée fixe pour l'instant, pas encore une vraie fenêtre glissante d'inactivité
+    maxAge: 1200, // 20 min — fenêtre glissante : prolongée par prolongerSessionParent() tant qu'il y a de l'activité (cf. ParentInactivityWatcher)
   },
 };
 

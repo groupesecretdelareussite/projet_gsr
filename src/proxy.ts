@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { ADMIN_ACTIVITY_COOKIE } from "@/lib/admin-activity-cookie";
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request: { headers: request.headers } });
@@ -59,6 +60,29 @@ export async function proxy(request: NextRequest) {
 
   if (session && isTdLoginPage) {
     return NextResponse.redirect(new URL("/td/coord/dashboard", request.url));
+  }
+
+  // Backstop serveur du timeout d'inactivité (20 min, §5.6). Le watcher JS
+  // (AdminInactivityWatcher) rafraîchit ADMIN_ACTIVITY_COOKIE tant qu'il y a
+  // une vraie interaction utilisateur ; s'il a expiré alors que la session
+  // Supabase est toujours valide (onglet en arrière-plan que le navigateur a
+  // throttled/gelé, JS désactivé, etc.), on force la déconnexion ici plutôt
+  // que de compter uniquement sur le JS. Partagé /admin + /td/coord car les
+  // deux réutilisent la même session. Exempte /admin/reinitialiser-mot-de-passe :
+  // sa session est posée par le flux "mot de passe oublié" (code exchange),
+  // jamais par login(), donc ce cookie n'y est jamais présent — l'exempter
+  // évite de casser ce flux, sans rouvrir l'accès sans session (déjà garanti
+  // par la vérification !session && isAdminRoute ci-dessus).
+  const isRouteExempteeInactivite =
+    isRoutePubliqueAdmin || request.nextUrl.pathname === "/admin/reinitialiser-mot-de-passe";
+  const routeProtegeeParInactivite = (isAdminRoute && !isRouteExempteeInactivite) || isTdCoordRoute;
+
+  if (session && routeProtegeeParInactivite && !request.cookies.get(ADMIN_ACTIVITY_COOKIE)) {
+    await supabase.auth.signOut();
+    const destination = isTdCoordRoute ? "/td/login" : "/admin/login";
+    const redirectResponse = NextResponse.redirect(new URL(destination, request.url));
+    response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie));
+    return redirectResponse;
   }
 
   return response;
