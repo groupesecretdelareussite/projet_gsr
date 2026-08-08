@@ -92,9 +92,10 @@ export default async function UtilisateursPage() {
             initialSiteId={u.site_id}
             initialSiteIds={siteIdsParUser.get(u.id) ?? []}
             sites={sitesList}
+            estSoiMeme={u.id === scope.userId}
           />
           <ReinitialiserMotDePasseDialog userId={u.id} username={u.username} />
-          <DesactiverUtilisateurButton userId={u.id} username={u.username} actif={u.actif} />
+          {u.id !== scope.userId && <DesactiverUtilisateurButton userId={u.id} username={u.username} actif={u.actif} />}
           {u.id !== scope.userId && <SupprimerUtilisateurDialog userId={u.id} username={u.username} />}
         </div>
       ),

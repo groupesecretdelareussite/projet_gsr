@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { RoleSiteFields } from "@/components/admin/parametres/RoleSiteFields";
 import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { modifierUtilisateur } from "@/actions/utilisateurs";
-import type { UserRole } from "@/lib/constants";
+import { ROLE_LABELS, type UserRole } from "@/lib/constants";
 
 interface SiteOption {
   id: number;
@@ -33,6 +33,8 @@ interface ModifierUtilisateurDialogProps {
   initialSiteId: number | null;
   initialSiteIds: number[];
   sites: SiteOption[];
+  /** Ligne du coordonnateur connecté — changer son propre rôle le déconnecterait de cette page sans recours (aucun autre coordonnateur pour l'y remettre). */
+  estSoiMeme?: boolean;
 }
 
 export function ModifierUtilisateurDialog({
@@ -42,6 +44,7 @@ export function ModifierUtilisateurDialog({
   initialSiteId,
   initialSiteIds,
   sites,
+  estSoiMeme = false,
 }: ModifierUtilisateurDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -99,15 +102,24 @@ export function ModifierUtilisateurDialog({
               <Input id="username" required value={username} onChange={(e) => setUsername(e.target.value)} />
             </div>
 
-            <RoleSiteFields
-              role={role}
-              onRoleChange={setRole}
-              siteId={siteId}
-              onSiteIdChange={setSiteId}
-              siteIds={siteIds}
-              onSiteIdsChange={setSiteIds}
-              sites={sites}
-            />
+            {estSoiMeme ? (
+              <div>
+                <Label>Rôle</Label>
+                <p className="text-sm text-gray-500">
+                  {ROLE_LABELS[role]} <span className="text-gray-400">— non modifiable sur votre propre compte</span>
+                </p>
+              </div>
+            ) : (
+              <RoleSiteFields
+                role={role}
+                onRoleChange={setRole}
+                siteId={siteId}
+                onSiteIdChange={setSiteId}
+                siteIds={siteIds}
+                onSiteIdsChange={setSiteIds}
+                sites={sites}
+              />
+            )}
           </DialogBody>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

@@ -90,7 +90,10 @@ export interface ModifierUtilisateurInput {
  * vidé hors de `superviseur` (interdit #20).
  */
 export async function modifierUtilisateur(input: ModifierUtilisateurInput): Promise<{ error?: string }> {
-  await getScopeAndAssert();
+  const scope = await getScopeAndAssert();
+  if (input.id === scope.userId && input.role !== "coordonnateur") {
+    return { error: "Vous ne pouvez pas changer votre propre rôle" };
+  }
   const supabaseAdmin = createServiceRoleClient();
 
   const { error: updateError } = await supabaseAdmin
