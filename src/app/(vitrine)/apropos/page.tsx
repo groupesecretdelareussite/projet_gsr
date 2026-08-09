@@ -79,7 +79,7 @@ export default function AProposPage() {
               </div>
 
               {/* Mini stats */}
-              <div className="grid grid-cols-3 gap-4 mt-8">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
                 {[
                   { icon: BookOpen, label: "Années", val: "5+" },
                   { icon: Users, label: "Élèves accompagnés", val: "1000+" },

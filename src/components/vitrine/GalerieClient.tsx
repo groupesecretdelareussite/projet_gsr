@@ -148,14 +148,8 @@ export default function GalerieClient() {
           ))}
         </div>
 
-        {/* ── Grille Masonry (CSS columns) ── */}
-        <div
-          className="gap-3"
-          style={{
-            columnCount: 2,
-            columnGap: "12px",
-          }}
-        >
+        {/* ── Grille Masonry (CSS columns) — 2 colonnes mobile, 3 dès la tablette (md) ── */}
+        <div className="columns-2 md:columns-3 gap-3">
           {visible.map((photo) => (
             <div
               key={photo.id}
@@ -222,7 +216,8 @@ export default function GalerieClient() {
               className="w-full h-auto object-contain max-h-[85vh]"
             />
             <button
-              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full w-9 h-9 flex items-center justify-center text-lg transition-colors"
+              aria-label="Fermer"
+              className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white rounded-full w-11 h-11 flex items-center justify-center text-lg transition-colors"
               onClick={() => setLightbox(null)}
             >
               ✕

@@ -33,7 +33,7 @@ const TD_TARIFS = [
 
 function TarifTable({ data }: { data: { classes: string; montant: string }[] }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
+    <div className="overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
       <table className="w-full text-sm">
         <thead>
           <tr className="bg-gray-50 border-b border-gray-200">

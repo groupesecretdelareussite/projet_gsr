@@ -52,7 +52,7 @@ export function ActualitesContent({ aLaUne, autresArticles }: { aLaUne: Article 
       {/* Latest News Section Header */}
       <div className="flex items-center justify-between border-b border-gray-200 pb-4 mb-8">
         <h3 className="text-xl sm:text-2xl font-bold text-gray-900">Dernières Actualités</h3>
-        <button className="p-2 text-gray-600 hover:text-primary transition-colors border border-gray-200 hover:border-primary/30 rounded-lg bg-white shadow-sm flex items-center justify-center">
+        <button className="p-2.5 text-gray-600 hover:text-primary transition-colors border border-gray-200 hover:border-primary/30 rounded-lg bg-white shadow-sm flex items-center justify-center">
           <SlidersHorizontal className="w-5 h-5" />
         </button>
       </div>

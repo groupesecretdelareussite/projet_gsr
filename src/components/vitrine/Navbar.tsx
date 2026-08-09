@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
 import { useState } from "react";
 
 const navLinks = [
@@ -61,10 +60,28 @@ export default function Navbar() {
           <div className="flex items-center md:hidden">
             <button
               type="button"
-              className="text-gray-700 hover:text-primary focus:outline-none"
+              aria-label={isMobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-expanded={isMobileMenuOpen}
+              className="p-2.5 text-gray-700 hover:text-primary focus:outline-none"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              <Menu className="h-6 w-6" />
+              <span className="relative block w-5 h-4">
+                <span
+                  className={`absolute left-0 h-0.5 w-5 bg-current rounded-full transition-all duration-300 ${
+                    isMobileMenuOpen ? "top-[7px] rotate-45" : "top-0 rotate-0"
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 top-[7px] h-0.5 w-5 bg-current rounded-full transition-opacity duration-300 ${
+                    isMobileMenuOpen ? "opacity-0" : "opacity-100"
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 h-0.5 w-5 bg-current rounded-full transition-all duration-300 ${
+                    isMobileMenuOpen ? "top-[7px] -rotate-45" : "top-[14px] rotate-0"
+                  }`}
+                />
+              </span>
             </button>
           </div>
         </div>

@@ -63,17 +63,9 @@ export default function ConnexionParentPage() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label htmlFor="mot_de_passe" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  Mot de passe
-                </label>
-                <span
-                  title="Contactez l'établissement pour une réinitialisation"
-                  className="text-xs text-gray-400 cursor-help"
-                >
-                  Mot de passe oublié ?
-                </span>
-              </div>
+              <label htmlFor="mot_de_passe" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                Mot de passe
+              </label>
               <div className="relative">
                 <input
                   id="mot_de_passe"
@@ -87,12 +79,15 @@ export default function ConnexionParentPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-2.5"
                   aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+              <p className="text-xs text-gray-400 mt-1.5">
+                Mot de passe oublié ? Contactez l&apos;établissement pour une réinitialisation.
+              </p>
             </div>
 
             {error && (
