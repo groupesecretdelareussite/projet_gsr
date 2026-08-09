@@ -63,7 +63,6 @@ export default async function DonneesScolairesPage(
 
   const sitesList = (sites ?? []) as SiteRow[];
   const classesList = (classes ?? []) as ClasseRow[];
-  const nomSiteParId = new Map(sitesList.map((s) => [s.id, s.nom_site]));
   const fraisParClasse = new Map((fraisTd ?? []).map((f) => [f.classe_id as number, Number(f.montant)]));
   const nomClasseParId = new Map(classesList.map((c) => [c.id, c.nom_classe]));
 
@@ -83,11 +82,15 @@ export default async function DonneesScolairesPage(
 
   const tarifVerrouille = !!anneeEnCours && dansPeriodeEnCours(anneeEnCours.date_debut, anneeEnCours.date_fin);
 
-  const toutesLesClassesOptions: ClasseOption[] = classesList.map((c) => ({
-    id: c.id,
-    nom_classe: c.nom_classe,
-    nom_site: nomSiteParId.get(c.site_id) ?? "?",
-  }));
+  // Groupé par site (dans l'ordre déjà alphabétique de sitesList), puis trié par `ordre`
+  // au sein de chaque site — sans ça, le <Select> "classe suivante" mélange les sites et
+  // affiche les classes dans un ordre arbitraire, illisible dès qu'il y en a plus qu'une poignée.
+  const toutesLesClassesOptions: ClasseOption[] = sitesList.flatMap((site) =>
+    classesList
+      .filter((c) => c.site_id === site.id)
+      .sort((a, b) => a.ordre - b.ordre)
+      .map((c) => ({ id: c.id, nom_classe: c.nom_classe, nom_site: site.nom_site }))
+  );
 
   const siteSelectionneId = searchParams.site ? Number(searchParams.site) : sitesList[0]?.id;
   const classesDuSite = classesList
