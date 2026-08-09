@@ -4,14 +4,12 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope, type UserScope } from "@/lib/auth-scope";
+import type { Categorie } from "@/lib/actualites";
 
 const BUCKET = "galerie";
 const TYPES_AUTORISES = ["image/png", "image/jpeg", "image/webp"];
 const TAILLE_MAX = 10 * 1024 * 1024;
 const DUREE_A_LA_UNE_JOURS = 14;
-
-export const CATEGORIES = ["Vie scolaire", "Événement", "Réussite", "Cours", "Examens/Contrôle"] as const;
-export type Categorie = (typeof CATEGORIES)[number];
 
 async function getScopeAndAssert(): Promise<UserScope> {
   const scope = await getUserScope(await createClient());

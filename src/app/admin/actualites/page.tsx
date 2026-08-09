@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SupprimerActualiteButton } from "@/components/admin/actualites/SupprimerActualiteButton";
 import { ACTIONS_HOVER_REVEAL, HOVER_ONLY_LABEL, cn } from "@/lib/utils";
-import type { Categorie } from "@/actions/actualites";
+import type { Categorie } from "@/lib/actualites";
 
 const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie`;
 

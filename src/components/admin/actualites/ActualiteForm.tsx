@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { creerActualite, modifierActualite, supprimerImageActualite, CATEGORIES, type Categorie } from "@/actions/actualites";
+import { creerActualite, modifierActualite, supprimerImageActualite } from "@/actions/actualites";
+import { CATEGORIES, type Categorie } from "@/lib/actualites";
 
 const CHAMP_TEXTE = "w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition";
 const CHAMP_FICHIER = "block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary-dark hover:file:bg-primary/20";

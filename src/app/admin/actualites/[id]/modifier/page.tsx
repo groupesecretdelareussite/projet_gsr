@@ -6,7 +6,7 @@ import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { ActualiteForm } from "@/components/admin/actualites/ActualiteForm";
-import type { Categorie } from "@/actions/actualites";
+import type { Categorie } from "@/lib/actualites";
 
 const STORAGE_URL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie`;
 

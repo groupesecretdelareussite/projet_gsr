@@ -1,4 +1,5 @@
-export type Categorie = "Vie scolaire" | "Événement" | "Réussite" | "Cours" | "Examens/Contrôle";
+export const CATEGORIES = ["Vie scolaire", "Événement", "Réussite", "Cours", "Examens/Contrôle"] as const;
+export type Categorie = (typeof CATEGORIES)[number];
 
 export interface Article {
   id: number;
