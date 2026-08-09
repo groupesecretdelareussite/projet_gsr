@@ -56,7 +56,20 @@ export default async function ElevesSuspendusPage() {
         return raison ? <Badge variant="warning">{RAISON_LABELS[raison]}</Badge> : "—";
       },
     },
-    { key: "motif", label: "Motif", render: (e) => e.eleves_suspendus[0]?.motif ?? "—" },
+    {
+      key: "motif",
+      label: "Motif",
+      render: (e) => {
+        const motif = e.eleves_suspendus[0]?.motif;
+        return motif ? (
+          <span className="block max-w-[220px] truncate" title={motif}>
+            {motif}
+          </span>
+        ) : (
+          "—"
+        );
+      },
+    },
     {
       key: "montant_du",
       label: "Montant dû",

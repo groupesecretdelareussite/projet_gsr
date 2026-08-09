@@ -84,7 +84,7 @@ export default async function ListeElevesPage(
             key: "actions",
             label: "Actions",
             render: (e: EleveRow) => (
-              <div className={cn("flex gap-2 flex-wrap", ACTIONS_HOVER_REVEAL)}>
+              <div className={cn("flex gap-3 flex-wrap", ACTIONS_HOVER_REVEAL)}>
                 <Link href={`/admin/eleves/${e.id}/modifier`}>
                   <Button variant="outline" size="sm">
                     <Pencil className="w-3.5 h-3.5" />

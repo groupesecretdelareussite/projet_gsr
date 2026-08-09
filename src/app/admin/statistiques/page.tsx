@@ -129,7 +129,7 @@ export default async function StatistiquesPage(
     <div>
       <PageHeader title="Statistiques financières" subtitle="Encaissements filtrés par année, site, classe et mois" />
 
-      <form method="get" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <form method="get" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
         <select name="annee_id" defaultValue={anneeSelectionnee?.id ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
           {anneesList.map((a) => (
             <option key={a.id} value={a.id}>
@@ -168,7 +168,7 @@ export default async function StatistiquesPage(
         <EmptyState icon={BarChart3} title="Aucune année scolaire" description="Configurez une année scolaire pour voir des statistiques." />
       ) : (
         <>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
             <KpiCard icon={Wallet} label="Total encaissé" value={`${totalEncaisse.toLocaleString("fr-FR")} F`} />
             <KpiCard icon={Receipt} label="Paiements enregistrés" value={nbPaiements} />
             <KpiCard icon={Receipt} label="Paiement moyen" value={`${paiementMoyen.toLocaleString("fr-FR")} F`} />

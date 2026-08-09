@@ -57,7 +57,15 @@ export default async function PaiementsSupprimesPage() {
     { key: "montant", label: "Montant", render: (p) => `${p.montant_paye} F` },
     { key: "date_paiement", label: "Date du paiement", render: (p) => p.date_paiement },
     { key: "mode", label: "Mode", render: (p) => MODE_PAIEMENT_LABELS[p.mode_paiement] },
-    { key: "motif", label: "Motif", render: (p) => p.motif },
+    {
+      key: "motif",
+      label: "Motif",
+      render: (p) => (
+        <span className="block max-w-[220px] truncate" title={p.motif}>
+          {p.motif}
+        </span>
+      ),
+    },
     { key: "par", label: "Supprimé par", render: (p) => p.users?.username ?? "—" },
     {
       key: "date_suppression",

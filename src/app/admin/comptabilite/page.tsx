@@ -164,7 +164,7 @@ export default async function ComptabilitePage(
         actions={<NouvelleDepenseDialog categoriesInitiales={categories ?? []} anneeScolaireId={anneeSelectionnee.id} />}
       />
 
-      <form method="get" className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6 max-w-xl">
+      <form method="get" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-xl">
         <select name="annee_id" defaultValue={anneeSelectionnee.id} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
           {anneesList.map((a) => (
             <option key={a.id} value={a.id}>
@@ -183,7 +183,7 @@ export default async function ComptabilitePage(
         <AutoSubmitOnChange />
       </form>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
         <KpiCard icon={Wallet} label="Entrées" value={`${totalEntrees.toLocaleString("fr-FR")} F`} />
         <KpiCard icon={BadgePercent} label="Dont pénalités" value={`${totalPenalites.toLocaleString("fr-FR")} F`} />
         <KpiCard icon={TrendingDown} label="Sorties (total)" value={`${totalSorties.toLocaleString("fr-FR")} F`} />

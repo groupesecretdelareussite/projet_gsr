@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { ScrollFadeX } from "@/components/shared/ScrollFadeX";
 import { cn } from "@/lib/utils";
 
 interface SemaineRow {
@@ -51,20 +52,22 @@ export default async function FinanceTDPage(props: { searchParams: Promise<{ sem
         <EmptyState icon={Wallet} title="Aucune semaine clôturée" description="La finance apparaît une fois une semaine clôturée." />
       ) : (
         <>
-          <div className="flex gap-1 border-b border-gray-100 mb-6 overflow-x-auto">
-            {listeSemaines.map((s) => (
-              <Link
-                key={s.id}
-                href={`/td/coord/finance?semaine=${s.id}`}
-                className={cn(
-                  "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors",
-                  s.id === semaineActive?.id ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700"
-                )}
-              >
-                {s.libelle}
-              </Link>
-            ))}
-          </div>
+          <ScrollFadeX className="mb-6" fadeClassName="from-surface">
+            <div className="flex gap-1 border-b border-gray-100 overflow-x-auto">
+              {listeSemaines.map((s) => (
+                <Link
+                  key={s.id}
+                  href={`/td/coord/finance?semaine=${s.id}`}
+                  className={cn(
+                    "px-4 py-2.5 text-sm font-medium border-b-2 -mb-px whitespace-nowrap transition-colors",
+                    s.id === semaineActive?.id ? "border-primary text-primary" : "border-transparent text-gray-500 hover:text-gray-700"
+                  )}
+                >
+                  {s.libelle}
+                </Link>
+              ))}
+            </div>
+          </ScrollFadeX>
           {semaineActive && <FinanceSemaine supabaseAdmin={supabaseAdmin} semaineId={semaineActive.id} />}
         </>
       )}

@@ -118,7 +118,7 @@ export function NotesGrid({
         <table className="w-full text-sm">
           <thead className="bg-gradient-to-r from-primary/15 to-primary/5">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-primary-dark whitespace-nowrap">
+              <th className="sticky left-0 z-10 bg-primary/15 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-primary-dark whitespace-nowrap">
                 Élève
               </th>
               {TYPES_NOTE.map((t) => (
@@ -130,8 +130,8 @@ export function NotesGrid({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {eleves.map((eleve) => (
-              <tr key={eleve.id} className="hover:bg-gray-50">
-                <td className="px-4 py-2 text-gray-700 whitespace-nowrap">
+              <tr key={eleve.id} className="group hover:bg-gray-50">
+                <td className="sticky left-0 z-10 bg-white px-4 py-2 text-gray-700 whitespace-nowrap group-hover:bg-gray-50">
                   {eleve.nom} {eleve.prenoms}
                 </td>
                 {TYPES_NOTE.map((typeNote) => {
@@ -151,7 +151,7 @@ export function NotesGrid({
                         onBlur={() => handleBlur(eleve.id, matiereActive.id, typeNote)}
                         disabled={isPending && statut === "saving"}
                         className={cn(
-                          "w-16 mx-auto block text-center px-2 py-1.5 border rounded-md text-sm transition-colors",
+                          "w-16 mx-auto block text-center px-2 py-2.5 border rounded-md text-sm transition-colors",
                           statut === "saving" && "border-amber-400 bg-amber-50",
                           statut === "saved" && "border-green-400 bg-green-50",
                           statut === "error" && "border-red-400 bg-red-50",

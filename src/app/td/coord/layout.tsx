@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { logout } from "@/actions/auth";
 import { AdminInactivityWatcher } from "@/components/admin/AdminInactivityWatcher";
+import { ScrollFadeX } from "@/components/shared/ScrollFadeX";
 
 const NAV = [
   { label: "Tableau de bord", href: "/td/coord/dashboard", icon: LayoutDashboard },
@@ -50,18 +51,20 @@ export default async function TdCoordLayout({ children }: { children: React.Reac
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-6 min-w-0">
             <span className="font-bold text-gray-900 shrink-0">Portail TD</span>
-            <nav className="flex items-center gap-1 overflow-x-auto">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors whitespace-nowrap"
-                >
-                  <item.icon className="w-3.5 h-3.5" />
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+            <ScrollFadeX className="min-w-0">
+              <nav className="flex items-center gap-1 overflow-x-auto">
+                {NAV.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors whitespace-nowrap"
+                  >
+                    <item.icon className="w-3.5 h-3.5" />
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </ScrollFadeX>
           </div>
           <div className="flex items-center gap-3 shrink-0">
             <Link href="/admin/aide" title="Aide" className="text-gray-500 hover:text-gray-700">

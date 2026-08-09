@@ -82,7 +82,7 @@ export function NouvelleDepenseDialog({ categoriesInitiales, anneeScolaireId }: 
           <DialogBody className="space-y-4">
             <div>
               <Label>Catégorie</Label>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <Select value={categorieId} onValueChange={setCategorieId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Choisir..." />

@@ -84,7 +84,7 @@ export default async function ArbitrageTDPage() {
               </div>
               <div className="space-y-2">
                 {candidats.map((p) => (
-                  <div key={p.id} className="flex items-center justify-between gap-3 border border-gray-100 rounded-lg px-4 py-2.5">
+                  <div key={p.id} className="flex items-center flex-wrap justify-between gap-3 border border-gray-100 rounded-lg px-4 py-2.5">
                     <span className="text-sm font-medium text-gray-800">{nomProfParId.get(p.professeur_id) ?? "—"}</span>
                     <div className="flex items-center gap-2">
                       <Badge variant="neutral">En attente</Badge>

@@ -136,14 +136,14 @@ export function RevueFinAnnee({
               const selectValue = decision ? (decision.decision === "passe" ? `classe:${decision.nouvelleClasseId}` : decision.decision) : "";
 
               return (
-                <div key={eleve.id} className="px-5 py-2.5 flex items-center justify-between gap-4">
+                <div key={eleve.id} className="px-5 py-2.5 flex items-center flex-wrap justify-between gap-3">
                   <div className="min-w-0">
                     <span className="text-sm text-gray-700">
                       {eleve.nom} {eleve.prenoms}
                     </span>{" "}
                     <span className="text-gray-400 font-mono text-xs">{eleve.matricule}</span>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     {statut === "saving" && <Loader2 className="w-3.5 h-3.5 text-gray-400 animate-spin" />}
                     {statut === "saved" && <Check className="w-3.5 h-3.5 text-green-500" />}
                     {!decision && (
@@ -159,7 +159,7 @@ export function RevueFinAnnee({
                         }
                       }}
                     >
-                      <SelectTrigger className="w-56">
+                      <SelectTrigger className="w-full sm:w-56">
                         <SelectValue placeholder="Choisir..." />
                       </SelectTrigger>
                       <SelectContent>

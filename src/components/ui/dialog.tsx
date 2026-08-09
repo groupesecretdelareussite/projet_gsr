@@ -18,13 +18,13 @@ export function DialogContent({
       <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=open]:fade-in" />
       <DialogPrimitive.Content
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-[14px] bg-white shadow-xl",
+          "fixed left-1/2 top-1/2 z-50 flex max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[14px] bg-white shadow-xl",
           className
         )}
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 text-white/80 hover:text-white">
+        <DialogPrimitive.Close className="absolute right-2.5 top-2.5 p-1.5 text-white/80 hover:text-white">
           <X className="w-4 h-4" />
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
@@ -35,7 +35,7 @@ export function DialogContent({
 export function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("bg-primary-gradient px-6 py-5", className)}
+      className={cn("shrink-0 bg-primary-gradient px-6 py-5", className)}
       {...props}
     />
   );
@@ -53,11 +53,14 @@ export function DialogDescription({
 }
 
 export function DialogBody({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("px-6 py-5", className)} {...props} />;
+  return <div className={cn("min-h-0 flex-1 overflow-y-auto px-6 py-5", className)} {...props} />;
 }
 
 export function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3", className)} {...props} />
+    <div
+      className={cn("shrink-0 px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3", className)}
+      {...props}
+    />
   );
 }

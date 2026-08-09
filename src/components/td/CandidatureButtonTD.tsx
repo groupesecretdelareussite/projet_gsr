@@ -44,7 +44,7 @@ export function CandidatureButtonTD({ creneauId, postulationId, statutValidation
 
   if (!postulationId) {
     return (
-      <Button size="sm" onClick={postuler} disabled={isPending}>
+      <Button onClick={postuler} disabled={isPending}>
         {isPending ? "..." : "Postuler"}
       </Button>
     );
@@ -52,7 +52,7 @@ export function CandidatureButtonTD({ creneauId, postulationId, statutValidation
 
   if (statutValidation === "En attente") {
     return (
-      <Button size="sm" variant="outline" onClick={retirer} disabled={isPending}>
+      <Button variant="outline" onClick={retirer} disabled={isPending}>
         {isPending ? "..." : "Retirer"}
       </Button>
     );

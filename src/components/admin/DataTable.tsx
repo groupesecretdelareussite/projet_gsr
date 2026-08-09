@@ -25,28 +25,30 @@ export function DataTable<T>({ columns, rows, rowKey, emptyState }: DataTablePro
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
       {/* Desktop */}
-      <table className="w-full text-sm hidden md:table">
-        <thead className="bg-gradient-to-r from-primary/15 to-primary/5">
-          <tr>
-            {columns.map((col) => (
-              <th key={col.key} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-primary-dark">
-                {col.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {rows.map((row) => (
-            <tr key={rowKey(row)} className="hover:bg-gray-50 group">
+      <div className="hidden md:block overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gradient-to-r from-primary/15 to-primary/5">
+            <tr>
               {columns.map((col) => (
-                <td key={col.key} className="px-4 py-3 text-gray-700">
-                  {col.render(row)}
-                </td>
+                <th key={col.key} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-primary-dark whitespace-nowrap">
+                  {col.label}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {rows.map((row) => (
+              <tr key={rowKey(row)} className="hover:bg-gray-50 group">
+                {columns.map((col) => (
+                  <td key={col.key} className="px-4 py-3 text-gray-700">
+                    {col.render(row)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {/* Mobile */}
       <div className="md:hidden divide-y divide-gray-100">

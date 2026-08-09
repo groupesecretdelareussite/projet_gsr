@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Trash2, FileImage } from "lucide-react";
 import { toast } from "sonner";
 import { supprimerPhotoGalerieAdmin } from "@/actions/galerie-admin";
+import { ACTIONS_HOVER_REVEAL, cn } from "@/lib/utils";
 
 export interface PhotoGalerieAdmin {
   id: number;
@@ -55,7 +56,11 @@ export function GalerieAdminGrid({ photos }: { photos: PhotoGalerieAdmin[] }) {
             type="button"
             disabled={isPending}
             onClick={() => supprimer(photo)}
-            className="absolute top-2 right-2 w-7 h-7 rounded-lg bg-white/90 flex items-center justify-center text-red-500 opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-red-50"
+            aria-label={`Supprimer ${photo.nom_fichier}`}
+            className={cn(
+              "absolute top-2 right-2 w-9 h-9 rounded-lg bg-white/90 flex items-center justify-center text-red-500 shadow-sm hover:bg-red-50",
+              ACTIONS_HOVER_REVEAL
+            )}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
