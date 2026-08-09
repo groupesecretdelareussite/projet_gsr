@@ -27,21 +27,20 @@ export default async function TdProfLayout({ children }: { children: React.React
   return (
     <div className="min-h-screen bg-surface">
       <ProfesseurInactivityWatcher />
-      <header className="bg-white border-b border-gray-100">
+      <header className="sticky top-0 z-50 bg-white border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-6 min-w-0">
-            <span className="font-bold text-gray-900 shrink-0">
-              Portail TD — {session.prenom} {session.nom}
-            </span>
+            <span className="font-bold text-gray-900 shrink-0">Portail TD</span>
             <nav className="flex items-center gap-1 overflow-x-auto">
               {NAV.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors whitespace-nowrap"
+                  aria-label={item.label}
+                  className="flex items-center justify-center sm:justify-start gap-1.5 w-10 h-10 sm:w-auto sm:px-3 sm:py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors whitespace-nowrap"
                 >
-                  <item.icon className="w-3.5 h-3.5" />
-                  {item.label}
+                  <item.icon className="w-4 h-4 shrink-0" />
+                  <span className="hidden sm:inline">{item.label}</span>
                 </Link>
               ))}
             </nav>
@@ -51,9 +50,13 @@ export default async function TdProfLayout({ children }: { children: React.React
               <HelpCircle className="w-4 h-4" />
             </Link>
             <form action={handleLogout}>
-              <button type="submit" className="text-xs text-gray-500 hover:text-red-600 flex items-center gap-1">
-                <LogOut className="w-3.5 h-3.5" />
-                Déconnexion
+              <button
+                type="submit"
+                aria-label="Déconnexion"
+                className="flex items-center gap-1 p-2.5 -m-2.5 sm:p-0 sm:m-0 rounded-lg text-xs text-gray-500 hover:text-red-600 transition-colors"
+              >
+                <LogOut className="w-4 h-4 sm:w-3.5 sm:h-3.5" />
+                <span className="hidden sm:inline">Déconnexion</span>
               </button>
             </form>
           </div>

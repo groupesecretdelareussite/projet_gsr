@@ -1,6 +1,7 @@
 import { LayoutDashboard, Wallet } from "lucide-react";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getTdProfesseurSession } from "@/lib/session-td";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { EmptyState } from "@/components/admin/EmptyState";
 
@@ -63,6 +64,8 @@ export default async function DashboardProfesseurPage() {
 
   return (
     <div>
+      <PageHeader title={`Bonjour, ${session.prenom} ${session.nom}`} subtitle="Voici un aperçu de vos affectations TD." />
+
       <div className="grid sm:grid-cols-2 gap-4 mb-6">
         <KpiCard icon={LayoutDashboard} label="Affectations à venir" value={String(aVenir.length)} />
         <KpiCard icon={Wallet} label="Total cumulé" value={`${totalCumule.toLocaleString("fr-FR")} F`} />
