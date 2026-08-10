@@ -54,7 +54,16 @@ export interface CreerCompteParentInput {
   motDePasse: string;
 }
 
-/** §9 Écran B — le matricule doit déjà exister dans `eleves` (quel que soit son statut, §12.10). */
+const ERREUR_CREATION_GENERIQUE = "Matricule introuvable ou un compte existe déjà";
+
+/**
+ * §9 Écran B — le matricule doit déjà exister dans `eleves` (quel que soit son
+ * statut, §12.10). Rate-limité comme connexionParent (même table
+ * `login_attempts`, portail "parent") : sans ça, le format de matricule
+ * documenté et court ([INITIALE][MM][AA][XXXX]) est brute-forçable, et sans
+ * message générique un attaquant pouvait distinguer "introuvable" de "compte
+ * déjà existant" pour énumérer les élèves inscrits (audit sécurité 2026-08-10).
+ */
 export async function creerCompteParent(input: CreerCompteParentInput): Promise<{ error?: string }> {
   if (input.motDePasse.length < 8) {
     return { error: "Le mot de passe doit contenir au moins 8 caractères" };
@@ -62,13 +71,18 @@ export async function creerCompteParent(input: CreerCompteParentInput): Promise<
 
   const supabaseAdmin = createServiceRoleClient();
 
+  if (await tropDeTentatives(supabaseAdmin, input.matricule, "parent")) {
+    return { error: "Trop de tentatives, réessayez dans 15 minutes." };
+  }
+
   const { data: eleve } = await supabaseAdmin
     .from("eleves")
     .select("id")
     .eq("matricule", input.matricule)
     .maybeSingle();
   if (!eleve) {
-    return { error: "Matricule introuvable" };
+    await enregistrerTentative(supabaseAdmin, input.matricule, "parent", false);
+    return { error: ERREUR_CREATION_GENERIQUE };
   }
 
   const { data: compteExistant } = await supabaseAdmin
@@ -77,7 +91,8 @@ export async function creerCompteParent(input: CreerCompteParentInput): Promise<
     .eq("matricule", input.matricule)
     .maybeSingle();
   if (compteExistant) {
-    return { error: "Un compte existe déjà pour ce matricule — connectez-vous plutôt." };
+    await enregistrerTentative(supabaseAdmin, input.matricule, "parent", false);
+    return { error: ERREUR_CREATION_GENERIQUE };
   }
 
   const hash = await bcrypt.hash(input.motDePasse, 10);
@@ -85,6 +100,8 @@ export async function creerCompteParent(input: CreerCompteParentInput): Promise<
     .from("comptes_parents")
     .insert({ matricule: input.matricule, mot_de_passe: hash });
   if (error) return { error: error.message };
+
+  await enregistrerTentative(supabaseAdmin, input.matricule, "parent", true);
 
   const session = await getParentSession();
   session.matricule = input.matricule;
