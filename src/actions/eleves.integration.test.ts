@@ -57,7 +57,8 @@ describe("inscrireEleve — intégration Niveau 3 (réseau réel)", () => {
     const result = await inscrireEleve({
       nom: "TESTAUTO",
       prenoms: "Intégration Vitest",
-      contactParent: "+22900000001",
+      contactParent: "+2290100000001",
+      contactParent2: "",
       classeId: jonquetClasseId,
       college: "COLLEGE TESTAUTO",
     });

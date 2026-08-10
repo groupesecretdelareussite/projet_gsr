@@ -16,7 +16,7 @@ interface EleveRow {
   nom: string;
   prenoms: string;
   classe_id: number;
-  contact_parent: string;
+  contact_parent: string | null;
   classes: { nom_classe: string; sites: { nom_site: string } | null } | null;
 }
 
@@ -169,13 +169,15 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
             label: "Actions",
             render: (l: RetardRow) => (
               <div className={ACTIONS_HOVER_REVEAL}>
-                <RelancerWhatsAppButton
-                  matricule={l.eleve.matricule}
-                  nomComplet={`${l.eleve.nom} ${l.eleve.prenoms}`}
-                  moisSouscription={l.mois}
-                  montantRestant={l.resteDu}
-                  contactParent={l.eleve.contact_parent}
-                />
+                {l.eleve.contact_parent && (
+                  <RelancerWhatsAppButton
+                    matricule={l.eleve.matricule}
+                    nomComplet={`${l.eleve.nom} ${l.eleve.prenoms}`}
+                    moisSouscription={l.mois}
+                    montantRestant={l.resteDu}
+                    contactParent={l.eleve.contact_parent}
+                  />
+                )}
               </div>
             ),
           },

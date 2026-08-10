@@ -6,6 +6,7 @@ import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope, siteInScope } from "@/lib/auth-scope";
 import { genererMatricule } from "@/lib/matricule";
 import { estVenuDansLeMois, PENALITE_REINSCRIPTION_MONTANT } from "@/lib/reinscription";
+import { normaliserNumero, validerNumeroTelephone } from "@/lib/telephone";
 import type { MoisScolaire, ModePaiement } from "@/lib/constants";
 
 const ROLES_GESTION_ELEVES = ["coordonnateur", "comptable", "superviseur"] as const;
@@ -14,9 +15,39 @@ export interface InscrireEleveInput {
   nom: string;
   prenoms: string;
   contactParent: string;
+  contactParent2: string;
   classeId: number;
   college: string;
   optionM?: string | null;
+}
+
+/**
+ * §discussion 2026-08-10 — contact_parent (WhatsApp) n'est plus obligatoire
+ * seul : un parent peut ne pas avoir WhatsApp. Au moins un des deux contacts
+ * doit être renseigné (garde-fou dupliqué en base, contrainte
+ * eleves_au_moins_un_contact, sql/014). Retourne les valeurs normalisées
+ * (sans espaces) prêtes à stocker, ou une erreur.
+ */
+function validerContacts(
+  contactParentBrut: string,
+  contactParent2Brut: string
+): { contactParent: string | null; contactParent2: string | null; error?: string } {
+  const contactParent = normaliserNumero(contactParentBrut);
+  const contactParent2 = normaliserNumero(contactParent2Brut);
+
+  if (!contactParent && !contactParent2) {
+    return { contactParent: null, contactParent2: null, error: "Au moins un contact (WhatsApp ou téléphonique) doit être renseigné." };
+  }
+  if (contactParent) {
+    const erreur = validerNumeroTelephone(contactParent);
+    if (erreur) return { contactParent: null, contactParent2: null, error: erreur };
+  }
+  if (contactParent2) {
+    const erreur = validerNumeroTelephone(contactParent2);
+    if (erreur) return { contactParent: null, contactParent2: null, error: erreur };
+  }
+
+  return { contactParent: contactParent || null, contactParent2: contactParent2 || null };
 }
 
 async function getScopeAndAssert() {
@@ -34,6 +65,10 @@ export async function inscrireEleve(
   options: { force?: boolean } = {}
 ): Promise<{ error?: string; requiresConfirmation?: boolean; matricule?: string }> {
   const scope = await getScopeAndAssert();
+
+  const { contactParent, contactParent2, error: erreurContacts } = validerContacts(input.contactParent, input.contactParent2);
+  if (erreurContacts) return { error: erreurContacts };
+
   const supabaseAdmin = createServiceRoleClient();
 
   const { data: classe } = await supabaseAdmin
@@ -72,7 +107,8 @@ export async function inscrireEleve(
     matricule,
     nom,
     prenoms,
-    contact_parent: input.contactParent,
+    contact_parent: contactParent,
+    contact_parent_2: contactParent2,
     classe_id: input.classeId,
     college,
     option_m: input.optionM || null,
@@ -90,6 +126,7 @@ export interface ModifierEleveInput {
   nom: string;
   prenoms: string;
   contactParent: string;
+  contactParent2: string;
   classeId: number;
   college: string;
   optionM?: string | null;
@@ -97,6 +134,10 @@ export interface ModifierEleveInput {
 
 export async function modifierEleve(input: ModifierEleveInput): Promise<{ error?: string }> {
   const scope = await getScopeAndAssert();
+
+  const { contactParent, contactParent2, error: erreurContacts } = validerContacts(input.contactParent, input.contactParent2);
+  if (erreurContacts) return { error: erreurContacts };
+
   const supabaseAdmin = createServiceRoleClient();
 
   const { data: eleve } = await supabaseAdmin
@@ -124,7 +165,8 @@ export async function modifierEleve(input: ModifierEleveInput): Promise<{ error?
     .update({
       nom: input.nom.toUpperCase().trim(),
       prenoms: input.prenoms.trim(),
-      contact_parent: input.contactParent,
+      contact_parent: contactParent,
+      contact_parent_2: contactParent2,
       classe_id: input.classeId,
       college: input.college.toUpperCase().trim(),
       option_m: input.optionM || null,

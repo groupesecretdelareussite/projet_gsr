@@ -12,6 +12,7 @@ import { ReinscrireDialog } from "@/components/admin/eleves/ReinscrireDialog";
 import { ReinitialiserMotDePasseParentDialog } from "@/components/admin/eleves/ReinitialiserMotDePasseParentDialog";
 import { calculerMoyenneMatiere, calculerMoyenneGenerale, type NoteMatiere } from "@/lib/moyennes";
 import { estVenuDansLeMois } from "@/lib/reinscription";
+import { formaterNumeroAffichage } from "@/lib/telephone";
 import { RAISON_LABELS, MODE_PAIEMENT_LABELS, type MoisScolaire } from "@/lib/constants";
 
 const ROLES_ELEVES = ["coordonnateur", "comptable", "superviseur", "chef_site"];
@@ -50,7 +51,7 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
   const { data: eleve } = await supabase
     .from("eleves")
     .select(
-      "id, matricule, nom, prenoms, contact_parent, college, option_m, statut, classe_id, classes(nom_classe, site_id, sites(nom_site))"
+      "id, matricule, nom, prenoms, contact_parent, contact_parent_2, college, option_m, statut, classe_id, classes(nom_classe, site_id, sites(nom_site))"
     )
     .eq("id", params.id)
     .single();
@@ -240,10 +241,16 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
               </dd>
             </div>
             {peutVoirContact && (
-              <div className="flex justify-between sm:block">
-                <dt className="text-gray-400">Contact parent</dt>
-                <dd className="text-gray-700">{eleve.contact_parent}</dd>
-              </div>
+              <>
+                <div className="flex justify-between sm:block">
+                  <dt className="text-gray-400">Contact parent (WhatsApp)</dt>
+                  <dd className="text-gray-700">{formaterNumeroAffichage(eleve.contact_parent)}</dd>
+                </div>
+                <div className="flex justify-between sm:block">
+                  <dt className="text-gray-400">Contact parent 2</dt>
+                  <dd className="text-gray-700">{formaterNumeroAffichage(eleve.contact_parent_2)}</dd>
+                </div>
+              </>
             )}
             <div className="flex justify-between sm:block">
               <dt className="text-gray-400">Collège</dt>

@@ -46,10 +46,60 @@ describe("inscrireEleve — garde de rôle", () => {
       inscrireEleve({
         nom: "TESTAUTO",
         prenoms: "Test",
-        contactParent: "+22900000000",
+        contactParent: "+2290100000000",
+        contactParent2: "",
         classeId: 1,
         college: "COLLEGE TEST",
       })
     ).rejects.toThrow("Non autorisé");
+  });
+});
+
+describe("inscrireEleve — au moins un contact requis (§discussion 2026-08-10)", () => {
+  it("rejette si contactParent et contactParent2 sont tous les deux vides", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({}));
+
+    const result = await inscrireEleve({
+      nom: "TESTAUTO",
+      prenoms: "Test",
+      contactParent: "",
+      contactParent2: "",
+      classeId: 1,
+      college: "COLLEGE TEST",
+    });
+
+    expect(result.error).toBe("Au moins un contact (WhatsApp ou téléphonique) doit être renseigné.");
+  });
+});
+
+describe("inscrireEleve — format des numéros de téléphone", () => {
+  it("rejette un numéro béninois qui ne commence pas par 01", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({}));
+
+    const result = await inscrireEleve({
+      nom: "TESTAUTO",
+      prenoms: "Test",
+      contactParent: "+22997921781",
+      contactParent2: "",
+      classeId: 1,
+      college: "COLLEGE TEST",
+    });
+
+    expect(result.error).toBe("Numéro béninois invalide — format attendu : +229 01 XX XX XX XX");
+  });
+
+  it("rejette un numéro sans indicatif international", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({}));
+
+    const result = await inscrireEleve({
+      nom: "TESTAUTO",
+      prenoms: "Test",
+      contactParent: "0197921781",
+      contactParent2: "",
+      classeId: 1,
+      college: "COLLEGE TEST",
+    });
+
+    expect(result.error).toBe("Numéro invalide — doit commencer par l'indicatif (+...) suivi des chiffres");
   });
 });

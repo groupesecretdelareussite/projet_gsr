@@ -12,13 +12,15 @@ import { SuspendreDialog } from "@/components/admin/eleves/SuspendreDialog";
 import { ReinitialiserMotDePasseParentDialog } from "@/components/admin/eleves/ReinitialiserMotDePasseParentDialog";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
+import { formaterNumeroAffichage } from "@/lib/telephone";
 
 interface EleveRow {
   id: number;
   matricule: string;
   nom: string;
   prenoms: string;
-  contact_parent: string;
+  contact_parent: string | null;
+  contact_parent_2: string | null;
   option_m: string | null;
   classes: { nom_classe: string; site_id: number; sites: { nom_site: string } | null } | null;
 }
@@ -48,7 +50,9 @@ export default async function ListeElevesPage(
 
   let query = supabase
     .from("eleves")
-    .select("id, matricule, nom, prenoms, contact_parent, option_m, classes!inner(nom_classe, site_id, sites(nom_site))")
+    .select(
+      "id, matricule, nom, prenoms, contact_parent, contact_parent_2, option_m, classes!inner(nom_classe, site_id, sites(nom_site))"
+    )
     .eq("statut", "actif")
     .order("nom");
 
@@ -76,7 +80,10 @@ export default async function ListeElevesPage(
     { key: "classe", label: "Classe", render: (e) => e.classes?.nom_classe ?? "—" },
     { key: "site", label: "Site", render: (e) => e.classes?.sites?.nom_site ?? "—" },
     ...(peutGerer
-      ? [{ key: "contact", label: "Contact parent", render: (e: EleveRow) => e.contact_parent }]
+      ? [
+          { key: "contact", label: "Contact parent", render: (e: EleveRow) => formaterNumeroAffichage(e.contact_parent) },
+          { key: "contact2", label: "Contact parent 2", render: (e: EleveRow) => formaterNumeroAffichage(e.contact_parent_2) },
+        ]
       : []),
     ...(peutGerer
       ? [

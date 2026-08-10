@@ -28,7 +28,8 @@ interface EleveFormProps {
   initialValues?: {
     nom: string;
     prenoms: string;
-    contactParent: string;
+    contactParent: string | null;
+    contactParent2: string | null;
     siteId: number;
     classeId: number;
     college: string;
@@ -47,6 +48,7 @@ export function EleveForm({ sites, mode, eleveId, initialValues, matricule }: El
   const [nom, setNom] = useState(initialValues?.nom ?? "");
   const [prenoms, setPrenoms] = useState(initialValues?.prenoms ?? "");
   const [contactParent, setContactParent] = useState(initialValues?.contactParent ?? "");
+  const [contactParent2, setContactParent2] = useState(initialValues?.contactParent2 ?? "");
   const [college, setCollege] = useState(initialValues?.college ?? "");
   const [optionM, setOptionM] = useState(initialValues?.optionM ?? "");
   const [confirmationRequise, setConfirmationRequise] = useState<string | null>(null);
@@ -68,6 +70,7 @@ export function EleveForm({ sites, mode, eleveId, initialValues, matricule }: El
             nom,
             prenoms,
             contactParent,
+            contactParent2,
             classeId: Number(classeId),
             college,
             optionM: optionM || null,
@@ -91,6 +94,7 @@ export function EleveForm({ sites, mode, eleveId, initialValues, matricule }: El
           nom,
           prenoms,
           contactParent,
+          contactParent2,
           classeId: Number(classeId),
           college,
           optionM: optionM || null,
@@ -133,8 +137,16 @@ export function EleveForm({ sites, mode, eleveId, initialValues, matricule }: El
       </div>
 
       <div>
-        <Label>Contact parent</Label>
-        <PhoneInput value={contactParent} onChange={setContactParent} required />
+        <Label>Contact parent (WhatsApp)</Label>
+        <PhoneInput value={contactParent} onChange={setContactParent} />
+        <p className="text-xs text-gray-400 mt-1">
+          Doit posséder WhatsApp — utilisé pour les relances de paiement. Laissez vide si le parent n&apos;a pas WhatsApp.
+        </p>
+      </div>
+
+      <div>
+        <Label>Contact parent 2 (optionnel)</Label>
+        <PhoneInput value={contactParent2} onChange={setContactParent2} />
       </div>
 
       <div>
@@ -206,7 +218,7 @@ export function EleveForm({ sites, mode, eleveId, initialValues, matricule }: El
         </div>
       )}
 
-      <Button type="submit" disabled={isPending || !classeId}>
+      <Button type="submit" disabled={isPending || !classeId || (!contactParent.trim() && !contactParent2.trim())}>
         {isPending ? "Enregistrement..." : mode === "create" ? "Inscrire l'élève" : "Enregistrer les modifications"}
       </Button>
     </form>

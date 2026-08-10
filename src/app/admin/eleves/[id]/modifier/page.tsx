@@ -11,7 +11,7 @@ export default async function ModifierElevePage(props: { params: Promise<{ id: s
     supabase.from("sites").select("id, nom_site").order("nom_site"),
     supabase
       .from("eleves")
-      .select("id, matricule, nom, prenoms, contact_parent, college, option_m, classe_id, classes(site_id)")
+      .select("id, matricule, nom, prenoms, contact_parent, contact_parent_2, college, option_m, classe_id, classes(site_id)")
       .eq("id", params.id)
       .single(),
   ]);
@@ -32,6 +32,7 @@ export default async function ModifierElevePage(props: { params: Promise<{ id: s
           nom: eleve.nom,
           prenoms: eleve.prenoms,
           contactParent: eleve.contact_parent,
+          contactParent2: eleve.contact_parent_2,
           siteId,
           classeId: eleve.classe_id,
           college: eleve.college,
