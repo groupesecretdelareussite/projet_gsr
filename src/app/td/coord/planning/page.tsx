@@ -134,7 +134,12 @@ export default async function PlanningTDPage(props: { searchParams: Promise<{ se
                       matieres={matieresOptions}
                     />
                   )}
-                  <SemaineActionsTD semaineId={semaineActive.id} statut={semaineActive.statut} />
+                  <SemaineActionsTD
+                    semaineId={semaineActive.id}
+                    statut={semaineActive.statut}
+                    libelle={semaineActive.libelle}
+                    dateDebut={semaineActive.date_debut}
+                  />
                 </div>
               </div>
 
