@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { creerCreneauTD } from "@/actions/td-creneaux";
 
 interface Option {
@@ -83,7 +84,7 @@ export function NouveauCreneauTDDialog({ semaineId, dateDebut, dateFin, classes,
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Plus className="w-3.5 h-3.5" />
-          Ajouter un créneau
+          <span className={HOVER_ONLY_LABEL}>Ajouter un créneau</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
