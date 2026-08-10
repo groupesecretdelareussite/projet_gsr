@@ -17,8 +17,6 @@ function revalidatePlanning() {
   revalidatePath("/td/coord/planning");
 }
 
-const JOURS_AUTORISES = [0, 3, 6]; // dimanche, mercredi, samedi
-
 export interface CreerCreneauInput {
   semaineId: number;
   classeId: number;
@@ -33,14 +31,15 @@ function estErreurContrainteUnique(error: unknown): boolean {
   return typeof error === "object" && error !== null && (error as { code?: string }).code === "23505";
 }
 
-/** §10.3/§12.7 (Règle B) — jour contrôlé côté serveur en plus du filtre JS du date picker ; violation UNIQUE interceptée pour un message lisible. */
+/**
+ * §10.3 — la date doit tomber dans la semaine choisie (contrôlé côté
+ * serveur, en plus du `min`/`max` du date picker qui ne bloque pas un
+ * `input` tapé/collé à la main). Violation de la contrainte UNIQUE
+ * (Règle B, §12.7) interceptée pour un message lisible.
+ */
 export async function creerCreneauTD(input: CreerCreneauInput): Promise<{ error?: string }> {
   await getScopeAndAssert();
 
-  const jour = new Date(`${input.dateTd}T00:00:00`).getDay();
-  if (!JOURS_AUTORISES.includes(jour)) {
-    return { error: "Un créneau TD ne peut avoir lieu qu'un mercredi, samedi ou dimanche." };
-  }
   if (input.heureFin <= input.heureDebut) {
     return { error: "L'heure de fin doit être après l'heure de début." };
   }
@@ -50,11 +49,14 @@ export async function creerCreneauTD(input: CreerCreneauInput): Promise<{ error?
   const { data: semaine } = await supabaseAdmin
     .schema("td")
     .from("semaines")
-    .select("statut")
+    .select("statut, date_debut, date_fin")
     .eq("id", input.semaineId)
     .single();
   if (!semaine || semaine.statut !== "brouillon") {
     return { error: "Les créneaux ne peuvent être créés que sur une semaine en brouillon." };
+  }
+  if (input.dateTd < semaine.date_debut || input.dateTd > semaine.date_fin) {
+    return { error: "La date du créneau doit être comprise dans la semaine sélectionnée." };
   }
 
   const { error } = await supabaseAdmin.schema("td").from("creneaux").insert({

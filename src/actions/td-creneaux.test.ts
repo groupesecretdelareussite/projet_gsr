@@ -28,7 +28,7 @@ const CRENEAU_VALIDE = {
   semaineId: 1,
   classeId: 1,
   matiereId: 1,
-  dateTd: "2026-11-04", // mercredi
+  dateTd: "2026-11-04",
   heureDebut: "09:00",
   heureFin: "11:00",
   montantPrevu: 5000,
@@ -52,16 +52,7 @@ describe("Planning TD (créneaux) — réservé au coordonnateur (§10.3)", () =
   );
 });
 
-describe("creerCreneauTD — Règle B, jour autorisé (§12.7)", () => {
-  it.each(["2026-11-02", "2026-11-03", "2026-11-05"])(
-    "rejette une date qui n'est ni mercredi, ni samedi, ni dimanche (%s)",
-    async (dateTd) => {
-      vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({}));
-      const result = await creerCreneauTD({ ...CRENEAU_VALIDE, dateTd });
-      expect(result.error).toBe("Un créneau TD ne peut avoir lieu qu'un mercredi, samedi ou dimanche.");
-    }
-  );
-
+describe("creerCreneauTD — validations pures", () => {
   it("rejette une heure de fin avant l'heure de début", async () => {
     vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({}));
     const result = await creerCreneauTD({ ...CRENEAU_VALIDE, heureDebut: "11:00", heureFin: "09:00" });

@@ -17,21 +17,21 @@ function revalidatePlanning() {
   revalidatePath("/td/coord/planning");
 }
 
-/** §10.3/§12.8 — dateDebut doit être un mercredi ; dateFin (dimanche) est calculée automatiquement, jamais saisie. */
+/** §10.3/§12.8 — dateDebut doit être un lundi ; dateFin (dimanche) est calculée automatiquement, jamais saisie. */
 export interface CreerSemaineInput {
   libelle: string;
-  dateDebut: string; // ISO yyyy-mm-dd, mercredi
+  dateDebut: string; // ISO yyyy-mm-dd, lundi
 }
 
 export async function creerSemaineTD(input: CreerSemaineInput): Promise<{ error?: string }> {
   await getScopeAndAssert();
 
   const debut = new Date(`${input.dateDebut}T00:00:00`);
-  if (debut.getDay() !== 3) {
-    return { error: "La date de début doit être un mercredi" };
+  if (debut.getDay() !== 1) {
+    return { error: "La date de début doit être un lundi" };
   }
   const fin = new Date(debut);
-  fin.setDate(fin.getDate() + 4); // mercredi + 4 jours = dimanche
+  fin.setDate(fin.getDate() + 6); // lundi + 6 jours = dimanche
 
   const supabaseAdmin = createServiceRoleClient();
   const { error } = await supabaseAdmin

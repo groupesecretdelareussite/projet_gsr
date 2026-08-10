@@ -126,7 +126,13 @@ export default async function PlanningTDPage(props: { searchParams: Promise<{ se
                 </div>
                 <div className="flex items-center gap-2">
                   {semaineActive.statut === "brouillon" && (
-                    <NouveauCreneauTDDialog semaineId={semaineActive.id} classes={classesOptions} matieres={matieresOptions} />
+                    <NouveauCreneauTDDialog
+                      semaineId={semaineActive.id}
+                      dateDebut={semaineActive.date_debut}
+                      dateFin={semaineActive.date_fin}
+                      classes={classesOptions}
+                      matieres={matieresOptions}
+                    />
                   )}
                   <SemaineActionsTD semaineId={semaineActive.id} statut={semaineActive.statut} />
                 </div>

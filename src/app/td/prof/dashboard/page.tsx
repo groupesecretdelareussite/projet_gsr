@@ -1,4 +1,4 @@
-import { LayoutDashboard, Wallet } from "lucide-react";
+import { LayoutDashboard, Wallet, CalendarClock } from "lucide-react";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getTdProfesseurSession } from "@/lib/session-td";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -45,6 +45,11 @@ export default async function DashboardProfesseurPage() {
   const aVenir = affectations.filter((c) => c.date_td >= aujourdHui);
   const historique = affectations.filter((c) => c.date_td < aujourdHui);
 
+  const moisCourant = aujourdHui.slice(0, 7); // "YYYY-MM"
+  const totalCumuleMois = affectations
+    .filter((c) => c.date_td.slice(0, 7) === moisCourant)
+    .reduce((sum, c) => sum + Number(c.montant_prevu), 0);
+
   function Ligne({ c }: { c: CreneauRow }) {
     return (
       <div className="border border-gray-100 rounded-lg px-4 py-3 flex flex-wrap items-center justify-between gap-2">
@@ -66,8 +71,9 @@ export default async function DashboardProfesseurPage() {
     <div>
       <PageHeader title={`Bonjour, ${session.prenom} ${session.nom}`} subtitle="Voici un aperçu de vos affectations TD." />
 
-      <div className="grid sm:grid-cols-2 gap-4 mb-6">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         <KpiCard icon={LayoutDashboard} label="Affectations à venir" value={String(aVenir.length)} />
+        <KpiCard icon={CalendarClock} label="Total cumulé du mois" value={`${totalCumuleMois.toLocaleString("fr-FR")} F`} />
         <KpiCard icon={Wallet} label="Total cumulé" value={`${totalCumule.toLocaleString("fr-FR")} F`} />
       </div>
 

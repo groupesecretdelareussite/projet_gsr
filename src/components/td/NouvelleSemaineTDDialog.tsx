@@ -69,7 +69,7 @@ export function NouvelleSemaineTDDialog() {
               />
             </div>
             <div>
-              <Label htmlFor="dateDebut">Mercredi de la semaine</Label>
+              <Label htmlFor="dateDebut">Lundi de la semaine</Label>
               <Input id="dateDebut" type="date" required value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} />
             </div>
           </DialogBody>

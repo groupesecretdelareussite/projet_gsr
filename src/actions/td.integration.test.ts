@@ -23,10 +23,10 @@ import { soumettrePostulationTD } from "./td-postulations";
 
 const PREFIXE = "TESTAUTO";
 
-/** Toujours un mercredi futur, jamais aujourd'hui — évite tout conflit avec un run précédent le même jour. */
-function prochainMercredi(): string {
+/** Toujours un lundi futur, jamais aujourd'hui — évite tout conflit avec un run précédent le même jour. */
+function prochainLundi(): string {
   const d = new Date();
-  const decalage = ((3 - d.getDay() + 7) % 7) || 7;
+  const decalage = ((1 - d.getDay() + 7) % 7) || 7;
   d.setDate(d.getDate() + decalage);
   return d.toISOString().slice(0, 10);
 }
@@ -79,7 +79,7 @@ describe("Portail TD — intégration Niveau 3 (réseau réel)", () => {
   let classeBId: number;
   let prof1Id: number;
   let prof2Id: number;
-  const dateTd = prochainMercredi();
+  const dateTd = prochainLundi();
 
   beforeAll(async () => {
     authedClient = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);

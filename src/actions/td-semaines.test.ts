@@ -50,11 +50,11 @@ describe("Planning TD (semaines) — réservé au coordonnateur (§10.3)", () =>
   );
 });
 
-describe("creerSemaineTD — validation mercredi (§12.8)", () => {
-  it("rejette une date de début qui n'est pas un mercredi", async () => {
+describe("creerSemaineTD — validation lundi (§12.8)", () => {
+  it("rejette une date de début qui n'est pas un lundi", async () => {
     vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({}));
     // 2026-11-05 est un jeudi
     const result = await creerSemaineTD({ libelle: "Semaine test", dateDebut: "2026-11-05" });
-    expect(result.error).toBe("La date de début doit être un mercredi");
+    expect(result.error).toBe("La date de début doit être un lundi");
   });
 });

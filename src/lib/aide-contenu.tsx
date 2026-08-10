@@ -105,7 +105,7 @@ export const SECTIONS_AIDE_ADMIN: SectionAide[] = [
       <>
         <p className="text-sm text-gray-600">Organisation des cours de renfort — clic dans le menu, aucune reconnexion nécessaire.</p>
         <Carte titre="Planning" route="/td/coord/planning">
-          <p>Créer une semaine (mercredi/samedi/dimanche uniquement) puis ses créneaux. Cycle de vie : <strong>Brouillon → Publiée → Clôturée</strong> (irréversible).</p>
+          <p>Créer une semaine (du lundi au dimanche) puis ses créneaux, n&apos;importe quel jour de cette semaine. Cycle de vie : <strong>Brouillon → Publiée → Clôturée</strong> (irréversible).</p>
         </Carte>
         <Carte titre="Arbitrage" route="/td/coord/arbitrage">
           <p>Quand plusieurs professeurs postulent au même créneau, c&apos;est ici qu&apos;on tranche.</p>

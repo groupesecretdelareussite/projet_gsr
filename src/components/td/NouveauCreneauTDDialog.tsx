@@ -24,7 +24,15 @@ interface Option {
   nom: string;
 }
 
-export function NouveauCreneauTDDialog({ semaineId, classes, matieres }: { semaineId: number; classes: Option[]; matieres: Option[] }) {
+interface NouveauCreneauTDDialogProps {
+  semaineId: number;
+  dateDebut: string;
+  dateFin: string;
+  classes: Option[];
+  matieres: Option[];
+}
+
+export function NouveauCreneauTDDialog({ semaineId, dateDebut, dateFin, classes, matieres }: NouveauCreneauTDDialogProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
@@ -117,8 +125,20 @@ export function NouveauCreneauTDDialog({ semaineId, classes, matieres }: { semai
               </div>
             </div>
             <div>
-              <Label htmlFor="dateTd">Date (mercredi, samedi ou dimanche)</Label>
-              <Input id="dateTd" type="date" required value={dateTd} onChange={(e) => setDateTd(e.target.value)} />
+              <Label htmlFor="dateTd">
+                Date (du{" "}
+                {new Date(`${dateDebut}T00:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} au{" "}
+                {new Date(`${dateFin}T00:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })})
+              </Label>
+              <Input
+                id="dateTd"
+                type="date"
+                required
+                min={dateDebut}
+                max={dateFin}
+                value={dateTd}
+                onChange={(e) => setDateTd(e.target.value)}
+              />
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
