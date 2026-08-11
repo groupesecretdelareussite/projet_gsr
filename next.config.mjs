@@ -21,12 +21,16 @@ const nextConfig = {
   // includeSubDomains/preload pour l'instant : irréversible pendant sa durée
   // de vie si un sous-domaine hors Vercel n'est pas encore en HTTPS partout —
   // à durcir une fois ce point confirmé.
+  // cdnjs.cloudflare.com ajouté le 2026-08-11 : les drapeaux de PhoneInput
+  // (react-international-phone, champs contact_parent) chargent leurs SVG
+  // Twemoji depuis ce CDN — invisible dans le grep initial car dépendance
+  // transitive d'une librairie, pas un chargement fait par notre propre code.
   async headers() {
     const csp = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https://*.supabase.co",
+      "img-src 'self' data: https://*.supabase.co https://cdnjs.cloudflare.com",
       "font-src 'self'",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
       "frame-src https://www.google.com",
