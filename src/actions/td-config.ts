@@ -72,52 +72,6 @@ export async function supprimerZoneTD(id: number): Promise<{ error?: string }> {
 }
 
 // ---------------------------------------------------------------------------
-// Classes TD
-// ---------------------------------------------------------------------------
-
-export async function creerClasseTD(nomClasse: string): Promise<{ error?: string }> {
-  await getScopeAndAssert();
-  const supabaseAdmin = createServiceRoleClient();
-
-  const { error } = await supabaseAdmin.schema("td").from("classes_td").insert({ nom_classe: nomClasse });
-  if (error) return { error: error.message };
-
-  revalidateConfigPath("classes");
-  return {};
-}
-
-export async function modifierClasseTD(id: number, nomClasse: string): Promise<{ error?: string }> {
-  await getScopeAndAssert();
-  const supabaseAdmin = createServiceRoleClient();
-
-  const { error } = await supabaseAdmin.schema("td").from("classes_td").update({ nom_classe: nomClasse }).eq("id", id);
-  if (error) return { error: error.message };
-
-  revalidateConfigPath("classes");
-  return {};
-}
-
-export async function supprimerClasseTD(id: number): Promise<{ error?: string }> {
-  await getScopeAndAssert();
-  const supabaseAdmin = createServiceRoleClient();
-
-  const { count } = await supabaseAdmin
-    .schema("td")
-    .from("creneaux")
-    .select("id", { count: "exact", head: true })
-    .eq("classe_id", id);
-  if ((count ?? 0) > 0) {
-    return { error: "Cette classe a des créneaux rattachés — impossible de la supprimer." };
-  }
-
-  const { error } = await supabaseAdmin.schema("td").from("classes_td").delete().eq("id", id);
-  if (error) return { error: error.message };
-
-  revalidateConfigPath("classes");
-  return {};
-}
-
-// ---------------------------------------------------------------------------
 // Matières TD
 // ---------------------------------------------------------------------------
 

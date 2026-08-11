@@ -85,12 +85,17 @@ async function FinanceSemaine({
   const [{ data: creneaux }, { data: postulations }, { data: classes }, { data: professeurs }] = await Promise.all([
     supabaseAdmin.schema("td").from("creneaux").select("id, classe_id, montant_prevu").eq("semaine_id", semaineId).eq("statut_creneau", "cloture"),
     supabaseAdmin.schema("td").from("postulations").select("creneau_id, professeur_id").eq("statut_validation", "Valide"),
-    supabaseAdmin.schema("td").from("classes_td").select("id, nom_classe"),
+    supabaseAdmin.from("classes").select("id, nom_classe, sites(nom_site)"),
     supabaseAdmin.schema("td").from("professeurs").select("id, nom, prenom"),
   ]);
 
   const professeurParCreneau = new Map((postulations ?? []).map((p) => [p.creneau_id, p.professeur_id]));
-  const nomClasseParId = new Map((classes ?? []).map((c) => [c.id, c.nom_classe]));
+  const nomClasseParId = new Map(
+    ((classes ?? []) as unknown as { id: number; nom_classe: string; sites: { nom_site: string } | null }[]).map((c) => [
+      c.id,
+      `${c.sites?.nom_site ?? "—"} — ${c.nom_classe}`,
+    ])
+  );
   const nomProfParId = new Map((professeurs ?? []).map((p) => [p.id, `${p.prenom} ${p.nom}`]));
 
   const pourvus: (CreneauFinance & { professeur_id: number })[] = (creneaux ?? [])

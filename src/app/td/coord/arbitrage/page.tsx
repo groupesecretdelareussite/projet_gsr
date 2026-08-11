@@ -37,13 +37,18 @@ export default async function ArbitrageTDPage() {
       .eq("statut_creneau", "public")
       .order("date_td")
       .order("heure_debut"),
-    supabaseAdmin.schema("td").from("classes_td").select("id, nom_classe"),
+    supabaseAdmin.from("classes").select("id, nom_classe, sites(nom_site)"),
     supabaseAdmin.schema("td").from("matieres_td").select("id, nom_matiere"),
     supabaseAdmin.schema("td").from("professeurs").select("id, nom, prenom"),
   ]);
 
   const listeCreneaux = (creneaux ?? []) as CreneauRow[];
-  const nomClasseParId = new Map((classes ?? []).map((c) => [c.id, c.nom_classe]));
+  const nomClasseParId = new Map(
+    ((classes ?? []) as unknown as { id: number; nom_classe: string; sites: { nom_site: string } | null }[]).map((c) => [
+      c.id,
+      `${c.sites?.nom_site ?? "—"} — ${c.nom_classe}`,
+    ])
+  );
   const nomMatiereParId = new Map((matieres ?? []).map((m) => [m.id, m.nom_matiere]));
   const nomProfParId = new Map((professeurs ?? []).map((p) => [p.id, `${p.prenom} ${p.nom}`]));
 

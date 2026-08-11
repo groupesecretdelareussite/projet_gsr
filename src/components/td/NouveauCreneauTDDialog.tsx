@@ -16,7 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { creerCreneauTD } from "@/actions/td-creneaux";
 
@@ -25,11 +25,17 @@ interface Option {
   nom: string;
 }
 
+interface ClasseOptionTD {
+  id: number;
+  nom: string;
+  site: string;
+}
+
 interface NouveauCreneauTDDialogProps {
   semaineId: number;
   dateDebut: string;
   dateFin: string;
-  classes: Option[];
+  classes: ClasseOptionTD[];
   matieres: Option[];
 }
 
@@ -79,6 +85,11 @@ export function NouveauCreneauTDDialog({ semaineId, dateDebut, dateFin, classes,
 
   const peutSoumettre = classeId && matiereId && dateTd && heureDebut && heureFin && montantPrevu;
 
+  const classesParSite = new Map<string, ClasseOptionTD[]>();
+  for (const c of classes) {
+    classesParSite.set(c.site, [...(classesParSite.get(c.site) ?? []), c]);
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -101,10 +112,15 @@ export function NouveauCreneauTDDialog({ semaineId, dateDebut, dateFin, classes,
                     <SelectValue placeholder="Choisir..." />
                   </SelectTrigger>
                   <SelectContent>
-                    {classes.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.nom}
-                      </SelectItem>
+                    {Array.from(classesParSite.entries()).map(([site, classesSite]) => (
+                      <SelectGroup key={site}>
+                        <SelectLabel>{site}</SelectLabel>
+                        {classesSite.map((c) => (
+                          <SelectItem key={c.id} value={String(c.id)}>
+                            {c.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
                     ))}
                   </SelectContent>
                 </Select>

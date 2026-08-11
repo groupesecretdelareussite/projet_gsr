@@ -103,9 +103,11 @@ describe("Portail TD — intégration Niveau 3 (réseau réel)", () => {
     if (!matiere) throw new Error("Aucune matière TD trouvée — sql/005_seed.sql a-t-il été appliqué ?");
     matiereId = matiere.id;
 
-    const { data: classeA } = await admin.schema("td").from("classes_td").select("id").eq("nom_classe", "6ème").maybeSingle();
-    const { data: classeB } = await admin.schema("td").from("classes_td").select("id").eq("nom_classe", "5ème").maybeSingle();
-    if (!classeA || !classeB) throw new Error("Classes TD '6ème'/'5ème' introuvables — sql/009_td_module.sql a-t-il été appliqué ?");
+    const { data: siteJericho } = await admin.from("sites").select("id").eq("initiale", "J").maybeSingle();
+    if (!siteJericho) throw new Error("Site 'Jéricho' introuvable — sql/005_seed.sql a-t-il été appliqué ?");
+    const { data: classeA } = await admin.from("classes").select("id").eq("nom_classe", "6ème").eq("site_id", siteJericho.id).maybeSingle();
+    const { data: classeB } = await admin.from("classes").select("id").eq("nom_classe", "5ème").eq("site_id", siteJericho.id).maybeSingle();
+    if (!classeA || !classeB) throw new Error("Classes '6ème'/'5ème' à Jéricho introuvables — sql/005_seed.sql a-t-il été appliqué ?");
     classeAId = classeA.id;
     classeBId = classeB.id;
 
@@ -133,11 +135,33 @@ describe("Portail TD — intégration Niveau 3 (réseau réel)", () => {
       (await creerCreneauTD({ semaineId, classeId: classeBId, matiereId, dateTd, heureDebut: "14:00", heureFin: "16:00", montantPrevu: 5000 }))
         .error
     ).toBeUndefined();
+    // Chevauchement réel avec creneauA (14h-16h) malgré une heure_debut différente —
+    // reproduit précisément le cas que l'ancienne Règle A (égalité stricte de
+    // heure_debut) ne détectait pas (sql/016_td_arbitrage_chevauchement.sql).
+    expect(
+      (await creerCreneauTD({ semaineId, classeId: classeBId, matiereId, dateTd, heureDebut: "15:00", heureFin: "17:00", montantPrevu: 5000 }))
+        .error
+    ).toBeUndefined();
 
     const { data: creneauA } = await admin.schema("td").from("creneaux").select("id").eq("semaine_id", semaineId).eq("classe_id", classeAId).single();
-    const { data: creneauB } = await admin.schema("td").from("creneaux").select("id").eq("semaine_id", semaineId).eq("classe_id", classeBId).single();
+    const { data: creneauB } = await admin
+      .schema("td")
+      .from("creneaux")
+      .select("id")
+      .eq("semaine_id", semaineId)
+      .eq("classe_id", classeBId)
+      .eq("heure_debut", "14:00:00")
+      .single();
+    const { data: creneauC } = await admin
+      .schema("td")
+      .from("creneaux")
+      .select("id")
+      .eq("semaine_id", semaineId)
+      .eq("heure_debut", "15:00:00")
+      .single();
     const creneauAId = creneauA!.id;
     const creneauBId = creneauB!.id;
+    const creneauCId = creneauC!.id;
 
     expect((await publierSemaineTD(semaineId)).error).toBeUndefined();
 
@@ -147,6 +171,7 @@ describe("Portail TD — intégration Niveau 3 (réseau réel)", () => {
     currentProfesseurId = prof1Id;
     expect((await soumettrePostulationTD(creneauAId)).error).toBeUndefined();
     expect((await soumettrePostulationTD(creneauBId)).error).toBeUndefined();
+    expect((await soumettrePostulationTD(creneauCId)).error).toBeUndefined();
     // Contrainte UNIQUE(creneau_id, professeur_id) — vérifie le message lisible sur la vraie erreur Postgres 23505.
     expect((await soumettrePostulationTD(creneauAId)).error).toBe("Vous avez déjà postulé sur ce créneau.");
 
@@ -160,13 +185,14 @@ describe("Portail TD — intégration Niveau 3 (réseau réel)", () => {
       .schema("td")
       .from("postulations")
       .select("professeur_id, creneau_id, statut_validation")
-      .in("creneau_id", [creneauAId, creneauBId]);
+      .in("creneau_id", [creneauAId, creneauBId, creneauCId]);
     const statut = (creneauId: number, professeurId: number) =>
       postulations!.find((p) => p.creneau_id === creneauId && p.professeur_id === professeurId)!.statut_validation;
 
     expect(statut(creneauAId, prof1Id)).toBe("Valide"); // candidat choisi
     expect(statut(creneauAId, prof2Id)).toBe("Refuse"); // concurrent sur le même créneau
-    expect(statut(creneauBId, prof1Id)).toBe("Refuse"); // Règle A : même prof, même horaire, refusé automatiquement
+    expect(statut(creneauBId, prof1Id)).toBe("Refuse"); // Règle A : même prof, même horaire exacte, refusé automatiquement
+    expect(statut(creneauCId, prof1Id)).toBe("Refuse"); // Règle A corrigée : chevauchement réel (15h-17h chevauche 14h-16h) malgré une heure_debut différente
 
     const { data: creneauAApresArbitrage } = await admin.schema("td").from("creneaux").select("statut_creneau").eq("id", creneauAId).single();
     const { data: creneauBApresArbitrage } = await admin.schema("td").from("creneaux").select("statut_creneau").eq("id", creneauBId).single();

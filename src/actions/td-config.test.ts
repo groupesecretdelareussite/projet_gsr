@@ -14,7 +14,6 @@ import {
   creerZoneTD,
   modifierZoneTD,
   supprimerZoneTD,
-  creerClasseTD,
   creerMatiereTD,
   creerProfesseurTD,
   reinitialiserMotDePasseProfTD,
@@ -55,14 +54,6 @@ describe("Configuration TD — réservée au coordonnateur (§10.6)", () => {
     async (role) => {
       vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role, isGlobal: false }));
       await expect(supprimerZoneTD(1)).rejects.toThrow("Non autorisé");
-    }
-  );
-
-  it.each(["comptable", "superviseur", "chef_site", "secretaire"] as const)(
-    "rejette le rôle %s pour creerClasseTD",
-    async (role) => {
-      vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role, isGlobal: false }));
-      await expect(creerClasseTD("6ème")).rejects.toThrow("Non autorisé");
     }
   );
 

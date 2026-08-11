@@ -7,7 +7,6 @@ import { ScrollFadeX } from "@/components/shared/ScrollFadeX";
 
 const TABS = [
   { label: "Zones", href: "/td/coord/config/zones" },
-  { label: "Classes TD", href: "/td/coord/config/classes" },
   { label: "Matières TD", href: "/td/coord/config/matieres" },
   { label: "Professeurs", href: "/td/coord/config/professeurs" },
 ];

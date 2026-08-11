@@ -37,13 +37,18 @@ export default async function CandidaturesTDPage() {
       .eq("semaines.statut", "publiee")
       .order("date_td")
       .order("heure_debut"),
-    supabaseAdmin.schema("td").from("classes_td").select("id, nom_classe"),
+    supabaseAdmin.from("classes").select("id, nom_classe, sites(nom_site)"),
     supabaseAdmin.schema("td").from("matieres_td").select("id, nom_matiere"),
     supabaseAdmin.schema("td").from("postulations").select("id, creneau_id, statut_validation").eq("professeur_id", professeurId),
   ]);
 
   const listeCreneaux = (creneaux ?? []) as unknown as CreneauRow[];
-  const nomClasseParId = new Map((classes ?? []).map((c) => [c.id, c.nom_classe]));
+  const nomClasseParId = new Map(
+    ((classes ?? []) as unknown as { id: number; nom_classe: string; sites: { nom_site: string } | null }[]).map((c) => [
+      c.id,
+      `${c.sites?.nom_site ?? "—"} — ${c.nom_classe}`,
+    ])
+  );
   const nomMatiereParId = new Map((matieres ?? []).map((m) => [m.id, m.nom_matiere]));
   const postulationParCreneau = new Map((mesPostulations ?? []).map((p) => [p.creneau_id, p]));
 

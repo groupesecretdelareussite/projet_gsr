@@ -59,12 +59,13 @@ export default async function PlanningTDPage(props: { searchParams: Promise<{ se
   const semaineActive = listeSemaines.find((s) => s.id === semaineId) ?? null;
 
   const [{ data: classes }, { data: matieres }] = await Promise.all([
-    supabaseAdmin.schema("td").from("classes_td").select("id, nom_classe").order("nom_classe"),
+    supabaseAdmin.from("classes").select("id, nom_classe, sites(nom_site)").order("site_id").order("ordre"),
     supabaseAdmin.schema("td").from("matieres_td").select("id, nom_matiere").order("nom_matiere"),
   ]);
-  const classesOptions = (classes ?? []).map((c) => ({ id: c.id, nom: c.nom_classe }));
+  const classesJoin = (classes ?? []) as unknown as { id: number; nom_classe: string; sites: { nom_site: string } | null }[];
+  const classesOptions = classesJoin.map((c) => ({ id: c.id, nom: c.nom_classe, site: c.sites?.nom_site ?? "—" }));
   const matieresOptions = (matieres ?? []).map((m) => ({ id: m.id, nom: m.nom_matiere }));
-  const nomClasseParId = new Map(classesOptions.map((c) => [c.id, c.nom]));
+  const nomClasseParId = new Map(classesOptions.map((c) => [c.id, `${c.site} — ${c.nom}`]));
   const nomMatiereParId = new Map(matieresOptions.map((m) => [m.id, m.nom]));
 
   let creneaux: CreneauRow[] = [];

@@ -50,13 +50,18 @@ export default async function DashboardCoordTDPage() {
       .eq("semaine_id", semaineActive.id)
       .order("date_td")
       .order("heure_debut"),
-    supabaseAdmin.schema("td").from("classes_td").select("id, nom_classe"),
+    supabaseAdmin.from("classes").select("id, nom_classe, sites(nom_site)"),
     supabaseAdmin.schema("td").from("matieres_td").select("id, nom_matiere"),
     supabaseAdmin.schema("td").from("postulations").select("creneau_id, professeur_id, statut_validation"),
   ]);
 
   const listeCreneaux = (creneaux ?? []) as CreneauRow[];
-  const nomClasseParId = new Map((classes ?? []).map((c) => [c.id, c.nom_classe]));
+  const nomClasseParId = new Map(
+    ((classes ?? []) as unknown as { id: number; nom_classe: string; sites: { nom_site: string } | null }[]).map((c) => [
+      c.id,
+      `${c.sites?.nom_site ?? "—"} — ${c.nom_classe}`,
+    ])
+  );
   const nomMatiereParId = new Map((matieres ?? []).map((m) => [m.id, m.nom_matiere]));
   const toutesPostulations = postulations ?? [];
 
