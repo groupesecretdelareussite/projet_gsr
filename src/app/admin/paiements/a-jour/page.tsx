@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 
 interface EleveRow {
   id: number;
@@ -94,9 +95,29 @@ export default async function PaiementsAJourPage() {
     { key: "site", label: "Site", render: (e) => e.classes?.sites?.nom_site ?? "—" },
   ];
 
+  const peutExporter = ["coordonnateur", "comptable", "superviseur"].includes(scope.role);
+  const dateExport = new Date().toLocaleDateString("fr-FR");
+  const lignesExport = elevesAJour.map((e) => ({
+    Matricule: e.matricule,
+    Nom: e.nom,
+    Prénoms: e.prenoms,
+    Classe: e.classes?.nom_classe ?? "—",
+    Site: e.classes?.sites?.nom_site ?? "—",
+  }));
+
   return (
     <div>
       {header}
+      {peutExporter && (
+        <div className="flex justify-end mb-4">
+          <ExporterExcelButton
+            titre={`Paiements à jour — Mois de ${mois} — ${dateExport}`}
+            lignes={lignesExport}
+            nomFichier={`Paiements_a_jour_${mois}_${dateExport}`.replace(/\s+/g, "_")}
+            nomFeuille="À jour"
+          />
+        </div>
+      )}
       <DataTable
         columns={columns}
         rows={elevesAJour}

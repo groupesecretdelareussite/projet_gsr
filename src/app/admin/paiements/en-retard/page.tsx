@@ -7,6 +7,7 @@ import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { RelancerWhatsAppButton } from "@/components/admin/paiements/RelancerWhatsAppButton";
+import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import type { MoisScolaire } from "@/lib/constants";
 
@@ -185,9 +186,31 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
       : []),
   ];
 
+  const peutExporter = ["coordonnateur", "comptable", "superviseur"].includes(scope.role);
+  const dateExport = new Date().toLocaleDateString("fr-FR");
+  const lignesExport = lignes.map((l) => ({
+    Élève: `${l.eleve.nom} ${l.eleve.prenoms}`,
+    Matricule: l.eleve.matricule,
+    Classe: l.eleve.classes?.nom_classe ?? "—",
+    Site: l.eleve.classes?.sites?.nom_site ?? "—",
+    Mois: l.mois,
+    "Reste dû": l.resteDu,
+    "Dernière relance": l.derniereRelance ? new Date(l.derniereRelance).toLocaleDateString("fr-FR") : "Jamais",
+  }));
+
   return (
     <div>
       {header}
+      {peutExporter && (
+        <div className="flex justify-end mb-4">
+          <ExporterExcelButton
+            titre={`Paiements en retard — Mois de ${moisFiltre} — ${dateExport}`}
+            lignes={lignesExport}
+            nomFichier={`Paiements_en_retard_${moisFiltre}_${dateExport}`.replace(/\s+/g, "_")}
+            nomFeuille="En retard"
+          />
+        </div>
+      )}
       {moisVisibles.length > 1 && (
         <form method="get" className="flex items-center gap-2 mb-4">
           <select

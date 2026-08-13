@@ -13,6 +13,7 @@ import { ReinitialiserMotDePasseParentDialog } from "@/components/admin/eleves/R
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 import { formaterNumeroAffichage } from "@/lib/telephone";
+import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 
 interface EleveRow {
   id: number;
@@ -64,6 +65,18 @@ export default async function ListeElevesPage(
   const { data: eleves } = await query;
 
   const elevesFiltres = (eleves ?? []) as unknown as EleveRow[];
+
+  const nomSiteTitre = siteIdEffectif ? nomSiteParId.get(Number(siteIdEffectif)) ?? "Site inconnu" : "Tous les sites";
+  const dateExport = new Date().toLocaleDateString("fr-FR");
+  const lignesExport = elevesFiltres.map((e) => ({
+    Matricule: e.matricule,
+    Nom: e.nom,
+    Prénoms: e.prenoms,
+    Classe: e.classes?.nom_classe ?? "—",
+    Site: e.classes?.sites?.nom_site ?? "—",
+    "Contact parent": formaterNumeroAffichage(e.contact_parent),
+    "Contact parent 2": formaterNumeroAffichage(e.contact_parent_2),
+  }));
 
   const columns: DataTableColumn<EleveRow>[] = [
     { key: "matricule", label: "Matricule", render: (e) => <span className="font-mono text-xs">{e.matricule}</span> },
@@ -133,6 +146,14 @@ export default async function ListeElevesPage(
             Élèves suspendus
           </Button>
         </Link>
+        {peutGerer && (
+          <ExporterExcelButton
+            titre={`Liste des élèves — ${nomSiteTitre} — ${dateExport}`}
+            lignes={lignesExport}
+            nomFichier={`Liste_eleves_${nomSiteTitre}_${dateExport}`.replace(/\s+/g, "_")}
+            nomFeuille="Élèves"
+          />
+        )}
       </ActionsBar>
 
       <form method="get" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">

@@ -1,5 +1,6 @@
 import { UserX } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
@@ -8,6 +9,7 @@ import { ReinscrireDialog } from "@/components/admin/eleves/ReinscrireDialog";
 import { RAISON_LABELS, type MoisScolaire } from "@/lib/constants";
 import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import { estVenuDansLeMois } from "@/lib/reinscription";
+import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 
 interface EleveSuspenduRow {
   id: number;
@@ -21,6 +23,8 @@ interface EleveSuspenduRow {
 
 export default async function ElevesSuspendusPage() {
   const supabase = await createClient();
+  const scope = await getUserScope(supabase);
+  const peutExporter = ["coordonnateur", "comptable", "superviseur"].includes(scope.role);
 
   const [{ data: eleves }, { data: anneeEnCours }] = await Promise.all([
     supabase
@@ -101,9 +105,37 @@ export default async function ElevesSuspendusPage() {
     },
   ];
 
+  const dateExport = new Date().toLocaleDateString("fr-FR");
+  const lignesExport = rows.map((e) => {
+    const suspension = e.eleves_suspendus[0];
+    const raison = suspension?.raison as keyof typeof RAISON_LABELS | undefined;
+    return {
+      Matricule: e.matricule,
+      Nom: e.nom,
+      Prénoms: e.prenoms,
+      "Classe / Site": `${e.classes?.nom_classe ?? "—"} — ${e.classes?.sites?.nom_site ?? "—"}`,
+      Raison: raison ? RAISON_LABELS[raison] : "—",
+      Motif: suspension?.motif ?? "—",
+      "Montant dû": suspension?.montant_du ?? 0,
+    };
+  });
+
   return (
     <div>
-      <PageHeader title="Élèves suspendus" subtitle={`${rows.length} élève(s) suspendu(s)`} />
+      <PageHeader
+        title="Élèves suspendus"
+        subtitle={`${rows.length} élève(s) suspendu(s)`}
+        actions={
+          peutExporter ? (
+            <ExporterExcelButton
+              titre={`Élèves suspendus — ${dateExport}`}
+              lignes={lignesExport}
+              nomFichier={`Eleves_suspendus_${dateExport}`.replace(/\s+/g, "_")}
+              nomFeuille="Suspendus"
+            />
+          ) : undefined
+        }
+      />
       <DataTable
         columns={columns}
         rows={rows}

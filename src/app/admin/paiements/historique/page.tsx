@@ -10,6 +10,7 @@ import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import { MODE_PAIEMENT_LABELS, MOIS_SCOLAIRES, type ModePaiement } from "@/lib/constants";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
+import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 
 interface PaiementRow {
   id: number;
@@ -61,6 +62,22 @@ export default async function HistoriquePaiementsPage(
   const { data: paiements } = await query;
   const rows = (paiements ?? []) as unknown as PaiementRow[];
 
+  const peutExporter = ["coordonnateur", "comptable", "superviseur"].includes(scope.role);
+  const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
+  const nomSiteTitre = siteIdEffectif ? nomSiteParId.get(Number(siteIdEffectif)) ?? "Site inconnu" : "Tous les sites";
+  const moisTitre = searchParams.mois ?? "Tous les mois";
+  const dateExport = new Date().toLocaleDateString("fr-FR");
+  const lignesExport = rows.map((p) => ({
+    Date: p.date_paiement,
+    Élève: `${p.eleves?.nom ?? ""} ${p.eleves?.prenoms ?? ""}`.trim(),
+    Matricule: p.eleves?.matricule ?? "—",
+    Classe: p.eleves?.classes?.nom_classe ?? "—",
+    Site: p.eleves?.classes?.sites?.nom_site ?? "—",
+    Mois: p.mois_souscription,
+    Montant: p.montant_paye,
+    Mode: MODE_PAIEMENT_LABELS[p.mode_paiement],
+  }));
+
   const columns: DataTableColumn<PaiementRow>[] = [
     { key: "date", label: "Date", render: (p) => p.date_paiement },
     {
@@ -98,7 +115,20 @@ export default async function HistoriquePaiementsPage(
 
   return (
     <div>
-      <PageHeader title="Historique des paiements" subtitle={`${rows.length} paiement(s)`} />
+      <PageHeader
+        title="Historique des paiements"
+        subtitle={`${rows.length} paiement(s)`}
+        actions={
+          peutExporter ? (
+            <ExporterExcelButton
+              titre={`Historique des paiements — ${nomSiteTitre} — ${moisTitre} — ${dateExport}`}
+              lignes={lignesExport}
+              nomFichier={`Historique_paiements_${nomSiteTitre}_${moisTitre}_${dateExport}`.replace(/\s+/g, "_")}
+              nomFeuille="Paiements"
+            />
+          ) : undefined
+        }
+      />
       <PaiementsNav active="historique" role={scope.role} />
 
       <form method="get" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">

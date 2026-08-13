@@ -10,6 +10,7 @@ import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { NouvelleDepenseDialog } from "@/components/admin/comptabilite/NouvelleDepenseDialog";
 import { ModifierDepenseDialog } from "@/components/admin/comptabilite/ModifierDepenseDialog";
 import { SupprimerDepenseButton } from "@/components/admin/comptabilite/SupprimerDepenseButton";
+import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 import { EntreesSortiesChart } from "@/components/admin/comptabilite/EntreesSortiesChart";
 import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import { moisCourant } from "@/lib/paiements";
@@ -132,6 +133,15 @@ export default async function ComptabilitePage(
     sorties: sortiesParMois.get(m) ?? 0,
   }));
 
+  const moisTitre = moisFiltre ?? "Tous les mois";
+  const dateExport = new Date().toLocaleDateString("fr-FR");
+  const lignesExport = depensesKpi.map((d) => ({
+    Date: new Date(d.date_depense).toLocaleDateString("fr-FR"),
+    Catégorie: d.categories_depenses?.nom ?? "—",
+    Libellé: d.libelle,
+    Montant: Number(d.montant),
+  }));
+
   const columns: DataTableColumn<DepenseRow>[] = [
     { key: "date", label: "Date", render: (d) => new Date(d.date_depense).toLocaleDateString("fr-FR") },
     { key: "categorie", label: "Catégorie", render: (d) => d.categories_depenses?.nom ?? "—" },
@@ -161,7 +171,17 @@ export default async function ComptabilitePage(
       <PageHeader
         title="Comptabilité"
         subtitle="Vue consolidée entrées (paiements élèves) / sorties (rémunérations professeurs + dépenses annexes)"
-        actions={<NouvelleDepenseDialog categoriesInitiales={categories ?? []} anneeScolaireId={anneeSelectionnee.id} />}
+        actions={
+          <>
+            <NouvelleDepenseDialog categoriesInitiales={categories ?? []} anneeScolaireId={anneeSelectionnee.id} />
+            <ExporterExcelButton
+              titre={`Dépenses annexes — ${anneeSelectionnee.libelle} — ${moisTitre} — ${dateExport}`}
+              lignes={lignesExport}
+              nomFichier={`Depenses_annexes_${moisTitre}_${dateExport}`.replace(/\s+/g, "_")}
+              nomFeuille="Dépenses"
+            />
+          </>
+        }
       />
 
       <form method="get" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-xl">
