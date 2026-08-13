@@ -26,7 +26,7 @@ Seeding the first admin account (one-shot, service-role key required — never r
 SUPABASE_SERVICE_ROLE_KEY=xxx SEED_ADMIN_USERNAME=admin SEED_ADMIN_PASSWORD=xxx npx tsx scripts/seed-admin.ts
 ```
 
-SQL migrations live in `sql/` and are applied manually to Supabase in numeric order (`001_schema_public.sql` → `017_programmes_publics_rls.sql` as of this writing); there is no migration runner. **`015`/`016`/`017` are written but not yet applied anywhere** (neither the test Supabase nor the client's) — see "Historique et points ouverts" below before assuming `td.creneaux.classe_id` already points to `public.classes` in a live database.
+SQL migrations live in `sql/` and are applied manually to Supabase in numeric order (`001_schema_public.sql` → `017_programmes_publics_rls.sql` as of this writing); there is no migration runner. **`015`/`016`/`017` are applied on the client's Supabase (confirmed 2026-08-11) but NOT on the local test Supabase (`.env.local`)** — `td.classes_td` still exists there, so `npm run test:integration` fails and creating a TD créneau against the test DB breaks until someone applies the same 3 files there too. See "Historique et points ouverts" below.
 
 ## Current implementation state
 
@@ -49,10 +49,11 @@ All 7 core phases of `GSR_ARCHITECTURE.md` are now built, plus Portail TD, Compt
 Repères pour ne pas reperdre le contexte d'une session à l'autre. Le détail fin de chaque changement reste dans `git log` — cette section ne garde que les décisions, leur "pourquoi", et ce qui reste en suspens.
 
 ### En attente / à ne pas oublier
-- **`sql/015`/`016`/`017` écrits mais pas encore appliqués** — ni sur la base de test actuelle (`.env.local`), ni sur celle du client. Tant que `015` n'est pas appliqué : `npm run test:integration` échoue, et créer un créneau TD casse (l'ancienne FK vers `td.classes_td` n'existe plus côté code, mais la vraie base a encore l'ancien schéma).
+- **`sql/015`/`016`/`017` appliqués sur la base du client (confirmé 2026-08-11), mais toujours pas sur la base de test locale (`.env.local`)** — `td.classes_td` y existe encore. Tant que ce n'est pas fait là aussi : `npm run test:integration` échoue, et créer un créneau TD en dev casse (l'ancienne FK vers `td.classes_td` n'existe plus côté code, mais la base de test a encore l'ancien schéma).
 - **3 fichiers vitrine annoncent encore un horaire TD obsolète** ("Mercredi · Samedi · Dimanche", alors que la règle est "n'importe quel jour de la semaine" depuis fin juillet 2026) : `src/components/vitrine/BrochurePDF.tsx`, `src/app/(vitrine)/sites/page.tsx`, `src/components/vitrine/HomeClient.tsx`. Repéré plusieurs fois, jamais corrigé — en attente d'une décision utilisateur.
 - **Restriction des candidatures professeur par zone** : explicitement laissée de côté au moment de lier `td.creneaux` aux vraies classes — rien n'empêche aujourd'hui un professeur de postuler hors de sa zone d'affectation.
 - **`td.zones` et `public.sites` restent deux tables séparées** bien qu'elles se recouvrent (mêmes noms de sites) — pas unifiées, à reconsidérer si ça devient gênant.
+- **`public.matieres` et `td.matieres_td` sont deux tables indépendantes**, même précédent que `td.zones`/`public.sites`. `public.matieres` (10 matières, `sql/005_seed.sql`) est une liste fixe seedée une fois — aucun écran admin pour en ajouter/modifier, seulement lue (coefficients, notes). `td.matieres_td` a les mêmes 10 noms au départ mais est librement gérée par le coordonnateur (`creerMatiereTD`/`modifierMatiereTD`/`supprimerMatiereTD`, `/td/coord/config/matieres`) — les deux listes peuvent diverger sans avertissement.
 - **"Agent IA"** : item de menu grisé, scope jamais défini — ne pas construire sans reconfirmer avec l'utilisateur.
 - **Galerie vitrine publique** : contenu statique, pas branchée sur Supabase Storage — différé volontairement, à ne pas confondre avec la Galerie admin interne (`/admin/galerie`), elle terminée.
 - **4 documents livrables attendus par le client** (document client, guide utilisateur, contrat de maintenance, document ultra-technique pour un futur développeur humain) — pas commencés ; leur condition de déclenchement d'origine (migration Next 16 faite + infra dédiée client en place) est remplie.
@@ -71,6 +72,8 @@ Repères pour ne pas reperdre le contexte d'une session à l'autre. Le détail f
 - Deux contacts parents ajoutés (WhatsApp obligatoire pour au moins un des deux, format Bénin normalisé `+229 01 XX XX XX XX`).
 - Règle TD "semaine" assouplie : lundi→dimanche, n'importe quel jour autorisé pour un créneau (avant : Mercredi/Samedi/Dimanche uniquement).
 - `td.creneaux.classe_id` migré de la liste indépendante `td.classes_td` vers les vraies classes de l'école (`public.classes` — site + section réels, ex. "Terminale A" à Jéricho, pas juste "6ème" générique) : ça débloque un programme TD vraiment scopé par site, et corrige un bug où deux vraies sections de même niveau au même site ne pouvaient pas avoir de créneau à la même heure. Bug préexistant corrigé au passage dans `td.arbitrer_creneau()` (Règle A) : ne détectait qu'une égalité stricte d'heure de début, pas un vrai chevauchement d'intervalles horaires.
+- **Bug corrigé 2026-08-11 — inscription impossible avec un seul contact parent** : `PhoneInput` (react-international-phone) déclenche son `onChange` avec l'indicatif seul (ex. `+229`) dès qu'un champ contact reste vide au montage ou qu'on change de pays dans son sélecteur, sans qu'aucun chiffre n'ait été saisi. Le champ "resté vide" à l'écran n'était donc pas vraiment vide côté état React, et se faisait rejeter par la validation — alors que la règle voulue est qu'un seul des deux contacts suffit. `normaliserNumero()` (`src/lib/telephone.ts`) neutralise maintenant ce cas.
+- **CSP `img-src` élargie à `cdnjs.cloudflare.com`** (2026-08-11, `next.config.mjs`) : les drapeaux de `PhoneInput` chargent leurs SVG Twemoji depuis ce CDN — bloqués depuis l'audit sécurité du 10/08 car dépendance transitive non repérée par le grep initial (image cassée à l'écran, sur n'importe quel navigateur, rien à voir avec les polices emoji du système).
 
 ## Architecture
 
