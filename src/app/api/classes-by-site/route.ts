@@ -1,16 +1,20 @@
+import { z } from "zod";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope, siteInScope } from "@/lib/auth-scope";
+
+const SiteIdSchema = z.coerce.number().int().positive();
 
 /**
  * §6.1 GSR_ARCHITECTURE.md — Route Handler pour le chargement dynamique des
  * classes par site (AJAX depuis le formulaire d'inscription).
  */
 export async function GET(request: NextRequest) {
-  const siteId = request.nextUrl.searchParams.get("siteId");
-  if (!siteId) {
-    return NextResponse.json({ error: "siteId requis" }, { status: 400 });
+  const parsedSiteId = SiteIdSchema.safeParse(request.nextUrl.searchParams.get("siteId"));
+  if (!parsedSiteId.success) {
+    return NextResponse.json({ error: "siteId invalide" }, { status: 400 });
   }
+  const siteId = parsedSiteId.data;
 
   const supabase = await createClient();
   let scope;
@@ -20,7 +24,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
-  if (!siteInScope(scope, Number(siteId))) {
+  if (!siteInScope(scope, siteId)) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 403 });
   }
 

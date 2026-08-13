@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
@@ -5,6 +6,18 @@ import { getUserScope } from "@/lib/auth-scope";
 // Même périmètre que la fiche élève (/admin/eleves/[id]) — secretaire exclue
 // (dashboard uniquement, aucun droit sur les élèves).
 const ROLES_RECHERCHE_ELEVES = ["coordonnateur", "comptable", "superviseur", "chef_site"];
+
+// Liste blanche stricte : `q` est interpolé dans une chaîne de filtre
+// PostgREST (.or(), voir plus bas) qui a sa propre syntaxe (virgule, point,
+// parenthèses = caractères spéciaux). N'autoriser que lettres/chiffres/
+// espace/apostrophe/tiret élimine structurellement tout risque d'injection
+// dans ce mini-langage, plutôt que d'essayer d'échapper au cas par cas.
+const RechercheSchema = z
+  .string()
+  .trim()
+  .min(2)
+  .max(60)
+  .regex(/^[\p{L}0-9 '-]+$/u);
 
 /**
  * Recherche d'élèves actifs par nom, prénoms ou matricule — utilisée par
@@ -14,8 +27,9 @@ const ROLES_RECHERCHE_ELEVES = ["coordonnateur", "comptable", "superviseur", "ch
  * `superviseur`/`chef_site`.
  */
 export async function GET(request: NextRequest) {
-  const q = request.nextUrl.searchParams.get("q")?.trim();
-  if (!q || q.length < 2) return NextResponse.json([]);
+  const parsed = RechercheSchema.safeParse(request.nextUrl.searchParams.get("q") ?? "");
+  if (!parsed.success) return NextResponse.json([]);
+  const q = parsed.data;
 
   const supabase = await createClient();
   let scope;
