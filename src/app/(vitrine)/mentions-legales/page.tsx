@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { AlertTriangle } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Mentions légales | GSR",
@@ -16,13 +15,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-/**
- * Numéro IFU volontairement fictif (2026-08-12, à la demande explicite du
- * client — entreprise individuelle pas encore enregistrée) : callout visible
- * ci-dessous ET valeur non plausible, pour qu'un oubli avant publication
- * saute aux yeux plutôt que de passer pour un vrai numéro.
- */
-const IFU_PLACEHOLDER = "0000000000000 (À REMPLACER)";
+
+const IFU_PLACEHOLDER = "";
 
 export default function MentionsLegalesPage() {
   return (
@@ -38,13 +32,7 @@ export default function MentionsLegalesPage() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-        <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 text-orange-800 text-sm rounded-lg px-4 py-3 mb-10">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          <p>
-            Le numéro IFU ci-dessous est un numéro fictif de remplacement, en attendant l&apos;enregistrement officiel de
-            l&apos;entreprise. À corriger avant toute communication officielle de cette page.
-          </p>
-        </div>
+  
 
         <Section title="Éditeur du site">
           <p>Le présent site est édité par le Groupe Secret de la Réussite (GSR), entreprise individuelle.</p>
