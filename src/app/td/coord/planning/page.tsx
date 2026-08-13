@@ -11,6 +11,7 @@ import { NouvelleSemaineTDDialog } from "@/components/td/NouvelleSemaineTDDialog
 import { NouveauCreneauTDDialog } from "@/components/td/NouveauCreneauTDDialog";
 import { SemaineActionsTD } from "@/components/td/SemaineActionsTD";
 import { SupprimerCreneauTDButton } from "@/components/td/SupprimerCreneauTDButton";
+import { LibererCreneauTDDialog } from "@/components/td/LibererCreneauTDDialog";
 
 interface SemaineRow {
   id: number;
@@ -167,6 +168,9 @@ export default async function PlanningTDPage(props: { searchParams: Promise<{ se
                         <div className="flex items-center gap-2">
                           <Badge variant={badge.variant}>{badge.label}</Badge>
                           {c.statut_creneau === "brouillon" && <SupprimerCreneauTDButton creneauId={c.id} />}
+                          {c.statut_creneau === "cloture" && semaineActive.statut !== "cloturee" && (
+                            <LibererCreneauTDDialog creneauId={c.id} />
+                          )}
                         </div>
                       </div>
                     );

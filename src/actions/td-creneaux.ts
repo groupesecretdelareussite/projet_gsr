@@ -96,3 +96,114 @@ export async function supprimerCreneauTD(creneauId: number): Promise<{ error?: s
   revalidatePlanning();
   return {};
 }
+
+function chevauchent(
+  a: { date_td: string; heure_debut: string; heure_fin: string },
+  b: { date_td: string; heure_debut: string; heure_fin: string }
+): boolean {
+  return a.date_td === b.date_td && a.heure_debut < b.heure_fin && a.heure_fin > b.heure_debut;
+}
+
+/**
+ * Désistement d'un professeur validé (discussion 2026-08-12) — décision
+ * exclusivement coordonnateur : le professeur prévient par téléphone/
+ * WhatsApp, pas de self-service côté prof. Rouvre le créneau parmi les
+ * candidats initiaux qui sont ENCORE réellement disponibles — certains ont pu
+ * depuis être validés ailleurs sur un créneau qui chevauche celui-ci ; ceux-là
+ * restent `Refuse` plutôt que d'être remis en jeu. `arbitrer_creneau()`
+ * (sql/018) porte le même garde-fou de son côté, indépendamment de la
+ * fraîcheur de cette liste.
+ */
+export async function libererCreneauTD(creneauId: number, motif: string): Promise<{ error?: string }> {
+  await getScopeAndAssert();
+  if (!motif.trim()) return { error: "Un motif est requis." };
+
+  const supabaseAdmin = createServiceRoleClient();
+
+  const { data: creneau } = await supabaseAdmin
+    .schema("td")
+    .from("creneaux")
+    .select("statut_creneau, semaine_id, date_td, heure_debut, heure_fin")
+    .eq("id", creneauId)
+    .single();
+  if (!creneau || creneau.statut_creneau !== "cloture") {
+    return { error: "Seul un créneau clôturé peut être libéré." };
+  }
+
+  const { data: semaine } = await supabaseAdmin.schema("td").from("semaines").select("statut").eq("id", creneau.semaine_id).single();
+  if (!semaine || semaine.statut === "cloturee") {
+    return { error: "Cette semaine est déjà clôturée, impossible de revenir sur ce créneau." };
+  }
+
+  const { data: postulationValidee } = await supabaseAdmin
+    .schema("td")
+    .from("postulations")
+    .select("id")
+    .eq("creneau_id", creneauId)
+    .eq("statut_validation", "Valide")
+    .maybeSingle();
+  if (!postulationValidee) {
+    return { error: "Ce créneau n'a pas de professeur validé à libérer." };
+  }
+
+  const { error: erreurRetrait } = await supabaseAdmin
+    .schema("td")
+    .from("postulations")
+    .update({ statut_validation: "Retiree", motif_retrait: motif.trim() })
+    .eq("id", postulationValidee.id);
+  if (erreurRetrait) return { error: erreurRetrait.message };
+
+  const { data: autresCandidats } = await supabaseAdmin
+    .schema("td")
+    .from("postulations")
+    .select("id, professeur_id")
+    .eq("creneau_id", creneauId)
+    .eq("statut_validation", "Refuse");
+
+  if (autresCandidats && autresCandidats.length > 0) {
+    const idsProfsCandidats = autresCandidats.map((c) => c.professeur_id);
+
+    const { data: postulationsValideesAilleurs } = await supabaseAdmin
+      .schema("td")
+      .from("postulations")
+      .select("professeur_id, creneau_id")
+      .in("professeur_id", idsProfsCandidats)
+      .eq("statut_validation", "Valide");
+
+    const idsCreneauxAVerifier = [...new Set((postulationsValideesAilleurs ?? []).map((p) => p.creneau_id))];
+    const { data: creneauxAVerifier } = idsCreneauxAVerifier.length
+      ? await supabaseAdmin.schema("td").from("creneaux").select("id, date_td, heure_debut, heure_fin").in("id", idsCreneauxAVerifier)
+      : { data: [] as { id: number; date_td: string; heure_debut: string; heure_fin: string }[] };
+    const creneauParId = new Map((creneauxAVerifier ?? []).map((c) => [c.id, c]));
+
+    const idsProfsIndisponibles = new Set(
+      (postulationsValideesAilleurs ?? [])
+        .filter((p) => {
+          const autreCreneau = creneauParId.get(p.creneau_id);
+          return autreCreneau && chevauchent(autreCreneau, creneau);
+        })
+        .map((p) => p.professeur_id)
+    );
+
+    const idsARouvrir = autresCandidats.filter((c) => !idsProfsIndisponibles.has(c.professeur_id)).map((c) => c.id);
+    if (idsARouvrir.length > 0) {
+      const { error: erreurReouverture } = await supabaseAdmin
+        .schema("td")
+        .from("postulations")
+        .update({ statut_validation: "En attente" })
+        .in("id", idsARouvrir);
+      if (erreurReouverture) return { error: erreurReouverture.message };
+    }
+  }
+
+  const { error: erreurReouvertureCreneau } = await supabaseAdmin
+    .schema("td")
+    .from("creneaux")
+    .update({ statut_creneau: "public" })
+    .eq("id", creneauId);
+  if (erreurReouvertureCreneau) return { error: erreurReouvertureCreneau.message };
+
+  revalidatePlanning();
+  revalidatePath("/td/coord/arbitrage");
+  return {};
+}

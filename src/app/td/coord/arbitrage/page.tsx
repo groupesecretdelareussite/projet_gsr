@@ -60,6 +60,7 @@ export default async function ArbitrageTDPage() {
       .from("postulations")
       .select("id, creneau_id, professeur_id, statut_validation")
       .in("creneau_id", idsCreneaux)
+      .eq("statut_validation", "En attente")
       .order("date_postulation");
     postulations = (data ?? []) as PostulationRow[];
   }

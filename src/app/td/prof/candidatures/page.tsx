@@ -20,6 +20,7 @@ const STATUT_BADGE: Record<string, { label: string; variant: "neutral" | "succes
   "En attente": { label: "En attente", variant: "neutral" },
   Valide: { label: "Validée", variant: "success" },
   Refuse: { label: "Refusée", variant: "danger" },
+  Retiree: { label: "Retirée par le coordonnateur", variant: "danger" },
 };
 
 /** §10.7 GSR_ARCHITECTURE.md — créneaux ouverts aux candidatures (semaine publiée + créneau public). */

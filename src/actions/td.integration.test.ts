@@ -17,7 +17,7 @@ vi.mock("@/lib/session-td", () => ({
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 import { creerSemaineTD, publierSemaineTD, cloturerSemaineTD } from "./td-semaines";
-import { creerCreneauTD } from "./td-creneaux";
+import { creerCreneauTD, libererCreneauTD } from "./td-creneaux";
 import { traiterArbitrageTD } from "./td-arbitrage";
 import { soumettrePostulationTD } from "./td-postulations";
 
@@ -79,6 +79,7 @@ describe("Portail TD — intégration Niveau 3 (réseau réel)", () => {
   let classeBId: number;
   let prof1Id: number;
   let prof2Id: number;
+  let prof3Id: number;
   const dateTd = prochainLundi();
 
   beforeAll(async () => {
@@ -113,6 +114,7 @@ describe("Portail TD — intégration Niveau 3 (réseau réel)", () => {
 
     prof1Id = await creerOuRecupererProfesseurTest(admin, "testauto-prof1@gsr-tests.local", "+22900000091", zoneId, matiereId);
     prof2Id = await creerOuRecupererProfesseurTest(admin, "testauto-prof2@gsr-tests.local", "+22900000092", zoneId, matiereId);
+    prof3Id = await creerOuRecupererProfesseurTest(admin, "testauto-prof3@gsr-tests.local", "+22900000093", zoneId, matiereId);
   });
 
   afterEach(async () => {
@@ -231,4 +233,74 @@ describe("Portail TD — intégration Niveau 3 (réseau réel)", () => {
     const { data: postulation } = await admin.schema("td").from("postulations").select("statut_validation").eq("creneau_id", creneauId).single();
     expect(postulation!.statut_validation).toBe("Refuse");
   });
+
+  it("libererCreneauTD : rouvre un créneau clôturé uniquement aux candidats encore réellement disponibles (§discussion 2026-08-12)", async () => {
+    const libelle = `${PREFIXE} liberation`;
+    expect((await creerSemaineTD({ libelle, dateDebut: dateTd })).error).toBeUndefined();
+
+    const { data: semaine } = await admin.schema("td").from("semaines").select("id").eq("libelle", libelle).single();
+    const semaineId = semaine!.id;
+
+    // Créneau D chevauche A (15h-17h vs 14h-16h) — sert à occuper prof2 ailleurs après son refus sur A.
+    expect(
+      (await creerCreneauTD({ semaineId, classeId: classeAId, matiereId, dateTd, heureDebut: "14:00", heureFin: "16:00", montantPrevu: 5000 }))
+        .error
+    ).toBeUndefined();
+    expect(
+      (await creerCreneauTD({ semaineId, classeId: classeBId, matiereId, dateTd, heureDebut: "15:00", heureFin: "17:00", montantPrevu: 5000 }))
+        .error
+    ).toBeUndefined();
+
+    const { data: creneauA } = await admin.schema("td").from("creneaux").select("id").eq("semaine_id", semaineId).eq("classe_id", classeAId).single();
+    const { data: creneauD } = await admin.schema("td").from("creneaux").select("id").eq("semaine_id", semaineId).eq("classe_id", classeBId).single();
+    const creneauAId = creneauA!.id;
+    const creneauDId = creneauD!.id;
+
+    expect((await publierSemaineTD(semaineId)).error).toBeUndefined();
+
+    // prof1, prof2, prof3 postulent tous sur A ; prof2 postule aussi sur D.
+    currentProfesseurId = prof1Id;
+    expect((await soumettrePostulationTD(creneauAId)).error).toBeUndefined();
+    currentProfesseurId = prof2Id;
+    expect((await soumettrePostulationTD(creneauAId)).error).toBeUndefined();
+    expect((await soumettrePostulationTD(creneauDId)).error).toBeUndefined();
+    currentProfesseurId = prof3Id;
+    expect((await soumettrePostulationTD(creneauAId)).error).toBeUndefined();
+
+    // A est arbitré pour prof1 — prof2 et prof3 sont refusés dessus.
+    expect((await traiterArbitrageTD(creneauAId, prof1Id)).error).toBeUndefined();
+    // D est arbitré pour prof2, qui devient donc validé ailleurs sur un horaire qui chevauche A.
+    expect((await traiterArbitrageTD(creneauDId, prof2Id)).error).toBeUndefined();
+
+    const statutSur = async (creneauId: number, professeurId: number) => {
+      const { data } = await admin
+        .schema("td")
+        .from("postulations")
+        .select("statut_validation")
+        .eq("creneau_id", creneauId)
+        .eq("professeur_id", professeurId)
+        .single();
+      return data!.statut_validation;
+    };
+
+    // prof1 se désiste : le coordonnateur libère A.
+    expect((await libererCreneauTD(creneauAId, "Le professeur a prévenu par WhatsApp qu'il est indisponible."))).toEqual({});
+
+    expect(await statutSur(creneauAId, prof1Id)).toBe("Retiree");
+    // prof2 est désormais validé sur D (chevauche A) — ne doit PAS être remis en jeu sur A.
+    expect(await statutSur(creneauAId, prof2Id)).toBe("Refuse");
+    // prof3 n'a aucun conflit — redevient un candidat disponible.
+    expect(await statutSur(creneauAId, prof3Id)).toBe("En attente");
+
+    const { data: creneauAApresLiberation } = await admin.schema("td").from("creneaux").select("statut_creneau").eq("id", creneauAId).single();
+    expect(creneauAApresLiberation!.statut_creneau).toBe("public");
+
+    // Filet de sécurité : impossible de revalider prof2 sur A malgré la liste rouverte.
+    const tentativeConflit = await traiterArbitrageTD(creneauAId, prof2Id);
+    expect(tentativeConflit.error).toContain("chevauche");
+
+    // prof3, réellement libre, peut être validé normalement.
+    expect((await traiterArbitrageTD(creneauAId, prof3Id)).error).toBeUndefined();
+    expect(await statutSur(creneauAId, prof3Id)).toBe("Valide");
+  }, 20000);
 });
