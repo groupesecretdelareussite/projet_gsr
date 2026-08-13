@@ -12,6 +12,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/apropos", priority: 0.6, frequency: "monthly" as const },
     { path: "/actualites", priority: 0.7, frequency: "weekly" as const },
     { path: "/galerie", priority: 0.5, frequency: "monthly" as const },
+    { path: "/mentions-legales", priority: 0.2, frequency: "yearly" as const },
   ];
 
   return pages.map((p) => ({
