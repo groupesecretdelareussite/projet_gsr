@@ -93,6 +93,16 @@ jobs:
             CREATE OR REPLACE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS 'SELECT NULL::text';
             CREATE OR REPLACE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS 'SELECT NULL::jsonb';
           "
+          # Certaines policies RLS ciblent explicitement les rôles Supabase
+          # standards par leur nom (ex. CREATE POLICY ... TO anon, sql/017) —
+          # Postgres exige que le rôle existe pour recréer la policy, même
+          # dans ce conteneur jetable. Rôles NOLOGIN, jamais utilisés pour se
+          # connecter ici : juste pour satisfaire la référence.
+          "$PSQL" -h localhost -U postgres -v ON_ERROR_STOP=1 -q -c "
+            CREATE ROLE anon NOLOGIN;
+            CREATE ROLE authenticated NOLOGIN;
+            CREATE ROLE service_role NOLOGIN;
+          "
           # public.users référence auth.users(id) par clé étrangère — schéma
           # volontairement absent de la sauvegarde (comptes Supabase Auth,
           # hors périmètre). On retire cette contrainte précise du flux avant
