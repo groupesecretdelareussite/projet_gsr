@@ -7,6 +7,7 @@ import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 import { calculerMoyenneMatiere, calculerMoyenneGenerale, type NoteMatiere } from "@/lib/moyennes";
+import { SEMESTRES, type Semestre } from "@/lib/constants";
 
 interface EleveRow {
   id: number;
@@ -20,18 +21,21 @@ interface MatiereRef {
 }
 
 /**
- * §Notes > Moyennes — estimation en temps réel, calculée sur les notes
- * actuellement saisies (pas d'attente de fin de semestre). Réservé aux mêmes
- * rôles que Notes (coordonnateur/comptable/superviseur/chef_site).
+ * §Notes > Moyennes — estimation en temps réel du semestre sélectionné,
+ * calculée sur les notes actuellement saisies (pas d'attente de la clôture).
+ * Réservé aux mêmes rôles que Notes (coordonnateur/comptable/superviseur/
+ * chef_site). Le registre officiel figé par semestre + la moyenne annuelle
+ * (MA) sont sur /admin/notes/suivi-moyennes (coordonnateur).
  */
 export default async function MoyennesPage(
   props: {
-    searchParams: Promise<{ site_id?: string; classe_id?: string }>;
+    searchParams: Promise<{ site_id?: string; classe_id?: string; semestre?: string }>;
   }
 ) {
   const searchParams = await props.searchParams;
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
+  const semestre: Semestre = searchParams.semestre === "2" ? 2 : 1;
 
   if (!["coordonnateur", "comptable", "superviseur", "chef_site"].includes(scope.role)) {
     return (
@@ -77,6 +81,7 @@ export default async function MoyennesPage(
         .from("notes")
         .select("eleve_id, matiere_id, type_note, valeur")
         .eq("annee_scolaire_id", anneeEnCours.id)
+        .eq("semestre", semestre)
         .in("eleve_id", eleves.map((e) => e.id));
 
       for (const n of notesData ?? []) {
@@ -134,9 +139,9 @@ export default async function MoyennesPage(
 
   return (
     <div>
-      <PageHeader title="Moyennes" subtitle="Estimation en temps réel à partir des notes déjà saisies" />
+      <PageHeader title="Moyennes" subtitle={`Estimation en temps réel — Semestre ${semestre}`} />
 
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 max-w-xl">
+      <form method="get" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-2xl">
         <select name="site_id" defaultValue={siteIdEffectif ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
           <option value="">Tous les sites</option>
           {sites?.map((s) => (
@@ -150,6 +155,13 @@ export default async function MoyennesPage(
           {classesFiltrees.map((c) => (
             <option key={c.id} value={c.id}>
               {siteIdEffectif ? c.nom_classe : `${c.nom_classe} — ${nomSiteParId.get(c.site_id) ?? "?"}`}
+            </option>
+          ))}
+        </select>
+        <select name="semestre" defaultValue={String(semestre)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+          {SEMESTRES.map((s) => (
+            <option key={s} value={s}>
+              Semestre {s}
             </option>
           ))}
         </select>

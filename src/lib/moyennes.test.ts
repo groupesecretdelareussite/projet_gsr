@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { calculerMoyenneMatiere, calculerMoyenneGenerale } from "./moyennes";
+import { calculerMoyenneMatiere, calculerMoyenneGenerale, calculerMoyenneAnnuelle } from "./moyennes";
 
 describe("calculerMoyenneMatiere", () => {
   it("applique la formule complète : MI puis MM puis MC", () => {
@@ -83,5 +83,18 @@ describe("calculerMoyenneGenerale", () => {
     const resultat = calculerMoyenneGenerale(matieres);
     expect(resultat.moyenneGenerale).toBeNull();
     expect(resultat.nombreMatieresPrisesEnCompte).toBe(0);
+  });
+});
+
+describe("calculerMoyenneAnnuelle", () => {
+  it("pondère le second semestre double : MA = (MS1 + MS2×2) / 3", () => {
+    // (12 + 15*2) / 3 = 14
+    expect(calculerMoyenneAnnuelle(12, 15)).toBeCloseTo(14, 5);
+  });
+
+  it("retourne null si un des deux semestres n'est pas clôturé", () => {
+    expect(calculerMoyenneAnnuelle(null, 15)).toBeNull();
+    expect(calculerMoyenneAnnuelle(12, null)).toBeNull();
+    expect(calculerMoyenneAnnuelle(null, null)).toBeNull();
   });
 });

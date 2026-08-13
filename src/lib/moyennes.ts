@@ -72,3 +72,12 @@ export function calculerMoyenneGenerale(matieres: MatiereEvaluee[]): MoyenneGene
     coefficientTotal,
   };
 }
+
+/**
+ * MA = (MS1 + MS2×2) / 3 — le second semestre compte double. `null` si l'un
+ * des deux semestres n'a pas encore été clôturé (sql/019).
+ */
+export function calculerMoyenneAnnuelle(ms1: number | null, ms2: number | null): number | null {
+  if (ms1 === null || ms2 === null) return null;
+  return (ms1 + ms2 * 2) / 3;
+}

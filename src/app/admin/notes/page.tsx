@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { NotebookText, Calculator } from "lucide-react";
+import { NotebookText, Calculator, ClipboardList } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -8,15 +8,17 @@ import { Button } from "@/components/ui/button";
 import { NotesGrid, type EleveOption, type MatiereOption, type NoteExistante } from "@/components/admin/notes/NotesGrid";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
+import { SEMESTRES, type Semestre } from "@/lib/constants";
 
 export default async function NotesPage(
   props: {
-    searchParams: Promise<{ site_id?: string; classe_id?: string }>;
+    searchParams: Promise<{ site_id?: string; classe_id?: string; semestre?: string }>;
   }
 ) {
   const searchParams = await props.searchParams;
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
+  const semestre: Semestre = searchParams.semestre === "2" ? 2 : 1;
 
   if (!["coordonnateur", "comptable", "superviseur", "chef_site"].includes(scope.role)) {
     return (
@@ -61,6 +63,7 @@ export default async function NotesPage(
         .from("notes")
         .select("eleve_id, matiere_id, type_note, valeur")
         .eq("annee_scolaire_id", anneeEnCours.id)
+        .eq("semestre", semestre)
         .in(
           "eleve_id",
           eleves.map((e) => e.id)
@@ -75,16 +78,26 @@ export default async function NotesPage(
         title="Notes"
         subtitle="Saisie par matière, sauvegarde automatique"
         actions={
-          <Link href="/admin/notes/moyennes">
-            <Button variant="outline" size="sm">
-              <Calculator className="w-3.5 h-3.5" />
-              Moyennes
-            </Button>
-          </Link>
+          <>
+            <Link href="/admin/notes/moyennes">
+              <Button variant="outline" size="sm">
+                <Calculator className="w-3.5 h-3.5" />
+                Moyennes
+              </Button>
+            </Link>
+            {scope.role === "coordonnateur" && (
+              <Link href="/admin/notes/suivi-moyennes">
+                <Button variant="outline" size="sm">
+                  <ClipboardList className="w-3.5 h-3.5" />
+                  Suivi Moyennes
+                </Button>
+              </Link>
+            )}
+          </>
         }
       />
 
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 max-w-xl">
+      <form method="get" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-2xl">
         <select
           name="site_id"
           defaultValue={siteIdEffectif ?? ""}
@@ -109,6 +122,13 @@ export default async function NotesPage(
             </option>
           ))}
         </select>
+        <select name="semestre" defaultValue={String(semestre)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+          {SEMESTRES.map((s) => (
+            <option key={s} value={s}>
+              Semestre {s}
+            </option>
+          ))}
+        </select>
         <AutoSubmitOnChange />
       </form>
 
@@ -122,10 +142,12 @@ export default async function NotesPage(
         <EmptyState icon={NotebookText} title="Aucune matière active" description="Activez au moins une matière dans les données de référence." />
       ) : (
         <NotesGrid
+          key={`${classeId}-${semestre}`}
           eleves={eleves}
           matieres={(matieres ?? []) as MatiereOption[]}
           notesExistantes={notesExistantes}
           anneeScolaireId={anneeEnCours.id}
+          semestre={semestre}
         />
       )}
     </div>

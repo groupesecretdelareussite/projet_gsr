@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope, type UserScope } from "@/lib/auth-scope";
-import type { UserRole, TypeNote } from "@/lib/constants";
+import type { UserRole, TypeNote, Semestre } from "@/lib/constants";
 
 const ROLES_NOTES: UserRole[] = ["coordonnateur", "comptable", "superviseur", "chef_site"];
 
@@ -21,6 +21,7 @@ export interface UpsertNoteInput {
   typeNote: TypeNote;
   valeur: number;
   anneeScolaireId: number;
+  semestre: Semestre;
 }
 
 /**
@@ -44,8 +45,9 @@ export async function upsertNote(input: UpsertNoteInput): Promise<{ error?: stri
       type_note: input.typeNote,
       valeur: input.valeur,
       annee_scolaire_id: input.anneeScolaireId,
+      semestre: input.semestre,
     },
-    { onConflict: "eleve_id,matiere_id,type_note,annee_scolaire_id" }
+    { onConflict: "eleve_id,matiere_id,type_note,annee_scolaire_id,semestre" }
   );
 
   if (error) return { error: error.message };

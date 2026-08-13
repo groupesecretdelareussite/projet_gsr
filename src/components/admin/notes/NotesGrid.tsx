@@ -4,7 +4,7 @@ import { useState, useRef, useTransition } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { upsertNote } from "@/actions/notes";
-import { TYPES_NOTE, TYPE_NOTE_LABELS, type TypeNote } from "@/lib/constants";
+import { TYPES_NOTE, TYPE_NOTE_LABELS, type TypeNote, type Semestre } from "@/lib/constants";
 
 export interface EleveOption {
   id: number;
@@ -36,11 +36,13 @@ export function NotesGrid({
   matieres,
   notesExistantes,
   anneeScolaireId,
+  semestre,
 }: {
   eleves: EleveOption[];
   matieres: MatiereOption[];
   notesExistantes: NoteExistante[];
   anneeScolaireId: number;
+  semestre: Semestre;
 }) {
   const [matiereActiveId, setMatiereActiveId] = useState(matieres[0]?.id);
   const [isPending, startTransition] = useTransition();
@@ -81,7 +83,7 @@ export function NotesGrid({
 
     setStatut(key, "saving");
     startTransition(async () => {
-      const result = await upsertNote({ eleveId, matiereId, typeNote, valeur, anneeScolaireId });
+      const result = await upsertNote({ eleveId, matiereId, typeNote, valeur, anneeScolaireId, semestre });
       if (result.error) {
         setStatut(key, "error");
         toast.error(result.error);

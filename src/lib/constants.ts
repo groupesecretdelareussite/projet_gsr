@@ -66,3 +66,6 @@ export const TYPE_NOTE_LABELS: Record<TypeNote, string> = {
   D2: "Devoir 2",
   Ctrl: "Contrôle",
 };
+
+export const SEMESTRES = [1, 2] as const;
+export type Semestre = (typeof SEMESTRES)[number];
