@@ -1,5 +1,6 @@
 "use server";
 
+import * as XLSX from "xlsx";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
@@ -7,6 +8,7 @@ import { getUserScope, siteInScope } from "@/lib/auth-scope";
 import { genererMatricule } from "@/lib/matricule";
 import { estVenuDansLeMois, PENALITE_REINSCRIPTION_MONTANT } from "@/lib/reinscription";
 import { normaliserNumero, validerNumeroTelephone } from "@/lib/telephone";
+import { validerLigneImport, type LigneImportBrute } from "@/lib/import-eleves";
 import type { MoisScolaire, ModePaiement } from "@/lib/constants";
 
 const ROLES_GESTION_ELEVES = ["coordonnateur", "comptable", "superviseur"] as const;
@@ -177,6 +179,154 @@ export async function modifierEleve(input: ModifierEleveInput): Promise<{ error?
 
   revalidatePath("/admin/eleves/liste");
   return {};
+}
+
+const TAILLE_MAX_IMPORT = 5 * 1024 * 1024; // 5 Mo
+const LIGNES_MAX_IMPORT = 2000;
+
+export interface LigneIgnoree {
+  ligne: number;
+  nom: string;
+  prenoms: string;
+  raison: string;
+}
+
+export interface ImporterElevesResultat {
+  error?: string;
+  inseres?: number;
+  ignores?: LigneIgnoree[];
+}
+
+function celluleTexte(valeur: unknown): string {
+  return valeur === undefined || valeur === null ? "" : String(valeur).trim();
+}
+
+/**
+ * Import en masse depuis le modèle Excel téléchargeable (ENTETES_MODELE_IMPORT,
+ * import-eleves.ts) — inspiré de l'ancien import_eleves.php, adapté au schéma
+ * actuel (deux contacts, format international, matricule généré). Traite les
+ * lignes séquentiellement (pas en parallèle) : la génération du matricule et
+ * la détection de doublon doivent voir l'état de la base au fur et à mesure,
+ * y compris les lignes déjà insérées plus tôt dans le même fichier.
+ */
+export async function importerEleves(formData: FormData): Promise<ImporterElevesResultat> {
+  const scope = await getScopeAndAssert();
+
+  const fichier = formData.get("fichier");
+  if (!(fichier instanceof File) || fichier.size === 0) {
+    return { error: "Fichier requis" };
+  }
+  if (fichier.size > TAILLE_MAX_IMPORT) {
+    return { error: "Le fichier dépasse 5 Mo" };
+  }
+  if (!fichier.name.toLowerCase().endsWith(".xlsx")) {
+    return { error: "Format non supporté — utilisez le modèle .xlsx fourni" };
+  }
+
+  let lignesBrutes: unknown[][];
+  try {
+    const classeur = XLSX.read(await fichier.arrayBuffer(), { type: "buffer" });
+    const feuille = classeur.Sheets[classeur.SheetNames[0]];
+    lignesBrutes = XLSX.utils.sheet_to_json<unknown[]>(feuille, { header: 1 });
+  } catch {
+    return { error: "Fichier illisible — utilisez le modèle .xlsx fourni" };
+  }
+
+  const lignesDonnees = lignesBrutes.slice(1); // ligne 1 = en-têtes
+  if (lignesDonnees.length === 0) return { error: "Fichier vide" };
+  if (lignesDonnees.length > LIGNES_MAX_IMPORT) {
+    return { error: `Le fichier dépasse ${LIGNES_MAX_IMPORT} lignes` };
+  }
+
+  const supabaseAdmin = createServiceRoleClient();
+
+  const { data: classesData } = await supabaseAdmin
+    .from("classes")
+    .select("id, nom_classe, site_id, sites(nom_site, initiale)");
+
+  const classeParCle = new Map<string, { id: number; site_id: number; initiale: string }>();
+  for (const c of classesData ?? []) {
+    const site = (c as unknown as { sites: { nom_site: string; initiale: string } }).sites;
+    const cle = `${site.nom_site.trim().toUpperCase()}|${c.nom_classe.trim().toUpperCase()}`;
+    classeParCle.set(cle, { id: c.id, site_id: c.site_id, initiale: site.initiale });
+  }
+
+  const ignores: LigneIgnoree[] = [];
+  let inseres = 0;
+
+  for (let i = 0; i < lignesDonnees.length; i++) {
+    const numeroLigne = i + 2; // ligne 1 = en-têtes, donc la 1ère donnée est la ligne 2
+    const cellules = lignesDonnees[i] ?? [];
+
+    const brut: LigneImportBrute = {
+      nom: celluleTexte(cellules[0]),
+      prenoms: celluleTexte(cellules[1]),
+      contactParent: celluleTexte(cellules[2]),
+      contactParent2: celluleTexte(cellules[3]),
+      college: celluleTexte(cellules[4]),
+      site: celluleTexte(cellules[5]),
+      classe: celluleTexte(cellules[6]),
+      option: celluleTexte(cellules[7]),
+    };
+
+    if (!brut.nom && !brut.prenoms && !brut.site && !brut.classe) continue; // ligne vide
+
+    const { valeurs, erreur } = validerLigneImport(brut);
+    if (erreur || !valeurs) {
+      ignores.push({ ligne: numeroLigne, nom: brut.nom, prenoms: brut.prenoms, raison: erreur ?? "Ligne invalide" });
+      continue;
+    }
+
+    try {
+      const cle = `${valeurs.site.toUpperCase()}|${valeurs.classe.toUpperCase()}`;
+      const classeInfo = classeParCle.get(cle);
+      if (!classeInfo) {
+        ignores.push({ ligne: numeroLigne, nom: valeurs.nom, prenoms: valeurs.prenoms, raison: "Classe ou site introuvable" });
+        continue;
+      }
+      if (!siteInScope(scope, classeInfo.site_id)) {
+        ignores.push({ ligne: numeroLigne, nom: valeurs.nom, prenoms: valeurs.prenoms, raison: "Non autorisé sur ce site" });
+        continue;
+      }
+
+      const { count } = await supabaseAdmin
+        .from("eleves")
+        .select("*", { count: "exact", head: true })
+        .eq("nom", valeurs.nom)
+        .eq("college", valeurs.college)
+        .ilike("prenoms", valeurs.prenoms);
+      if ((count ?? 0) > 0) {
+        ignores.push({ ligne: numeroLigne, nom: valeurs.nom, prenoms: valeurs.prenoms, raison: "Doublon détecté" });
+        continue;
+      }
+
+      const matricule = await genererMatricule(supabaseAdmin, classeInfo.initiale);
+
+      const { error } = await supabaseAdmin.from("eleves").insert({
+        matricule,
+        nom: valeurs.nom,
+        prenoms: valeurs.prenoms,
+        contact_parent: valeurs.contactParent,
+        contact_parent_2: valeurs.contactParent2,
+        classe_id: classeInfo.id,
+        college: valeurs.college,
+        option_m: valeurs.optionM,
+        statut: "actif",
+      });
+
+      if (error) {
+        ignores.push({ ligne: numeroLigne, nom: valeurs.nom, prenoms: valeurs.prenoms, raison: "Erreur d'enregistrement" });
+        continue;
+      }
+
+      inseres++;
+    } catch {
+      ignores.push({ ligne: numeroLigne, nom: valeurs.nom, prenoms: valeurs.prenoms, raison: "Erreur imprévue" });
+    }
+  }
+
+  revalidatePath("/admin/eleves/liste");
+  return { inseres, ignores };
 }
 
 const RAISONS_MANUELLES = ["maladie", "renvoi", "autre"] as const;

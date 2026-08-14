@@ -10,7 +10,7 @@ vi.mock("@/lib/auth-scope", async () => {
 });
 
 import { getUserScope } from "@/lib/auth-scope";
-import { suspendreEleve, inscrireEleve } from "./eleves";
+import { suspendreEleve, inscrireEleve, importerEleves } from "./eleves";
 
 function makeScope(overrides: Partial<UserScope>): UserScope {
   return {
@@ -52,6 +52,32 @@ describe("inscrireEleve — garde de rôle", () => {
         college: "COLLEGE TEST",
       })
     ).rejects.toThrow("Non autorisé");
+  });
+});
+
+describe("importerEleves — garde de rôle", () => {
+  it.each(["chef_site", "secretaire"] as const)("rejette le rôle %s", async (role) => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role, isGlobal: false, siteId: 1 }));
+
+    await expect(importerEleves(new FormData())).rejects.toThrow("Non autorisé");
+  });
+});
+
+describe("importerEleves — validations avant lecture du fichier", () => {
+  it("rejette l'absence de fichier", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({}));
+
+    const result = await importerEleves(new FormData());
+    expect(result.error).toBe("Fichier requis");
+  });
+
+  it("rejette un format qui n'est pas .xlsx", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({}));
+
+    const formData = new FormData();
+    formData.set("fichier", new File(["contenu"], "eleves.csv"));
+    const result = await importerEleves(formData);
+    expect(result.error).toBe("Format non supporté — utilisez le modèle .xlsx fourni");
   });
 });
 
