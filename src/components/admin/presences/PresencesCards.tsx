@@ -1,24 +1,18 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, X, FileSpreadsheet } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Check, X } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "xlsx";
 import { cn } from "@/lib/utils";
-import { upsertPresence, marquerTousPresence } from "@/actions/presences";
+import { Button } from "@/components/ui/button";
+import { enregistrerAppelDuJour } from "@/actions/presences";
 
 export interface EleveOption {
   id: number;
   nom: string;
   prenoms: string;
 }
-
-export interface PresenceExistante {
-  eleve_id: number;
-  present: boolean;
-}
-
-type CarteStatut = "idle" | "saving" | "error";
 
 function CompteurCirculaire({ presents, total }: { presents: number; total: number }) {
   const rayon = 30;
@@ -52,91 +46,59 @@ function CompteurCirculaire({ presents, total }: { presents: number; total: numb
   );
 }
 
+/**
+ * §discussion 2026-08-16 — la coche par carte n'est plus sauvegardée
+ * individuellement : tout reste local (état visuel "tout présent" au
+ * chargement, on décoche à volonté) jusqu'au clic sur "Sauvegarder", qui
+ * envoie l'état exact affiché en un seul upsert multi-lignes puis renvoie
+ * vers `/admin/presences` (écran de sélection vide).
+ */
 export function PresencesCards({
   eleves,
-  presencesExistantes,
   datePresence,
   siteId,
   classeId,
   anneeScolaireId,
-  nomClasse,
-  nomSite,
-  peutExporter,
 }: {
   eleves: EleveOption[];
-  presencesExistantes: PresenceExistante[];
   datePresence: string;
   siteId: number;
   classeId: number;
   anneeScolaireId: number;
-  nomClasse: string;
-  nomSite: string;
-  peutExporter: boolean;
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  // Élève non encore marqué aujourd'hui -> présent par défaut (cas le plus courant, on décoche les absents).
-  const [presences, setPresences] = useState<Record<number, boolean>>(() => {
-    const map: Record<number, boolean> = {};
-    for (const e of eleves) map[e.id] = true;
-    for (const p of presencesExistantes) map[p.eleve_id] = p.present;
-    return map;
-  });
-  const [statuts, setStatuts] = useState<Record<number, CarteStatut>>({});
+  const [presences, setPresences] = useState<Record<number, boolean>>(() =>
+    Object.fromEntries(eleves.map((e) => [e.id, true]))
+  );
 
   const nbPresents = eleves.filter((e) => presences[e.id]).length;
 
   function toggle(eleveId: number) {
-    const nouvelleValeur = !presences[eleveId];
-    setPresences((prev) => ({ ...prev, [eleveId]: nouvelleValeur }));
-    setStatuts((prev) => ({ ...prev, [eleveId]: "saving" }));
+    setPresences((prev) => ({ ...prev, [eleveId]: !prev[eleveId] }));
+  }
 
+  function marquerTous(present: boolean) {
+    setPresences(Object.fromEntries(eleves.map((e) => [e.id, present])));
+  }
+
+  function sauvegarder() {
     startTransition(async () => {
-      const result = await upsertPresence({
-        eleveId,
+      const result = await enregistrerAppelDuJour({
         datePresence,
         siteId,
         classeId,
         anneeScolaireId,
-        present: nouvelleValeur,
+        presences: eleves.map((e) => ({ eleveId: e.id, present: presences[e.id] })),
       });
       if (result.error) {
-        setStatuts((prev) => ({ ...prev, [eleveId]: "error" }));
         toast.error(result.error);
         return;
       }
-      setStatuts((prev) => ({ ...prev, [eleveId]: "idle" }));
-    });
-  }
-
-  /** §8.6 GSR_ARCHITECTURE.md — export xlsx côté client, jamais de lecture de fichier importé. */
-  function exporterExcel() {
-    const donnees = eleves.map((e) => ({
-      Nom: e.nom,
-      Prénoms: e.prenoms,
-      Présence: presences[e.id] ? "Présent" : "Absent",
-    }));
-    const feuille = XLSX.utils.json_to_sheet(donnees);
-    const classeur = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(classeur, feuille, "Présences");
-    const nomFichier = `Presences_${nomClasse}_${nomSite}_${datePresence}`.replace(/\s+/g, "_");
-    XLSX.writeFile(classeur, `${nomFichier}.xlsx`);
-  }
-
-  function marquerTous(present: boolean) {
-    const eleveIds = eleves.map((e) => e.id);
-    setPresences(Object.fromEntries(eleveIds.map((id) => [id, present])));
-    setStatuts(Object.fromEntries(eleveIds.map((id) => [id, "saving"])));
-
-    startTransition(async () => {
-      const result = await marquerTousPresence({ eleveIds, datePresence, siteId, classeId, anneeScolaireId, present });
-      if (result.error) {
-        setStatuts(Object.fromEntries(eleveIds.map((id) => [id, "error"])));
-        toast.error(result.error);
-        return;
-      }
-      setStatuts(Object.fromEntries(eleveIds.map((id) => [id, "idle"])));
-      toast.success(present ? "Tous marqués présents" : "Tous marqués absents");
+      toast.success("Appel enregistré");
+      router.push("/admin/presences");
+      router.refresh();
     });
   }
 
@@ -145,49 +107,45 @@ export function PresencesCards({
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
         <CompteurCirculaire presents={nbPresents} total={eleves.length} />
         <div className="flex flex-wrap gap-2">
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => marquerTous(true)}
             disabled={isPending}
-            className="px-3 py-2 rounded-lg text-sm font-medium border border-green-200 text-green-700 hover:bg-green-50 transition-colors disabled:opacity-50"
+            className="border-green-200 text-green-700 hover:bg-green-50"
           >
             Tout présent
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             onClick={() => marquerTous(false)}
             disabled={isPending}
-            className="px-3 py-2 rounded-lg text-sm font-medium border border-red-200 text-red-700 hover:bg-red-50 transition-colors disabled:opacity-50"
+            className="border-red-200 text-red-700 hover:bg-red-50"
           >
             Tout absent
-          </button>
-          {peutExporter && (
-            <button
-              type="button"
-              onClick={exporterExcel}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              Exporter
-            </button>
-          )}
+          </Button>
+          <Button type="button" size="sm" onClick={sauvegarder} disabled={isPending}>
+            {isPending ? "Enregistrement..." : "Sauvegarder"}
+          </Button>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {eleves.map((eleve) => {
           const present = presences[eleve.id];
-          const statut = statuts[eleve.id] ?? "idle";
 
           return (
             <button
               key={eleve.id}
               type="button"
               onClick={() => toggle(eleve.id)}
+              disabled={isPending}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-colors",
-                present ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50",
-                statut === "error" && "ring-2 ring-red-400"
+                "flex items-center gap-3 px-4 py-3 rounded-xl border text-left transition-colors disabled:opacity-50",
+                present ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"
               )}
             >
               <div
