@@ -57,7 +57,7 @@ export function ModifierUtilisateurDialog({
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (role === "chef_site" && !siteId) return;
+    if ((role === "chef_site" || role === "secretaire") && !siteId) return;
     if (role === "superviseur" && siteIds.length === 0) return;
 
     startTransition(async () => {
@@ -81,7 +81,10 @@ export function ModifierUtilisateurDialog({
   }
 
   const peutSoumettre =
-    username && (role !== "chef_site" || siteId) && (role !== "superviseur" || siteIds.length > 0);
+    username &&
+    (role !== "chef_site" || siteId) &&
+    (role !== "secretaire" || siteId) &&
+    (role !== "superviseur" || siteIds.length > 0);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

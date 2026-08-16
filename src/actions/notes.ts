@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserScope, type UserScope } from "@/lib/auth-scope";
 import type { UserRole, TypeNote, Semestre } from "@/lib/constants";
 
-const ROLES_NOTES: UserRole[] = ["coordonnateur", "comptable", "superviseur", "chef_site"];
+const ROLES_NOTES: UserRole[] = ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"];
 
 async function getScopeAndAssert(): Promise<UserScope> {
   const supabase = await createClient();

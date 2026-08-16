@@ -63,6 +63,9 @@ alter table public.moyennes_semestrielles enable row level security;
 
 -- Même périmètre que notes_acces (§4/§5.4 GSR_ARCHITECTURE.md) : coordonnateur/
 -- comptable global, superviseur sur ses sites, chef_site sur son site.
+-- (secretaire aligné sur chef_site plus tard, sql/020 — pas ici : ce fichier
+-- est déjà appliqué tel quel sur la base client depuis le 2026-08-15,
+-- l'éditer ici ne l'aurait jamais atteinte là-bas.)
 drop policy if exists "moyennes_semestrielles_acces" on public.moyennes_semestrielles;
 create policy "moyennes_semestrielles_acces" on public.moyennes_semestrielles
   for all using (

@@ -51,7 +51,7 @@ export function RoleSiteFields({
         </Select>
       </div>
 
-      {role === "chef_site" && (
+      {(role === "chef_site" || role === "secretaire") && (
         <div>
           <Label>Site</Label>
           <Select value={siteId} onValueChange={onSiteIdChange}>

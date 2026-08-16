@@ -6,7 +6,7 @@ export interface UserScope {
   userId: string;
   username: string;
   role: UserRole;
-  siteId: number | null; // chef_site uniquement
+  siteId: number | null; // chef_site / secretaire uniquement
   siteIds: number[]; // superviseur uniquement
   isGlobal: boolean;
 }
@@ -40,7 +40,7 @@ export const getUserScope = cache(async function getUserScope(supabase: Supabase
       .select("site_id")
       .eq("user_id", user.id);
     siteIds = sites?.map((s) => s.site_id) ?? [];
-  } else if (profile.role === "chef_site" && profile.site_id) {
+  } else if ((profile.role === "chef_site" || profile.role === "secretaire") && profile.site_id) {
     siteIds = [profile.site_id];
   }
 

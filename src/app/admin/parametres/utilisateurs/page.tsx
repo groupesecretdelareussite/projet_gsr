@@ -67,7 +67,7 @@ export default async function UtilisateursPage() {
       key: "sites",
       label: "Site(s)",
       render: (u) => {
-        if (u.role === "chef_site") return u.site_id ? nomSiteParId.get(u.site_id) ?? "—" : "—";
+        if (u.role === "chef_site" || u.role === "secretaire") return u.site_id ? nomSiteParId.get(u.site_id) ?? "—" : "—";
         if (u.role === "superviseur") {
           const ids = siteIdsParUser.get(u.id) ?? [];
           return ids.length > 0 ? ids.map((id) => nomSiteParId.get(id)).join(", ") : "Aucun site assigné";

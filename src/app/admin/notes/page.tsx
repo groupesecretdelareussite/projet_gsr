@@ -19,8 +19,9 @@ export default async function NotesPage(
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
   const semestre: Semestre = searchParams.semestre === "2" ? 2 : 1;
+  const estChefSiteOuSecretaire = scope.role === "chef_site" || scope.role === "secretaire";
 
-  if (!["coordonnateur", "comptable", "superviseur", "chef_site"].includes(scope.role)) {
+  if (!["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"].includes(scope.role)) {
     return (
       <div>
         <PageHeader title="Notes" />
@@ -36,8 +37,9 @@ export default async function NotesPage(
     supabase.from("annees_scolaires").select("id").eq("statut", "en_cours").maybeSingle(),
   ]);
 
-  const siteIdEffectif =
-    searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
+  const siteIdEffectif = estChefSiteOuSecretaire
+    ? scope.siteId?.toString()
+    : searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
 
   const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
   const classesFiltrees = siteIdEffectif
@@ -98,18 +100,20 @@ export default async function NotesPage(
       />
 
       <form method="get" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-2xl">
-        <select
-          name="site_id"
-          defaultValue={siteIdEffectif ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
-        >
-          <option value="">Tous les sites</option>
-          {sites?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nom_site}
-            </option>
-          ))}
-        </select>
+        {!estChefSiteOuSecretaire && (
+          <select
+            name="site_id"
+            defaultValue={siteIdEffectif ?? ""}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          >
+            <option value="">Tous les sites</option>
+            {sites?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nom_site}
+              </option>
+            ))}
+          </select>
+        )}
         <select
           name="classe_id"
           defaultValue={searchParams.classe_id ?? ""}

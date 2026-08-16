@@ -5,7 +5,7 @@ import { getUserScope } from "@/lib/auth-scope";
 
 // Même périmètre que la fiche élève (/admin/eleves/[id]) — secretaire exclue
 // (dashboard uniquement, aucun droit sur les élèves).
-const ROLES_RECHERCHE_ELEVES = ["coordonnateur", "comptable", "superviseur", "chef_site"];
+const ROLES_RECHERCHE_ELEVES = ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"];
 
 // Liste blanche stricte : `q` est interpolé dans une chaîne de filtre
 // PostgREST (.or(), voir plus bas) qui a sa propre syntaxe (virgule, point,

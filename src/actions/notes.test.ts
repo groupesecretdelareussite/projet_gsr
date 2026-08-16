@@ -22,13 +22,12 @@ function makeScope(overrides: Partial<UserScope>): UserScope {
   };
 }
 
-describe("upsertNote — accessible à tous sauf secretaire (§4/§8.5)", () => {
-  it("rejette le rôle secretaire", async () => {
-    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "secretaire", isGlobal: false }));
+describe("upsertNote — secretaire aligné sur chef_site (§discussion 2026-08-15)", () => {
+  it("n'exclut plus le rôle secretaire (passe la garde de rôle)", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "secretaire", siteId: 1, isGlobal: false }));
 
-    await expect(
-      upsertNote({ eleveId: 1, matiereId: 1, typeNote: "I1", valeur: 15, anneeScolaireId: 1, semestre: 1 })
-    ).rejects.toThrow("Non autorisé");
+    const result = await upsertNote({ eleveId: 1, matiereId: 1, typeNote: "I1", valeur: -1, anneeScolaireId: 1, semestre: 1 });
+    expect(result.error).toBe("La note doit être comprise entre 0 et 20");
   });
 });
 

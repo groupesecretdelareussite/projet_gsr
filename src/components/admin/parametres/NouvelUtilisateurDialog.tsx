@@ -49,7 +49,7 @@ export function NouvelUtilisateurDialog({ sites }: { sites: SiteOption[] }) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (role === "chef_site" && !siteId) return;
+    if ((role === "chef_site" || role === "secretaire") && !siteId) return;
     if (role === "superviseur" && siteIds.length === 0) return;
 
     startTransition(async () => {
@@ -75,13 +75,18 @@ export function NouvelUtilisateurDialog({ sites }: { sites: SiteOption[] }) {
   }
 
   const peutSoumettre =
-    username && email && password.length >= 8 && (role !== "chef_site" || siteId) && (role !== "superviseur" || siteIds.length > 0);
+    username &&
+    email &&
+    password.length >= 8 &&
+    (role !== "chef_site" || siteId) &&
+    (role !== "secretaire" || siteId) &&
+    (role !== "superviseur" || siteIds.length > 0);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <UserPlus className="w-4 h-4" />
+        <Button variant="outline" size="sm">
+          <UserPlus className="w-3.5 h-3.5" />
           Nouvel utilisateur
         </Button>
       </DialogTrigger>

@@ -34,10 +34,12 @@ export default async function ListeElevesPage(
   const searchParams = await props.searchParams;
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
-  const peutGerer = scope.role !== "chef_site";
+  const peutGerer = scope.role !== "chef_site" && scope.role !== "secretaire";
+  const estChefSiteOuSecretaire = scope.role === "chef_site" || scope.role === "secretaire";
 
-  const siteIdEffectif =
-    searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
+  const siteIdEffectif = estChefSiteOuSecretaire
+    ? scope.siteId?.toString()
+    : searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
 
   const [{ data: sites }, { data: classes }] = await Promise.all([
     supabase.from("sites").select("id, nom_site").order("nom_site"),
@@ -156,19 +158,21 @@ export default async function ListeElevesPage(
         )}
       </ActionsBar>
 
-      <form method="get" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-        <select
-          name="site_id"
-          defaultValue={siteIdEffectif ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
-        >
-          <option value="">Tous les sites</option>
-          {sites?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nom_site}
-            </option>
-          ))}
-        </select>
+      <form method="get" className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
+        {!estChefSiteOuSecretaire && (
+          <select
+            name="site_id"
+            defaultValue={siteIdEffectif ?? ""}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          >
+            <option value="">Tous les sites</option>
+            {sites?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nom_site}
+              </option>
+            ))}
+          </select>
+        )}
         <select
           name="classe_id"
           defaultValue={searchParams.classe_id ?? ""}

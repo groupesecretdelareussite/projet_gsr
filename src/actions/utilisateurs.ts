@@ -29,7 +29,7 @@ export interface CreerUtilisateurInput {
   email: string;
   password: string;
   role: UserRole;
-  siteId?: number | null; // chef_site
+  siteId?: number | null; // chef_site / secretaire
   siteIds?: number[]; // superviseur
 }
 
@@ -53,7 +53,7 @@ export async function creerUtilisateur(input: CreerUtilisateurInput): Promise<{ 
     username: input.username,
     email: input.email,
     role: input.role,
-    site_id: input.role === "chef_site" ? input.siteId ?? null : null,
+    site_id: input.role === "chef_site" || input.role === "secretaire" ? input.siteId ?? null : null,
     actif: true,
   });
 
@@ -86,8 +86,8 @@ export interface ModifierUtilisateurInput {
 
 /**
  * Gère les effets de bord d'un changement de rôle : `site_id` remis à NULL
- * hors de `chef_site` (trg_users_scope_coherence l'exige) ; `user_sites`
- * vidé hors de `superviseur` (interdit #20).
+ * hors de `chef_site`/`secretaire` (trg_users_scope_coherence l'exige) ;
+ * `user_sites` vidé hors de `superviseur` (interdit #20).
  */
 export async function modifierUtilisateur(input: ModifierUtilisateurInput): Promise<{ error?: string }> {
   const scope = await getScopeAndAssert();
@@ -101,7 +101,7 @@ export async function modifierUtilisateur(input: ModifierUtilisateurInput): Prom
     .update({
       username: input.username,
       role: input.role,
-      site_id: input.role === "chef_site" ? input.siteId ?? null : null,
+      site_id: input.role === "chef_site" || input.role === "secretaire" ? input.siteId ?? null : null,
     })
     .eq("id", input.id);
 
