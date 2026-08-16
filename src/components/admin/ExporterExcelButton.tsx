@@ -2,7 +2,6 @@
 
 import { FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { exporterExcel } from "@/lib/export-excel";
 
 interface ExporterExcelButtonProps {
@@ -10,13 +9,15 @@ interface ExporterExcelButtonProps {
   lignes: Record<string, string | number>[];
   nomFichier: string;
   nomFeuille?: string;
+  /** Personnalise le texte du bouton — utile quand plusieurs exports cohabitent (ex. "Présents"/"Absents"). */
+  label?: string;
 }
 
-export function ExporterExcelButton({ titre, lignes, nomFichier, nomFeuille }: ExporterExcelButtonProps) {
+export function ExporterExcelButton({ titre, lignes, nomFichier, nomFeuille, label = "Exporter" }: ExporterExcelButtonProps) {
   return (
     <Button variant="outline" size="sm" onClick={() => exporterExcel(titre, lignes, nomFichier, nomFeuille)}>
       <FileSpreadsheet className="w-3.5 h-3.5" />
-      <span className={HOVER_ONLY_LABEL}>Exporter</span>
+      {label}
     </Button>
   );
 }
