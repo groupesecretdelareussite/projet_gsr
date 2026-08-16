@@ -29,6 +29,16 @@ export default async function PaiementsAJourPage() {
     </div>
   );
 
+  // §discussion 2026-08-16 — chef_site en lecture seule, pas secretaire (cf. PaiementsNav).
+  if (!["coordonnateur", "comptable", "superviseur", "chef_site"].includes(scope.role)) {
+    return (
+      <div>
+        {header}
+        <EmptyState icon={CheckCircle2} title="Non autorisé" description="Cette page ne vous est pas accessible." />
+      </div>
+    );
+  }
+
   if (!mois) {
     return (
       <div>
@@ -107,17 +117,21 @@ export default async function PaiementsAJourPage() {
 
   return (
     <div>
-      {header}
-      {peutExporter && (
-        <div className="flex justify-end mb-4">
-          <ExporterExcelButton
-            titre={`Paiements à jour — Mois de ${mois} — ${dateExport}`}
-            lignes={lignesExport}
-            nomFichier={`Paiements_a_jour_${mois}_${dateExport}`.replace(/\s+/g, "_")}
-            nomFeuille="À jour"
-          />
-        </div>
-      )}
+      <PageHeader
+        title="Paiements à jour"
+        subtitle={`Mois de ${mois}`}
+        actions={
+          peutExporter ? (
+            <ExporterExcelButton
+              titre={`Paiements à jour — Mois de ${mois} — ${dateExport}`}
+              lignes={lignesExport}
+              nomFichier={`Paiements_a_jour_${mois}_${dateExport}`.replace(/\s+/g, "_")}
+              nomFeuille="À jour"
+            />
+          ) : undefined
+        }
+      />
+      <PaiementsNav active="a-jour" role={scope.role} />
       <DataTable
         columns={columns}
         rows={elevesAJour}

@@ -1,22 +1,33 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { KeyRound } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { KeyRound, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { changerMonMotDePasse } from "@/actions/auth";
+import { changerMonMotDePasse, logout } from "@/actions/auth";
 
 /** Accessible à tous les rôles connectés — self-service, contrairement à Paramètres > Utilisateurs (coordonnateur only). */
 export default function MonComptePage() {
+  const router = useRouter();
   const [ancienMdp, setAncienMdp] = useState("");
   const [nouveauMdp, setNouveauMdp] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [isPendingLogout, startLogoutTransition] = useTransition();
 
   const peutSoumettre = ancienMdp.length > 0 && nouveauMdp.length >= 8 && nouveauMdp === confirmation;
+
+  function handleLogout() {
+    startLogoutTransition(async () => {
+      await logout();
+      router.push("/admin/login");
+      router.refresh();
+    });
+  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -83,6 +94,13 @@ export default function MonComptePage() {
             {isPending ? "Modification..." : "Modifier mon mot de passe"}
           </Button>
         </form>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 max-w-md mt-6">
+        <Button type="button" variant="outline" onClick={handleLogout} disabled={isPendingLogout}>
+          <LogOut className="w-4 h-4" />
+          {isPendingLogout ? "Déconnexion..." : "Se déconnecter"}
+        </Button>
       </div>
     </div>
   );

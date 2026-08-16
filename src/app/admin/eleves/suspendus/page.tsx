@@ -24,7 +24,11 @@ interface EleveSuspenduRow {
 export default async function ElevesSuspendusPage() {
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
-  const peutExporter = ["coordonnateur", "comptable", "superviseur"].includes(scope.role);
+  // §discussion 2026-08-16 : chef_site/secretaire voient désormais cette page
+  // (accessible depuis le bouton sur Élèves > Liste), mais sans Réinscrire ni
+  // Exporter — même périmètre que le reste de leurs droits.
+  const peutGerer = ["coordonnateur", "comptable", "superviseur"].includes(scope.role);
+  const peutExporter = peutGerer;
 
   const [{ data: eleves }, { data: anneeEnCours }] = await Promise.all([
     supabase
@@ -66,7 +70,7 @@ export default async function ElevesSuspendusPage() {
       render: (e) => {
         const motif = e.eleves_suspendus[0]?.motif;
         return motif ? (
-          <span className="block max-w-[220px] truncate" title={motif}>
+          <span className="block md:max-w-[220px] md:truncate" title={motif}>
             {motif}
           </span>
         ) : (
@@ -84,25 +88,29 @@ export default async function ElevesSuspendusPage() {
         return <span className="text-red-600 font-semibold">{montant} F</span>;
       },
     },
-    {
-      key: "actions",
-      label: "Actions",
-      render: (e) => {
-        const suspension = e.eleves_suspendus[0];
-        return (
-          <div className={ACTIONS_HOVER_REVEAL}>
-            <ReinscrireDialog
-              eleveId={e.id}
-              nomComplet={`${e.nom} ${e.prenoms}`}
-              raison={suspension?.raison ?? ""}
-              montantDu={suspension?.montant_du ?? 0}
-              moisSouscription={suspension?.mois_souscription ?? null}
-              estVenuDansLeMois={e.estVenuDansLeMois}
-            />
-          </div>
-        );
-      },
-    },
+    ...(peutGerer
+      ? [
+          {
+            key: "actions",
+            label: "Actions",
+            render: (e: EleveSuspenduRow) => {
+              const suspension = e.eleves_suspendus[0];
+              return (
+                <div className={ACTIONS_HOVER_REVEAL}>
+                  <ReinscrireDialog
+                    eleveId={e.id}
+                    nomComplet={`${e.nom} ${e.prenoms}`}
+                    raison={suspension?.raison ?? ""}
+                    montantDu={suspension?.montant_du ?? 0}
+                    moisSouscription={suspension?.mois_souscription ?? null}
+                    estVenuDansLeMois={e.estVenuDansLeMois}
+                  />
+                </div>
+              );
+            },
+          },
+        ]
+      : []),
   ];
 
   const dateExport = new Date().toLocaleDateString("fr-FR");

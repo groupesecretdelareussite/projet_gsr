@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { moisCourant, moisPrecedent, moisVisiblesRetard, resteAPayer } from "@/lib/paiements";
 import type { MoisScolaire } from "@/lib/constants";
+import { PageHeader } from "@/components/admin/PageHeader";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { DashboardChart } from "@/components/admin/DashboardChart";
 import { AlertesPanel, type Alerte } from "@/components/admin/AlertesPanel";
@@ -65,9 +66,15 @@ export default async function TableauDeBordPage() {
   ).length;
   const variationNouveaux = variation(nouveauxCeMois, nouveauxMoisPrecedent);
 
-  // --- Non à jour + alerte retard — interdit #6 : masqué pour chef_site/secretaire ---
-  const peutVoirKpiPaiements =
-    scope.role === "coordonnateur" || scope.role === "comptable" || scope.role === "superviseur";
+  // --- Non à jour + alerte retard — §discussion 2026-08-16 : le KPI "Non à
+  // jour" s'ouvre à chef_site ET secretaire, mais le panneau d'alerte (lien
+  // direct vers Paiements > En retard) reste borné à qui peut réellement
+  // accéder à cette page — chef_site seul, pas secretaire (cf. PaiementsNav).
+  const estChefSiteOuSecretaire = scope.role === "chef_site" || scope.role === "secretaire";
+  const peutVoirKpiNonAJour =
+    scope.role === "coordonnateur" || scope.role === "comptable" || scope.role === "superviseur" || estChefSiteOuSecretaire;
+  const peutVoirAlertePaiements =
+    scope.role === "coordonnateur" || scope.role === "comptable" || scope.role === "superviseur" || scope.role === "chef_site";
 
   const { data: anneeEnCours } = await supabase
     .from("annees_scolaires")
@@ -80,7 +87,7 @@ export default async function TableauDeBordPage() {
   let variationNonAJour: number | null = null;
   const alertes: Alerte[] = [];
 
-  if (peutVoirKpiPaiements && mois && elevesActifs.length > 0) {
+  if (peutVoirKpiNonAJour && mois && elevesActifs.length > 0) {
     if (anneeEnCours) {
       const moisPrec = moisPrecedent(mois);
       const moisVisiblesRetardCourant = moisVisiblesRetard(maintenant, {
@@ -153,19 +160,19 @@ export default async function TableauDeBordPage() {
 
   return (
     <div>
-      <div className="relative overflow-hidden bg-primary-gradient rounded-2xl px-6 py-6 mb-6">
-        <GraduationCap className="absolute -right-4 -bottom-4 w-32 h-32 text-white/10" />
-        <h1 className="text-white text-xl sm:text-2xl font-bold relative">Bonjour, {nomAffiche}</h1>
-        <p className="text-white/80 text-sm mt-1 relative">
-          {anneeEnCours
+      <PageHeader
+        title={`Bonjour, ${nomAffiche}`}
+        subtitle={
+          anneeEnCours
             ? `Année scolaire ${anneeEnCours.libelle} — voici un résumé de l'activité de l'établissement.`
-            : "Voici un résumé de l'activité de l'établissement."}
-        </p>
-      </div>
+            : "Voici un résumé de l'activité de l'établissement."
+        }
+        decorativeIcon={GraduationCap}
+      />
 
       <div className="grid sm:grid-cols-3 gap-4 mb-6">
         <KpiCard icon={Users} label="Élèves actifs" value={elevesActifs.length} />
-        {peutVoirKpiPaiements && (
+        {peutVoirKpiNonAJour && (
           <KpiCard
             icon={UserX}
             label={mois ? `Non à jour — ${mois}` : "Non à jour"}
@@ -185,7 +192,7 @@ export default async function TableauDeBordPage() {
         <div className="lg:col-span-2">
           {donneesGraphique.length > 0 && <DashboardChart data={donneesGraphique} />}
         </div>
-        {peutVoirKpiPaiements && (
+        {peutVoirAlertePaiements && (
           <div>
             <AlertesPanel alertes={alertes} voirToutHref="/admin/paiements/en-retard" />
           </div>

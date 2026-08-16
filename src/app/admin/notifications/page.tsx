@@ -28,15 +28,17 @@ function dateComplete(dateIso: string): string {
  * §5.8/§8.1 GSR_ARCHITECTURE.md — historique complet, complément de la
  * cloche Topbar (limitée aux 20 dernières + pas de filtre). RLS
  * (`notifications_acces`) filtre déjà par périmètre : coordonnateur/
- * comptable voient tout, superviseur uniquement ses sites — client RLS
- * suffit ici, pas besoin de service role pour la lecture.
+ * comptable voient tout, superviseur/chef_site/secretaire uniquement leur(s)
+ * site(s) — client RLS suffit ici, pas besoin de service role pour la
+ * lecture, ni de filtre `site_id` manuel : chef_site/secretaire ont accès
+ * depuis le 2026-08-16 (§discussion), la policy sql/020 les couvrait déjà.
  */
 export default async function NotificationsPage(props: { searchParams: Promise<{ statut?: string }> }) {
   const searchParams = await props.searchParams;
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
-  if (!["coordonnateur", "comptable", "superviseur"].includes(scope.role)) {
+  if (!["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"].includes(scope.role)) {
     return (
       <div>
         <PageHeader title="Notifications" />
@@ -66,7 +68,7 @@ export default async function NotificationsPage(props: { searchParams: Promise<{
   const columns: DataTableColumn<NotificationRow>[] = [
     {
       key: "statut",
-      label: "",
+      label: "Statut",
       render: (n) => (n.lu ? <Badge variant="neutral">Lue</Badge> : <Badge variant="warning">Non lue</Badge>),
     },
     { key: "contenu", label: "Notification", render: (n) => <span className={n.lu ? "text-gray-500" : "font-medium text-gray-900"}>{n.contenu}</span> },

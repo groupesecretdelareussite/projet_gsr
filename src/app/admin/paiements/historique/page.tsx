@@ -36,6 +36,17 @@ export default async function HistoriquePaiementsPage(
   const scope = await getUserScope(supabase);
   const peutSupprimer = scope.role === "coordonnateur" || scope.role === "comptable";
 
+  // §discussion 2026-08-16 — chef_site en lecture seule, pas secretaire (cf. PaiementsNav).
+  if (!["coordonnateur", "comptable", "superviseur", "chef_site"].includes(scope.role)) {
+    return (
+      <div>
+        <PageHeader title="Historique des paiements" />
+        <PaiementsNav active="historique" role={scope.role} />
+        <EmptyState icon={Wallet} title="Non autorisé" description="Cette page ne vous est pas accessible." />
+      </div>
+    );
+  }
+
   const [{ data: sites }, { data: classes }, { data: annees }] = await Promise.all([
     supabase.from("sites").select("id, nom_site").order("nom_site"),
     supabase.from("classes").select("id, nom_classe, site_id").order("ordre"),
@@ -68,7 +79,7 @@ export default async function HistoriquePaiementsPage(
   const moisTitre = searchParams.mois ?? "Tous les mois";
   const dateExport = new Date().toLocaleDateString("fr-FR");
   const lignesExport = rows.map((p) => ({
-    Date: p.date_paiement,
+    Date: new Date(p.date_paiement).toLocaleDateString("fr-FR"),
     Élève: `${p.eleves?.nom ?? ""} ${p.eleves?.prenoms ?? ""}`.trim(),
     Matricule: p.eleves?.matricule ?? "—",
     Classe: p.eleves?.classes?.nom_classe ?? "—",
@@ -79,7 +90,7 @@ export default async function HistoriquePaiementsPage(
   }));
 
   const columns: DataTableColumn<PaiementRow>[] = [
-    { key: "date", label: "Date", render: (p) => p.date_paiement },
+    { key: "date", label: "Date", render: (p) => new Date(p.date_paiement).toLocaleDateString("fr-FR") },
     {
       key: "eleve",
       label: "Élève",
@@ -131,7 +142,7 @@ export default async function HistoriquePaiementsPage(
       />
       <PaiementsNav active="historique" role={scope.role} />
 
-      <form method="get" className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+      <form method="get" className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
         <select
           name="annee_scolaire_id"
           defaultValue={anneeFiltre ?? ""}

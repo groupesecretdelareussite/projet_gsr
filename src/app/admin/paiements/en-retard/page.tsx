@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/admin/EmptyState";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { RelancerWhatsAppButton } from "@/components/admin/paiements/RelancerWhatsAppButton";
 import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
+import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import type { MoisScolaire } from "@/lib/constants";
 
@@ -32,7 +33,7 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
   const searchParams = await props.searchParams;
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
-  const peutVoirContact = scope.role !== "chef_site";
+  const peutVoirContact = scope.role !== "chef_site" && scope.role !== "secretaire";
 
   const header = (
     <div>
@@ -40,6 +41,16 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
       <PaiementsNav active="en-retard" role={scope.role} />
     </div>
   );
+
+  // §discussion 2026-08-16 — chef_site en lecture seule, pas secretaire (cf. PaiementsNav).
+  if (!["coordonnateur", "comptable", "superviseur", "chef_site"].includes(scope.role)) {
+    return (
+      <div>
+        {header}
+        <EmptyState icon={AlertTriangle} title="Non autorisé" description="Cette page ne vous est pas accessible." />
+      </div>
+    );
+  }
 
   const { data: anneeEnCours } = await supabase
     .from("annees_scolaires")
@@ -200,17 +211,21 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
 
   return (
     <div>
-      {header}
-      {peutExporter && (
-        <div className="flex justify-end mb-4">
-          <ExporterExcelButton
-            titre={`Paiements en retard — Mois de ${moisFiltre} — ${dateExport}`}
-            lignes={lignesExport}
-            nomFichier={`Paiements_en_retard_${moisFiltre}_${dateExport}`.replace(/\s+/g, "_")}
-            nomFeuille="En retard"
-          />
-        </div>
-      )}
+      <PageHeader
+        title="Paiements en retard"
+        subtitle="Règle du 15 — le mois courant n'apparaît qu'à partir du 16"
+        actions={
+          peutExporter ? (
+            <ExporterExcelButton
+              titre={`Paiements en retard — Mois de ${moisFiltre} — ${dateExport}`}
+              lignes={lignesExport}
+              nomFichier={`Paiements_en_retard_${moisFiltre}_${dateExport}`.replace(/\s+/g, "_")}
+              nomFeuille="En retard"
+            />
+          ) : undefined
+        }
+      />
+      <PaiementsNav active="en-retard" role={scope.role} />
       {moisVisibles.length > 1 && (
         <form method="get" className="flex items-center gap-2 mb-4">
           <select
@@ -224,9 +239,7 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
               </option>
             ))}
           </select>
-          <button type="submit" className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white hover:bg-gray-50">
-            Filtrer
-          </button>
+          <AutoSubmitOnChange />
         </form>
       )}
       <DataTable

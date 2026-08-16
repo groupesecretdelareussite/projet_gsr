@@ -14,15 +14,21 @@ interface PhotoRow {
   storage_path: string;
   nom_fichier: string;
   date_ajout: string;
+  ajoute_par: string;
   users: { username: string } | null;
 }
 
-/** §5.4 GSR_ARCHITECTURE.md — archive interne (coordonnateur/comptable/superviseur), distincte de la galerie vitrine publique. */
+/**
+ * §5.4 GSR_ARCHITECTURE.md — archive interne, distincte de la galerie
+ * vitrine publique. Ouverte à chef_site/secretaire depuis le 2026-08-16
+ * (§discussion) : accès complet en lecture/ajout, suppression bornée à leurs
+ * propres photos (voir GalerieAdminGrid + supprimerPhotoGalerieAdmin).
+ */
 export default async function GalerieAdminPage() {
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
-  if (!["coordonnateur", "comptable", "superviseur"].includes(scope.role)) {
+  if (!["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"].includes(scope.role)) {
     return (
       <div>
         <PageHeader title="Galerie" />
@@ -33,7 +39,7 @@ export default async function GalerieAdminPage() {
 
   const { data } = await supabase
     .from("galerie_admin")
-    .select("id, storage_path, nom_fichier, date_ajout, users(username)")
+    .select("id, storage_path, nom_fichier, date_ajout, ajoute_par, users(username)")
     .order("date_ajout", { ascending: false });
   const lignes = (data ?? []) as unknown as PhotoRow[];
 
@@ -48,8 +54,11 @@ export default async function GalerieAdminPage() {
     nom_fichier: l.nom_fichier,
     date_ajout: l.date_ajout,
     ajoutePar: l.users?.username ?? "?",
+    ajouteParId: l.ajoute_par,
     url: urlParChemin.get(l.storage_path) ?? null,
   }));
+
+  const estChefSiteOuSecretaire = scope.role === "chef_site" || scope.role === "secretaire";
 
   return (
     <div>
@@ -62,7 +71,7 @@ export default async function GalerieAdminPage() {
       {photos.length === 0 ? (
         <EmptyState icon={Images} title="Aucune photo" description="Ajoutez votre première photo ci-dessus." />
       ) : (
-        <GalerieAdminGrid photos={photos} />
+        <GalerieAdminGrid photos={photos} suppressionLimiteeAuProprietaire={estChefSiteOuSecretaire} utilisateurId={scope.userId} />
       )}
     </div>
   );

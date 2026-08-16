@@ -44,28 +44,31 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Élèves",
     href: "/admin/eleves/liste",
     icon: Users,
-    roles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
+    roles: ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"],
     enabled: true,
   },
   {
     label: "Notes",
     href: "/admin/notes",
     icon: NotebookText,
-    roles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
+    roles: ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"],
     enabled: true,
   },
   {
     label: "Présences",
     href: "/admin/presences",
     icon: ClipboardCheck,
-    roles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
+    roles: ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"],
     enabled: true,
   },
   {
+    // §discussion 2026-08-16 — chef_site en lecture seule (Historique/À
+    // jour/En retard, pas Enregistrer — cf. redirect dans
+    // paiements/enregistrer/page.tsx), pas secretaire.
     label: "Paiements",
     href: "/admin/paiements/enregistrer",
     icon: Wallet,
-    roles: ["coordonnateur", "comptable", "superviseur"],
+    roles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
     enabled: true,
   },
   {
@@ -97,17 +100,19 @@ export const NAV_ITEMS: NavItem[] = [
     enabled: true,
   },
   {
+    // §discussion 2026-08-16 — ouvert à chef_site/secretaire, scope par site déjà géré par RLS (sql/020).
     label: "Notifications",
     href: "/admin/notifications",
     icon: Bell,
-    roles: ["coordonnateur", "comptable", "superviseur"],
+    roles: ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"],
     enabled: true,
   },
   {
+    // §discussion 2026-08-16 — ouvert à chef_site/secretaire, suppression limitée à leurs propres photos (sql/021).
     label: "Galerie",
     href: "/admin/galerie",
     icon: Images,
-    roles: ["coordonnateur", "comptable", "superviseur"],
+    roles: ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"],
     enabled: true,
   },
   {
