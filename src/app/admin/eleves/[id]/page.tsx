@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
+import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SuspendreDialog } from "@/components/admin/eleves/SuspendreDialog";
@@ -15,9 +16,9 @@ import { estVenuDansLeMois } from "@/lib/reinscription";
 import { formaterNumeroAffichage } from "@/lib/telephone";
 import { RAISON_LABELS, MODE_PAIEMENT_LABELS, type MoisScolaire } from "@/lib/constants";
 
-const ROLES_ELEVES = ["coordonnateur", "comptable", "superviseur", "chef_site"];
+const ROLES_ELEVES = ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"];
 const ROLES_PAIEMENTS = ["coordonnateur", "comptable", "superviseur"];
-const ROLES_NOTES_PRESENCES = ["coordonnateur", "comptable", "superviseur", "chef_site"];
+const ROLES_NOTES_PRESENCES = ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"];
 
 function Bloc({ titre, action, children }: { titre: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -45,8 +46,8 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
     );
   }
 
-  const peutGererSuspension = scope.role !== "chef_site";
-  const peutVoirContact = scope.role !== "chef_site";
+  const peutGererSuspension = scope.role !== "chef_site" && scope.role !== "secretaire";
+  const peutVoirContact = scope.role !== "chef_site" && scope.role !== "secretaire";
 
   const { data: eleve } = await supabase
     .from("eleves")
@@ -214,6 +215,41 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
     presencesResume = { total, presents };
   }
 
+  const colonnesNotes: DataTableColumn<{ nom: string; coefficient: number | null; moyenne: number | null }>[] = [
+    {
+      key: "matiere",
+      label: "Matière",
+      render: (m) => (
+        <span className="flex items-center gap-1.5">
+          <NotebookText className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+          {m.nom}
+          {m.coefficient === null && <span className="text-xs text-orange-600">(coef. absent)</span>}
+        </span>
+      ),
+    },
+    { key: "moyenne", label: "Moyenne", render: (m) => <span className="font-medium text-gray-800">{m.moyenne !== null ? m.moyenne.toFixed(2) : "—"}</span> },
+  ];
+
+  const colonnesPaiements: DataTableColumn<LigneHistoriquePaiement>[] = [
+    {
+      key: "libelle",
+      label: "Mois / Libellé",
+      render: (l) => (
+        <span className={`flex items-center gap-1.5 ${l.montant === null ? "text-gray-400 italic" : "text-gray-700"}`}>
+          <Wallet className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+          {l.libelle}
+        </span>
+      ),
+    },
+    {
+      key: "montant",
+      label: "Montant",
+      render: (l) => <span className={l.montant === null ? "text-gray-400 italic" : "text-gray-700"}>{l.montant === null ? "Exonéré" : `${l.montant} F`}</span>,
+    },
+    { key: "mode", label: "Mode", render: (l) => (l.mode ? MODE_PAIEMENT_LABELS[l.mode as keyof typeof MODE_PAIEMENT_LABELS] : "—") },
+    { key: "date", label: "Date", render: (l) => new Date(l.date).toLocaleDateString("fr-FR") },
+  ];
+
   return (
     <div>
       <PageHeader
@@ -315,24 +351,7 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
               <p className="text-sm text-gray-500">Aucune année scolaire en cours.</p>
             ) : (
               <>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <tbody className="divide-y divide-gray-100">
-                      {matieresMoyennes.map((m) => (
-                        <tr key={m.nom}>
-                          <td className="py-1.5 text-gray-600 flex items-center gap-1.5">
-                            <NotebookText className="w-3.5 h-3.5 text-gray-300 shrink-0" />
-                            {m.nom}
-                            {m.coefficient === null && <span className="text-xs text-orange-600">(coef. absent)</span>}
-                          </td>
-                          <td className="py-1.5 text-right font-medium text-gray-800">
-                            {m.moyenne !== null ? m.moyenne.toFixed(2) : "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <DataTable bare columns={colonnesNotes} rows={matieresMoyennes} rowKey={(m) => m.nom} />
                 <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
                   <span className="text-sm font-semibold text-gray-700">Moyenne générale</span>
                   <span className="text-lg font-bold text-primary">{moyenneGeneraleAffichage ?? "—"}</span>
@@ -367,35 +386,7 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
             {historiquePaiements.length === 0 ? (
               <p className="text-sm text-gray-500">Aucun paiement enregistré.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="text-xs text-gray-400 uppercase tracking-wide">
-                      <th className="text-left font-medium py-1.5">Mois / Libellé</th>
-                      <th className="text-left font-medium py-1.5">Montant</th>
-                      <th className="text-left font-medium py-1.5">Mode</th>
-                      <th className="text-left font-medium py-1.5">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {historiquePaiements.map((l) => (
-                      <tr key={l.key}>
-                        <td className={`py-1.5 flex items-center gap-1.5 ${l.montant === null ? "text-gray-400 italic" : "text-gray-700"}`}>
-                          <Wallet className="w-3.5 h-3.5 text-gray-300 shrink-0" />
-                          {l.libelle}
-                        </td>
-                        <td className={`py-1.5 ${l.montant === null ? "text-gray-400 italic" : "text-gray-700"}`}>
-                          {l.montant === null ? "Exonéré" : `${l.montant} F`}
-                        </td>
-                        <td className="py-1.5 text-gray-700">
-                          {l.mode ? MODE_PAIEMENT_LABELS[l.mode as keyof typeof MODE_PAIEMENT_LABELS] : "—"}
-                        </td>
-                        <td className="py-1.5 text-gray-500">{new Date(l.date).toLocaleDateString("fr-FR")}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <DataTable bare columns={colonnesPaiements} rows={historiquePaiements} rowKey={(l) => l.key} />
             )}
           </Bloc>
         )}

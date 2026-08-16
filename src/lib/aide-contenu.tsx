@@ -183,12 +183,26 @@ export const SECTIONS_AIDE_ADMIN: SectionAide[] = [
   },
 ];
 
-/** Toujours affiché, quel que soit le rôle — pas de notion de permission ici. */
+/** Toujours affiché, quel que soit le rôle — pas de notion de permission ici. Portail Admin + coordonnateur du portail TD (les deux authentifiés via Supabase Auth, cf. `td/login/page.tsx`). */
 export const AIDE_CONNEXION_SECURITE: ReactNode = (
   <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1.5">
     <li><strong>Déconnexion automatique</strong> après 20 minutes d&apos;inactivité.</li>
     <li><strong>Blocage anti-intrusion</strong> : 5 tentatives échouées bloquent l&apos;identifiant 15 minutes.</li>
     <li><strong>Mot de passe oublié</strong> : lien de réinitialisation envoyé par email depuis l&apos;écran de connexion.</li>
+  </ul>
+);
+
+/**
+ * §Priorité 3 audit 2026-08-16 — le professeur TD n'a pas de compte Supabase
+ * Auth (session bcrypt/iron-session séparée, `connexionProfesseurTD`) : pas
+ * de lien de réinitialisation par email pour lui, la vraie procédure est
+ * "contacter le coordonnateur" (cf. `td/login/page.tsx`).
+ */
+export const AIDE_CONNEXION_SECURITE_PROF_TD: ReactNode = (
+  <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1.5">
+    <li><strong>Déconnexion automatique</strong> après 20 minutes d&apos;inactivité.</li>
+    <li><strong>Blocage anti-intrusion</strong> : 5 tentatives échouées bloquent l&apos;identifiant 15 minutes.</li>
+    <li><strong>Mot de passe oublié</strong> : contactez le coordonnateur pour une réinitialisation — pas de lien envoyé par email pour les comptes professeur.</li>
   </ul>
 );
 

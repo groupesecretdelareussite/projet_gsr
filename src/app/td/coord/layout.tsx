@@ -68,7 +68,7 @@ export default async function TdCoordLayout({ children }: { children: React.Reac
             </ScrollFadeX>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <Link href="/admin/aide" title="Aide" className="text-gray-500 hover:text-gray-700">
+            <Link href="/admin/aide" title="Aide" className="p-2.5 -m-2.5 sm:p-0 sm:m-0 rounded-lg text-gray-500 hover:text-gray-700">
               <HelpCircle className="w-4 h-4" />
             </Link>
             <Link href="/admin/tableau-de-bord" className="text-xs text-gray-500 hover:text-gray-700 hidden sm:inline">

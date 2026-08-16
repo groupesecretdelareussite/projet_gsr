@@ -11,19 +11,21 @@ interface DataTableProps<T> {
   rows: T[];
   rowKey: (row: T) => string | number;
   emptyState?: ReactNode;
+  /** Omet la carte (fond blanc, bordure) — pour un usage imbriqué dans une carte existante (ex. Bloc de la fiche élève). */
+  bare?: boolean;
 }
 
 /**
  * §3.3 GSR_ARCHITECTURE.md — thead dégradé vert clair, responsive -> cartes
  * sur mobile.
  */
-export function DataTable<T>({ columns, rows, rowKey, emptyState }: DataTableProps<T>) {
+export function DataTable<T>({ columns, rows, rowKey, emptyState, bare = false }: DataTableProps<T>) {
   if (rows.length === 0 && emptyState) {
-    return <div className="bg-white rounded-2xl border border-gray-100">{emptyState}</div>;
+    return bare ? <>{emptyState}</> : <div className="bg-white rounded-2xl border border-gray-100">{emptyState}</div>;
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+    <div className={bare ? "overflow-hidden" : "bg-white rounded-2xl border border-gray-100 overflow-hidden"}>
       {/* Desktop */}
       <div className="hidden md:block overflow-x-auto">
         <table className="w-full text-sm">

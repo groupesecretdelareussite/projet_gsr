@@ -91,7 +91,7 @@ export function NotificationBadge() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-11 w-80 bg-white rounded-xl border border-gray-100 shadow-lg z-50 overflow-hidden">
+        <div className="fixed inset-x-4 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-11 sm:w-80 bg-white rounded-xl border border-gray-100 shadow-lg z-50 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <p className="text-sm font-semibold text-gray-800">Notifications</p>
             {nonLues.length > 0 && (

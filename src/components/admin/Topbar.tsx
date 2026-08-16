@@ -9,7 +9,7 @@ import { NotificationBadge } from "@/components/admin/NotificationBadge";
 import { ROLE_LABELS, type UserRole } from "@/lib/constants";
 
 // Même périmètre que /api/eleves-recherche et la fiche élève /admin/eleves/[id].
-const ROLES_RECHERCHE_ELEVES: UserRole[] = ["coordonnateur", "comptable", "superviseur", "chef_site"];
+const ROLES_RECHERCHE_ELEVES: UserRole[] = ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"];
 
 interface EleveResultat {
   id: number;
@@ -54,7 +54,7 @@ function RechercheElevesTopbar() {
   }
 
   return (
-    <div ref={conteneurRef} className="relative flex-1 max-w-sm">
+    <div ref={conteneurRef} className="relative flex-1 min-w-0 max-w-sm">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
       <input
         value={requete}
@@ -138,7 +138,7 @@ function ToggleSiteSuperviseur({ sites }: { sites: { id: number; nom_site: strin
     <select
       value={valeur}
       onChange={handleChange}
-      className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-700"
+      className="w-28 sm:w-auto shrink-0 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white text-gray-700"
     >
       <option value="">Tous mes sites</option>
       {sites.map((s) => (
@@ -159,7 +159,7 @@ export function Topbar({ sitesSuperviseur = [] }: { sitesSuperviseur?: { id: num
       {ROLES_RECHERCHE_ELEVES.includes(role) ? (
         <RechercheElevesTopbar />
       ) : (
-        <div className="relative flex-1 max-w-sm">
+        <div className="relative flex-1 min-w-0 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
           <input
             disabled

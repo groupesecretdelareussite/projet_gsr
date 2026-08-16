@@ -46,7 +46,7 @@ export default async function TdProfLayout({ children }: { children: React.React
             </nav>
           </div>
           <div className="flex items-center gap-3 shrink-0">
-            <Link href="/td/prof/aide" title="Aide" className="text-gray-500 hover:text-gray-700">
+            <Link href="/td/prof/aide" title="Aide" className="p-2.5 -m-2.5 sm:p-0 sm:m-0 rounded-lg text-gray-500 hover:text-gray-700">
               <HelpCircle className="w-4 h-4" />
             </Link>
             <form action={handleLogout}>

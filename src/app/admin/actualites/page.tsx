@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
-import { ActionsBar } from "@/components/admin/ActionsBar";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/badge";
@@ -40,7 +39,7 @@ export default async function ActualitesAdminPage() {
     return (
       <div>
         <PageHeader title="Actualités" />
-        <EmptyState icon={Newspaper} title="Non autorisé" description="Cette page ne vous est pas accessible." />
+        <EmptyState icon={Newspaper} title="Non autorisé" description="Cette page est réservée au coordonnateur." />
       </div>
     );
   }
@@ -55,7 +54,7 @@ export default async function ActualitesAdminPage() {
   const columns: DataTableColumn<ActualiteRow>[] = [
     {
       key: "couverture",
-      label: "",
+      label: "Couverture",
       render: (a) => {
         const couverture = [...a.actualites_images].sort((x, y) => x.ordre - y.ordre)[0];
         return (
@@ -106,16 +105,18 @@ export default async function ActualitesAdminPage() {
 
   return (
     <div>
-      <PageHeader title="Actualités" subtitle="Gérez les articles publiés sur la page Actualités du site public" />
-
-      <ActionsBar>
-        <Link href="/admin/actualites/nouveau">
-          <Button size="sm">
-            <Plus className="w-3.5 h-3.5" />
-            Nouvel article
-          </Button>
-        </Link>
-      </ActionsBar>
+      <PageHeader
+        title="Actualités"
+        subtitle="Gérez les articles publiés sur la page Actualités du site public"
+        actions={
+          <Link href="/admin/actualites/nouveau">
+            <Button variant="outline" size="sm">
+              <Plus className="w-3.5 h-3.5" />
+              Nouvel article
+            </Button>
+          </Link>
+        }
+      />
 
       <DataTable
         columns={columns}

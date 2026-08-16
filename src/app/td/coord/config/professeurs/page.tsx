@@ -54,7 +54,16 @@ export default async function ProfesseursTDPage() {
         </span>
       ),
     },
-    { key: "contact", label: "Contact", render: (p) => <span className="text-xs">{p.email} — {p.telephone}</span> },
+    {
+      key: "contact",
+      label: "Contact",
+      render: (p) => (
+        <span className="text-xs block">
+          <span className="block break-words">{p.email}</span>
+          <span className="block text-gray-400">{p.telephone}</span>
+        </span>
+      ),
+    },
     { key: "zone", label: "Zone", render: (p) => nomZoneParId.get(p.zone_id) ?? "—" },
     { key: "matiere", label: "Matière principale", render: (p) => nomMatiereParId.get(p.matiere_principale_id) ?? "—" },
     {

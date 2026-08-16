@@ -55,13 +55,13 @@ export default async function PaiementsSupprimesPage() {
     { key: "matricule", label: "Matricule", render: (p) => <span className="font-mono text-xs">{p.matricule}</span> },
     { key: "mois", label: "Mois", render: (p) => p.mois_souscription },
     { key: "montant", label: "Montant", render: (p) => `${p.montant_paye} F` },
-    { key: "date_paiement", label: "Date du paiement", render: (p) => p.date_paiement },
+    { key: "date_paiement", label: "Date du paiement", render: (p) => new Date(p.date_paiement).toLocaleDateString("fr-FR") },
     { key: "mode", label: "Mode", render: (p) => MODE_PAIEMENT_LABELS[p.mode_paiement] },
     {
       key: "motif",
       label: "Motif",
       render: (p) => (
-        <span className="block max-w-[220px] truncate" title={p.motif}>
+        <span className="block md:max-w-[220px] md:truncate" title={p.motif}>
           {p.motif}
         </span>
       ),

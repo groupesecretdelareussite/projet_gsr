@@ -69,7 +69,7 @@ export function NouvelleDepenseDialog({ categoriesInitiales, anneeScolaireId }: 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">
+        <Button variant="outline" size="sm">
           <Plus className="w-3.5 h-3.5" />
           Nouvelle dépense
         </Button>

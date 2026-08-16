@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/admin/PageHeader";
-import { AIDE_CONNEXION_SECURITE } from "@/lib/aide-contenu";
+import { AIDE_CONNEXION_SECURITE_PROF_TD } from "@/lib/aide-contenu";
 
 /** Contenu propre au professeur TD — audience séparée du portail Admin (session bcrypt/iron-session, pas Supabase Auth), donc pas de filtrage par rôle ici : un professeur voit tout ce qui existe pour lui, rien de plus. */
 export default function AideProfesseurPage() {
@@ -24,7 +24,7 @@ export default function AideProfesseurPage() {
 
         <section>
           <h2 className="text-sm font-bold uppercase tracking-wide text-primary-dark mb-3">Connexion &amp; sécurité</h2>
-          {AIDE_CONNEXION_SECURITE}
+          {AIDE_CONNEXION_SECURITE_PROF_TD}
         </section>
       </div>
     </div>

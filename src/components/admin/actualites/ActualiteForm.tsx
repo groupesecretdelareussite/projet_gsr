@@ -113,7 +113,7 @@ export function ActualiteForm({ article }: { article?: ActualiteExistante }) {
       {article && imagesExistantes.length > 0 && (
         <div>
           <Label>Images actuelles ({imagesExistantes.length}) — la première est la couverture</Label>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {imagesExistantes.map((img, i) => (
               <div key={img.id} className="relative group">
                 <div className="relative h-24 rounded-lg overflow-hidden border border-gray-200">

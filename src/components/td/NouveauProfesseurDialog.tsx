@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { PhoneInput } from "@/components/shared/PhoneInput";
 import { creerProfesseurTD } from "@/actions/td-config";
 
 interface Option {
@@ -100,8 +101,8 @@ export function NouveauProfesseurDialog({ zones, matieres }: { zones: Option[]; 
             </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="telephone">Téléphone</Label>
-                <Input id="telephone" required value={telephone} onChange={(e) => setTelephone(e.target.value)} />
+                <Label>Téléphone</Label>
+                <PhoneInput value={telephone} onChange={setTelephone} required />
               </div>
               <div>
                 <Label htmlFor="email">Email</Label>
