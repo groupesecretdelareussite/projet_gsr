@@ -24,8 +24,7 @@ const config: Config = {
         "surface-variant": "#e0e3e5",
       },
       fontFamily: {
-        sans: ["var(--font-inter)"],
-        lexend: ["var(--font-lexend)"],
+        sans: ["var(--font-lexend)"],
       },
       backgroundImage: {
         "primary-gradient": "linear-gradient(135deg, #12AA00, #0e8f00)",

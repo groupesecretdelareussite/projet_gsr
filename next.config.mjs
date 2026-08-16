@@ -25,7 +25,19 @@ const nextConfig = {
   // (react-international-phone, champs contact_parent) chargent leurs SVG
   // Twemoji depuis ce CDN — invisible dans le grep initial car dépendance
   // transitive d'une librairie, pas un chargement fait par notre propre code.
+  //
+  // Header désactivé hors production (2026-08-15) : `upgrade-insecure-requests`
+  // réécrit toute requête http:// de la page en https:// — sans effet sur
+  // localhost (origine considérée sûre par le navigateur), mais casse tout
+  // chargement d'asset (CSS/JS/polices) dès qu'on teste via l'IP locale
+  // (téléphone sur le même WiFi, cf. allowedDevOrigins) puisque le serveur de
+  // dev ne parle pas TLS. Même schéma que l'ancien souci `unsafe-eval` : cette
+  // CSP protège la prod, pas le serveur de dev.
   async headers() {
+    if (process.env.NODE_ENV !== "production") {
+      return [];
+    }
+
     const csp = [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline'",

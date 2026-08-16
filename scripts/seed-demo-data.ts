@@ -205,7 +205,7 @@ async function main() {
     } while (usedNames.has(cle));
     usedNames.add(cle);
 
-    const contactParent = `+229 ${pick(PREFIXES_TEL)} ${randInt(10, 99)} ${randInt(10, 99)} ${randInt(10, 99)}`;
+    const contactParent = `+22901${pick(PREFIXES_TEL)}${randInt(10, 99)}${randInt(10, 99)}${randInt(10, 99)}`;
 
     const roll = Math.random();
     const profil: Profil = roll < 0.45 ? "regulier" : roll < 0.75 ? "irregulier" : "critique";

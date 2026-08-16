@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Lexend } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const lexend = Lexend({ subsets: ["latin"], variable: "--font-lexend" });
 
 const SITE_URL = "https://groupe-secretdelareussite.com";
 
@@ -70,7 +70,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className={`${inter.variable} font-sans antialiased text-gray-900 bg-background`}>
+      <body className={`${lexend.variable} font-sans antialiased text-gray-900 bg-background`}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD_ORGANISATION) }}
