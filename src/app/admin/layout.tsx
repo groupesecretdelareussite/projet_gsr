@@ -24,8 +24,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   try {
     scope = await getUserScope(supabase);
   } catch {
-    // Compte désactivé/supprimé entre-temps (§5.1) : session encore valide
-    // côté JWT mais plus autorisée applicativement.
+    // Compte désactivé/supprimé ou profil inaccessible : déconnexion propre pour éviter
+    // toute boucle de redirection infinie (ERR_TOO_MANY_REDIRECTS) avec le middleware proxy.
+    await supabase.auth.signOut();
     redirect("/admin/login");
   }
 

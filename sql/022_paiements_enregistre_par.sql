@@ -19,10 +19,9 @@ alter table public.paiements
 -- ---------------------------------------------------------------------------
 drop policy if exists "users_lecture_soi_meme" on public.users;
 drop policy if exists "users_lecture_staff" on public.users;
+
+create policy "users_lecture_soi_meme" on public.users
+  for select using (id = auth.uid());
+
 create policy "users_lecture_staff" on public.users
-  for select using (
-    exists (
-      select 1 from public.users u
-      where u.id = auth.uid() and u.actif = true
-    )
-  );
+  for select using (auth.role() = 'authenticated');
