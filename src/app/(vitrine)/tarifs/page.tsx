@@ -18,17 +18,17 @@ const CIP_TARIFS = [
   { classes: "6ème et 5ème", montant: "3 500 F" },
   { classes: "4ème et 3ème", montant: "5 000 F" },
   { classes: "2nde et 1ère", montant: "6 000 F" },
-  { classes: "Terminale", montant: "8 000 F" },
+  { classes: "Tle", montant: "8 000 F" },
 ];
 
 const TD_TARIFS = [
-  { classes: "6ème", montant: "2 000 F" },
-  { classes: "5ème et 4ème", montant: "3 000 F" },
+  { classes: "6ème et 5ème", montant: "2 500 F" },
+  { classes: "4ème", montant: "3 500 F" },
   { classes: "3ème", montant: "5 000 F" },
   { classes: "2nde AB et 2nde CD", montant: "5 000 F" },
   { classes: "1ère B et 1ère CD", montant: "6 000 F" },
-  { classes: "Terminale D", montant: "8 000 F" },
-  { classes: "Terminale C", montant: "10 000 F" },
+  { classes: "Tle B et Tle D", montant: "8 000 F" },
+  { classes: "Tle C", montant: "10 000 F" },
 ];
 
 function TarifTable({ data }: { data: { classes: string; montant: string }[] }) {

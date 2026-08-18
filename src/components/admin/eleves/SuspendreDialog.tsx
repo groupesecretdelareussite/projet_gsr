@@ -53,7 +53,7 @@ export function SuspendreDialog({ eleveId, nomComplet }: { eleveId: number; nomC
       <DialogTrigger asChild>
         <Button variant="destructive" size="sm">
           <UserX className="w-3.5 h-3.5" />
-          <span className={HOVER_ONLY_LABEL}>Suspendre</span>
+          {/* <span className={HOVER_ONLY_LABEL}>Suspendre</span> */}
         </Button>
       </DialogTrigger>
       <DialogContent>

@@ -46,7 +46,7 @@ export function ReinitialiserMotDePasseParentDialog({ matricule, nomComplet }: {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <KeyRound className="w-3.5 h-3.5" />
-          <span className={HOVER_ONLY_LABEL}>Mdp parent</span>
+          {/* <span className={HOVER_ONLY_LABEL}>Mdp parent</span> */}
         </Button>
       </DialogTrigger>
       <DialogContent>

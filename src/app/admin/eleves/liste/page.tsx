@@ -110,7 +110,7 @@ export default async function ListeElevesPage(
                 <Link href={`/admin/eleves/${e.id}/modifier`}>
                   <Button variant="outline" size="sm">
                     <Pencil className="w-3.5 h-3.5" />
-                    <span className={HOVER_ONLY_LABEL}>Modifier</span>
+                    {/* <span className={HOVER_ONLY_LABEL}>Modifier</span> */}
                   </Button>
                 </Link>
                 <SuspendreDialog eleveId={e.id} nomComplet={`${e.nom} ${e.prenoms}`} />
