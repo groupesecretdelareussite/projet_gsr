@@ -41,7 +41,7 @@ export default function AProposPage() {
           </h1>
           <p className="text-white/90 text-sm sm:text-base lg:text-lg leading-relaxed max-w-2xl mx-auto">
             L'excellence académique au service de la réussite de chaque élève, bâtie
-            sur la rigueur, la discipline et l'innovation pédagogique.
+            sur la méthode, la rigueur, la discipline et l'innovation pédagogique.
           </p>
         </div>
       </div>

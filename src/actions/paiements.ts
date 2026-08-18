@@ -90,6 +90,7 @@ export async function enregistrerPaiement(
     date_paiement: input.datePaiement,
     mode_paiement: input.modePaiement,
     annee_scolaire_id: anneeEnCours.id,
+    enregistre_par: scope.userId,
   });
 
   if (error) return { error: error.message };

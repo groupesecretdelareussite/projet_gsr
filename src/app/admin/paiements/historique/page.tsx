@@ -18,6 +18,7 @@ interface PaiementRow {
   montant_paye: number;
   date_paiement: string;
   mode_paiement: ModePaiement;
+  users: { username: string } | null;
   eleves: {
     matricule: string;
     nom: string;
@@ -58,7 +59,7 @@ export default async function HistoriquePaiementsPage(
   let query = supabase
     .from("paiements")
     .select(
-      "id, mois_souscription, montant_paye, date_paiement, mode_paiement, eleves!inner(matricule, nom, prenoms, classes!inner(nom_classe, site_id, sites(nom_site)))"
+      "id, mois_souscription, montant_paye, date_paiement, mode_paiement, users(username), eleves!inner(matricule, nom, prenoms, classes!inner(nom_classe, site_id, sites(nom_site)))"
     )
     .order("date_paiement", { ascending: false });
 
@@ -106,6 +107,11 @@ export default async function HistoriquePaiementsPage(
     { key: "mois", label: "Mois", render: (p) => p.mois_souscription },
     { key: "montant", label: "Montant", render: (p) => `${p.montant_paye} F` },
     { key: "mode", label: "Mode", render: (p) => MODE_PAIEMENT_LABELS[p.mode_paiement] },
+    {
+      key: "agent",
+      label: "Encaissé par",
+      render: (p) => <span className="text-gray-600 text-xs font-medium">{p.users?.username ?? "—"}</span>,
+    },
     ...(peutSupprimer
       ? [
           {

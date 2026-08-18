@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Pencil, Wallet, NotebookText, ClipboardCheck, UserX, KeyRound } from "lucide-react";
+import { Pencil, Wallet, NotebookText, ClipboardCheck, UserX, KeyRound, Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -215,6 +215,18 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
     presencesResume = { total, presents };
   }
 
+  let totalRecompensesGagnees = 0;
+  let nbRecompensesGagnees = 0;
+  if (["coordonnateur", "comptable", "superviseur"].includes(scope.role) && anneeEnCours) {
+    const { data: recompensesData } = await supabase
+      .from("recompenses")
+      .select("montant")
+      .eq("eleve_id", eleve.id)
+      .eq("annee_scolaire_id", anneeEnCours.id);
+    totalRecompensesGagnees = (recompensesData ?? []).reduce((s, r) => s + r.montant, 0);
+    nbRecompensesGagnees = recompensesData?.length ?? 0;
+  }
+
   const colonnesNotes: DataTableColumn<{ nom: string; coefficient: number | null; moyenne: number | null }>[] = [
     {
       key: "matiere",
@@ -388,6 +400,26 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
             ) : (
               <DataTable bare columns={colonnesPaiements} rows={historiquePaiements} rowKey={(l) => l.key} />
             )}
+          </Bloc>
+        )}
+
+        {["coordonnateur", "comptable", "superviseur"].includes(scope.role) && totalRecompensesGagnees > 0 && (
+          <Bloc
+            titre="Récompenses d'excellence"
+            action={
+              <Link href="/admin/recompenses/cumul" className="text-xs text-primary font-medium hover:underline">
+                Voir le palmarès
+              </Link>
+            }
+          >
+            <div className="flex items-center gap-2.5 text-sm">
+              <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
+              <span className="text-gray-700">
+                Total perçu cette année :{" "}
+                <strong className="text-emerald-700 font-bold">{totalRecompensesGagnees.toLocaleString("fr-FR")} F</strong>{" "}
+                <span className="text-gray-400 text-xs">({nbRecompensesGagnees} note(s) récompensée(s))</span>
+              </span>
+            </div>
           </Bloc>
         )}
 

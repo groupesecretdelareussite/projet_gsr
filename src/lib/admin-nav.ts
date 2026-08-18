@@ -13,6 +13,7 @@ import {
   Newspaper,
   Settings,
   CalendarClock,
+  Trophy,
 } from "lucide-react";
 import type { UserRole } from "@/lib/constants";
 
@@ -83,6 +84,13 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/td/coord/dashboard",
     icon: CalendarClock,
     roles: ["coordonnateur"],
+    enabled: true,
+  },
+  {
+    label: "Récompenses",
+    href: "/admin/recompenses",
+    icon: Trophy,
+    roles: ["coordonnateur", "comptable", "superviseur"],
     enabled: true,
   },
   {

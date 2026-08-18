@@ -86,7 +86,7 @@ export default function ConnexionParentPage() {
                 </button>
               </div>
               <p className="text-xs text-gray-400 mt-1.5">
-                Mot de passe oublié ? Contactez l&apos;établissement pour une réinitialisation.
+                Mot de passe oublié ? Contactez-nous pour une réinitialisation.
               </p>
             </div>
 

@@ -59,7 +59,7 @@ export default function CreerCompteParentPage() {
           <p className="text-primary text-xs font-bold uppercase tracking-widest mb-2">Première connexion</p>
           <h1 className="text-3xl font-bold text-gray-900 mb-3">Créer votre compte</h1>
           <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-            Utilisez le matricule de votre enfant, communiqué par l&apos;établissement.
+            Utilisez le matricule de votre enfant, communiqué par le groupe.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">

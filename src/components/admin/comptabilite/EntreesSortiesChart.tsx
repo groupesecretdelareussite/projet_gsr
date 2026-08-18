@@ -6,6 +6,17 @@ interface EntreesSortiesChartProps {
   data: { mois: string; entrees: number; sorties: number }[];
 }
 
+const MOIS_COURTS: Record<string, string> = {
+  Octobre: "Oct",
+  Novembre: "Nov",
+  Décembre: "Déc",
+  Janvier: "Jan",
+  Février: "Fév",
+  Mars: "Mars",
+  Avril: "Avr",
+  Mai: "Mai",
+};
+
 /** §11 GSR_ARCHITECTURE.md — toujours sur les 8 mois de l'année sélectionnée, indépendant du filtre "mois". */
 export function EntreesSortiesChart({ data }: EntreesSortiesChartProps) {
   return (
@@ -24,7 +35,7 @@ export function EntreesSortiesChart({ data }: EntreesSortiesChartProps) {
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-          <XAxis dataKey="mois" tick={{ fontSize: 12 }} />
+          <XAxis dataKey="mois" tick={{ fontSize: 12 }} tickFormatter={(m) => MOIS_COURTS[m] ?? m} />
           <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `${(v / 1000).toLocaleString("fr-FR")}k`} />
           <Tooltip formatter={(value) => `${Number(value).toLocaleString("fr-FR")} F`} />
           <Legend />

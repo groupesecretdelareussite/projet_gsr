@@ -55,14 +55,18 @@ export default async function HistoriqueClassePage(
   const date = searchParams.date;
 
   let eleves: EleveStatut[] = [];
+  let appelEffectue = false;
 
   if (classeId && date) {
     const [{ data: elevesData }, { data: presencesData }] = await Promise.all([
       supabase.from("eleves").select("id, nom, prenoms").eq("classe_id", classeId).eq("statut", "actif").order("nom"),
       supabase.from("presences").select("eleve_id, present").eq("classe_id", classeId).eq("date_presence", date),
     ]);
-    const presenceParEleve = new Map((presencesData ?? []).map((p) => [p.eleve_id, p.present]));
-    eleves = (elevesData ?? []).map((e) => ({ ...e, present: presenceParEleve.get(e.id) ?? false }));
+    appelEffectue = (presencesData?.length ?? 0) > 0;
+    if (appelEffectue) {
+      const presenceParEleve = new Map((presencesData ?? []).map((p) => [p.eleve_id, p.present]));
+      eleves = (elevesData ?? []).map((e) => ({ ...e, present: presenceParEleve.get(e.id) ?? false }));
+    }
   }
 
   const total = eleves.length;
@@ -83,6 +87,7 @@ export default async function HistoriqueClassePage(
   const nomSiteTitre = classeSelectionnee ? nomSiteParId.get(classeSelectionnee.site_id) ?? "" : "";
   const lignesExportPresents = eleves.filter((e) => e.present).map((e) => ({ Nom: e.nom, Prénoms: e.prenoms }));
   const lignesExportAbsents = eleves.filter((e) => !e.present).map((e) => ({ Nom: e.nom, Prénoms: e.prenoms }));
+  const dateFormatee = date ? date.split("-").reverse().join("/") : "";
 
   return (
     <div>
@@ -115,8 +120,14 @@ export default async function HistoriqueClassePage(
 
       {!classeId || !date ? (
         <EmptyState icon={ClipboardList} title="Choisissez une classe et une date" description="Sélectionnez une classe et une date ci-dessus." />
+      ) : !appelEffectue ? (
+        <EmptyState
+          icon={ClipboardList}
+          title="Aucun appel enregistré pour cette date"
+          description={`Aucune présence n'a été saisie pour cette classe le ${dateFormatee} (pas de séance ou appel non effectué).`}
+        />
       ) : eleves.length === 0 ? (
-        <EmptyState icon={ClipboardList} title="Aucun élève actif" description="Cette classe n'a aucun élève actif, ou aucune présence n'a été enregistrée pour cette date." />
+        <EmptyState icon={ClipboardList} title="Aucun élève actif" description="Cette classe n'a aucun élève actif." />
       ) : (
         <>
           <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">

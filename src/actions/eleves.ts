@@ -457,6 +457,7 @@ export async function reinscrireEleve(eleveId: number, input: ReinscrireInput): 
         date_paiement: input.datePaiement,
         mode_paiement: input.modePaiement,
         annee_scolaire_id: suspension.annee_scolaire_id,
+        enregistre_par: scope.userId,
       });
       if (paiementError) return { error: paiementError.message };
     } else {
