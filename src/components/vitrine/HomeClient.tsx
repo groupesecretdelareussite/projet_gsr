@@ -208,7 +208,7 @@ export default function HomeClient() {
               <Trophy className="w-8 h-8" />
             </div>
             <Counter value={86} suffix="%" />
-            <p className="text-gray-600 font-medium">Taux de Réussite</p>
+            <p className="text-gray-600 font-medium">Taux de Réussite en 2025</p>
           </div>
         </div>
       </section>

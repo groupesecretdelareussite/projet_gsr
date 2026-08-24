@@ -16,7 +16,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 
-const IFU_PLACEHOLDER = "";
+const IFU_PLACEHOLDER = "0 2019 1094 0473";
 
 export default function MentionsLegalesPage() {
   return (

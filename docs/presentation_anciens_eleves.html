@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Séance d'Orientation & Présentation des Dispositions Numériques — GSR</title>
+  <style>
+    :root {
+      --primary: #0F766E;
+      --primary-dark: #115E59;
+      --primary-light: #CCFBF1;
+      --secondary: #D97706;
+      --secondary-light: #FEF3C7;
+      --danger: #DC2626;
+      --danger-light: #FEE2E2;
+      --dark: #0F172A;
+      --gray-600: #475569;
+      --gray-400: #94A3B8;
+      --gray-100: #F1F5F9;
+      --gray-50: #F8FAFC;
+      --white: #FFFFFF;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--dark);
+      background-color: #E2E8F0;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .document-container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: var(--white);
+      border-radius: 1rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      padding: 3.5rem 4rem;
+    }
+
+    /* En-tête */
+    .header {
+      border-bottom: 2px solid var(--gray-100);
+      padding-bottom: 2rem;
+      margin-bottom: 2.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1.5rem;
+    }
+
+    .badge-label {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      margin-bottom: 0.75rem;
+    }
+
+    .title {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--dark);
+      line-height: 1.25;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: var(--gray-600);
+      font-weight: 500;
+    }
+
+    .meta-box {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-100);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      margin-bottom: 2rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      font-size: 0.875rem;
+    }
+
+    .meta-item strong {
+      display: block;
+      color: var(--gray-600);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.2rem;
+    }
+
+    .meta-item span {
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    /* Structure du discours */
+    .speech-section {
+      margin-bottom: 2.5rem;
+      page-break-inside: avoid;
+    }
+
+    .speech-section h2 {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary-dark);
+      border-bottom: 1.5px solid var(--primary-light);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .section-number {
+      background: var(--primary);
+      color: var(--white);
+      width: 1.85rem;
+      height: 1.85rem;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .speech-box {
+      background: #FAFDFB;
+      border-left: 4px solid var(--primary);
+      padding: 1.25rem 1.5rem;
+      border-radius: 0 0.75rem 0.75rem 0;
+      margin-bottom: 1.25rem;
+      font-style: normal;
+      color: #1E293B;
+      font-size: 0.95rem;
+      line-height: 1.7;
+    }
+
+    .speech-box p {
+      margin-bottom: 0.75rem;
+    }
+
+    .speech-box p:last-child {
+      margin-bottom: 0;
+    }
+
+    .speaker-note {
+      background: var(--secondary-light);
+      border-left: 4px solid var(--secondary);
+      padding: 0.75rem 1.25rem;
+      border-radius: 0 0.5rem 0.5rem 0;
+      font-size: 0.825rem;
+      color: #78350F;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    .warning-box {
+      background: var(--danger-light);
+      border-left: 4px solid var(--danger);
+      padding: 1.25rem 1.5rem;
+      border-radius: 0 0.75rem 0.75rem 0;
+      color: #7F1D1D;
+      font-size: 0.95rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .card {
+      border: 1px solid var(--gray-100);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      background: var(--white);
+    }
+
+    .card-title {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--dark);
+      margin-bottom: 0.35rem;
+    }
+
+    .card-amount {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .card-desc {
+      font-size: 0.8rem;
+      color: var(--gray-600);
+      margin-top: 0.25rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.875rem;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    th {
+      background: var(--gray-50);
+      color: var(--gray-600);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    .highlight {
+      font-weight: 700;
+      color: var(--primary-dark);
+    }
+
+    /* Barre d'action / Impression */
+    .print-bar {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--white);
+      padding: 0.75rem 1.25rem;
+      border-radius: 9999px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      z-index: 100;
+    }
+
+    .btn-print {
+      background: var(--primary);
+      color: var(--white);
+      border: none;
+      padding: 0.6rem 1.25rem;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.2s;
+    }
+
+    .btn-print:hover {
+      background: var(--primary-dark);
+    }
+
+    /* Print CSS */
+    @media print {
+      body {
+        background: var(--white);
+        padding: 0;
+      }
+
+      .document-container {
+        box-shadow: none;
+        max-width: 100%;
+        padding: 0;
+      }
+
+      .print-bar {
+        display: none !important;
+      }
+
+      .page-break {
+        page-break-before: always;
+      }
+
+      .speech-section {
+        page-break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barre flottante pour exporter -->
+  <div class="print-bar">
+    <button class="btn-print" onclick="window.print()">
+      🖨️ Imprimer / Enregistrer en PDF
+    </button>
+  </div>
+
+  <div class="document-container">
+
+    <!-- En-tête -->
+    <header class="header">
+      <div>
+        <span class="badge-label">Conducteur d'animation & Discours officiel</span>
+        <h1 class="title">Rentrée Académique & Dispositions Technologiques</h1>
+        <p class="subtitle">Séance d'orientation et de présentation destinée aux anciens élèves</p>
+      </div>
+    </header>
+
+    <!-- Fiche Technique -->
+    <div class="meta-box">
+      <div class="meta-item">
+        <strong>Public Cible</strong>
+        <span>Anciens élèves (Tous niveaux)</span>
+      </div>
+      <div class="meta-item">
+        <strong>Orateur</strong>
+        <span>Direction / Coordonnateur</span>
+      </div>
+      <div class="meta-item">
+        <strong>Objectif</strong>
+        <span>Sensibiliser, motiver & fixer les règles du jeu</span>
+      </div>
+      <div class="meta-item">
+        <strong>Durée Estimée</strong>
+        <span>30 à 45 minutes</span>
+      </div>
+    </div>
+
+    <!-- INTRODUCTION -->
+    <section class="speech-section">
+      <h2><span class="section-number">1</span> Mot d'Ouverture & Contexte</h2>
+      <div class="speaker-note">
+        🎯 <strong>Posture de l'orateur :</strong> Chaleureux, solennel et motivant. Valoriser leur retour au centre et marquer une rupture positive avec les anciennes méthodes manuelles.
+      </div>
+      <div class="speech-box">
+        <p>
+          « Chers élèves, bon retour parmi nous ! C'est un immense plaisir de vous retrouver tous réunis pour cette nouvelle année scolaire.
+        </p>
+        <p>
+          Si vous êtes ici aujourd'hui, c'est parce que vous connaissez déjà notre engagement pour votre réussite aux examens et concours. Mais cette année, notre centre franchit une étape majeure : <strong>nous entrons pleinement dans l'ère numérique</strong>.
+        </p>
+        <p>
+          Finis les registres papier égarés, les doutes sur les notes, les calculs manuels approximatifs et les retards d'information. Nous avons déployé une <strong>plateforme technologique moderne</strong> conçue pour deux objectifs : 
+          <strong>récompenser au centime près l'effort de ceux qui travaillent</strong>, et <strong>instaurer une rigueur totale</strong> pour vous hisser au sommet.
+        </p>
+        <p>
+          Voici exactement ce qui change pour vous dès aujourd'hui. »
+        </p>
+      </div>
+    </section>
+
+    <!-- POINT 1 : RÉCOMPENSES -->
+    <section class="speech-section">
+      <h2><span class="section-number">2</span> Le Programme d'Excellence : Récompenses Financières en Argent Réel</h2>
+      <div class="speaker-note">
+        🎯 <strong>Posture :</strong> Enthousiaste et percutant. C'est l'argument numéro 1 qui va susciter l'attention immédiate des élèves.
+      </div>
+      <div class="speech-box">
+        <p>
+          « Nous commençons par la plus grande nouveauté de l'année : <strong>votre travail acharné va désormais vous rapporter de l'argent direct chaque mois !</strong>
+        </p>
+        <p>
+          La direction a instauré un budget d'encouragement à l'excellence. Chaque mois, le système informatique analyse automatiquement vos notes et débloque des primes financières :
+        </p>
+      </div>
+
+      <div class="grid-cards">
+        <div class="card">
+          <div class="card-title">Interrogations Scientifiques (I1, I2, I3)</div>
+          <div class="card-amount">200 FCFA / note</div>
+          <div class="card-desc">
+            Exclusivité : <strong>MATHS, PCT, SVT</strong><br>
+            Condition stricte : <strong>Note exacte de 20/20</strong>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Devoirs Surveillés (D1, D2)</div>
+          <div class="card-amount">500 FCFA / note</div>
+          <div class="card-desc">
+            Toutes matières confondues<br>
+            Condition : <strong>Note supérieure ou égale à 18/20</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="speech-box">
+        <p>
+          <strong>Comment ça marche ?</strong> Ces montants sont cumulables ! Si dans le mois, vous obtenez deux 20 en Maths et SVT (400F) plus un 18 en Devoir de Philo (500F), vous repartez à la fin du mois avec <strong>900 FCFA en cash</strong>.
+        </p>
+        <p>
+          De plus, un <strong>Palmarès officiel des meilleurs élèves</strong> sera publié chaque mois sur la plateforme et partagé avec la coordination. Travaillez, visez le 20, et vous serez célébrés et récompensés. »
+        </p>
+      </div>
+    </section>
+
+    <!-- POINT 2 : GESTION DES NOTES -->
+    <section class="speech-section">
+      <h2><span class="section-number">3</span> Gestion Numérique des Notes & Bulletins</h2>
+      <div class="speech-box">
+        <p>
+          « Désormais, chaque note obtenue (interrogations, devoirs, contrôles) est enregistrée directement dans la base de données sécurisée par vos enseignants et l'administration.
+        </p>
+        <p>
+          Les coefficients officiels sont appliqués automatiquement. Vos moyennes par matière, vos moyennes semestrielles (Semestre 1 et Semestre 2) et votre moyenne générale annuelle sont calculées instantanément par le système.
+        </p>
+        <p>
+          Tout est transparent, infalsifiable et accessible en temps réel. »
+        </p>
+      </div>
+    </section>
+
+    <!-- POINT 3 : PRÉSENCE -->
+    <section class="speech-section page-break">
+      <h2><span class="section-number">4</span> Pointage Numérique des Présences & Ponctualité</h2>
+      <div class="speaker-note">
+        🎯 <strong>Posture :</strong> Ferme et rassurante. Insister sur le fait que la réussite repose sur la présence physique active aux séances.
+      </div>
+      <div class="speech-box">
+        <p>
+          « La présence à chaque séance de TD fait l'objet d'un <strong>appel numérique en direct</strong>.
+        </p>
+        <p>
+          Les retards et les absences sont immédiatement archivés dans votre dossier personnel. Votre taux de présence global sur l'année est visible par la direction et par vos parents. 
+        </p>
+        <p>
+          Rappelez-vous : aucun élève ne peut prétendre à l'excellence s'il manque les séances de révision et d'exercices pratiques. La ponctualité est non négociable. »
+        </p>
+      </div>
+    </section>
+
+    <!-- POINT 4 : PORTAIL PARENTS & WHATSAPP -->
+    <section class="speech-section">
+      <h2><span class="section-number">5</span> Portail Parents & Notifications WhatsApp Directes</h2>
+      <div class="speech-box">
+        <p>
+          « Vos parents sont vos premiers partenaires dans vos études. Pour leur offrir une tranquillité totale, nous avons mis en place le <strong>Portail Parents</strong>.
+        </p>
+        <p>
+          Grâce à votre matricule unique d'élève, chaque parent peut créer son compte personnel depuis son téléphone ou son ordinateur pour :
+        </p>
+        <ul style="margin-left: 1.5rem; margin-bottom: 0.75rem;">
+          <li>Consulter vos notes et moyennes en direct.</li>
+          <li>Vérifier vos présences et retards aux séances.</li>
+          <li>Suivre l'historique des paiements de scolarité/TD et obtenir des reçus numériques.</li>
+        </ul>
+        <p>
+          En plus du portail, notre système envoie des <strong>notifications et rappels automatiques directement sur le compte WhatsApp de vos parents</strong>. Vos succès comme vos manquements seront immédiatement partagés à la maison. »
+        </p>
+      </div>
+    </section>
+
+    <!-- POINT 5 : EMPLOI DU TEMPS -->
+    <section class="speech-section">
+      <h2><span class="section-number">6</span> Planning des Séances de TD en Ligne</h2>
+      <div class="speech-box">
+        <p>
+          « Plus besoin de vous demander quelle matière aura lieu ou quel professeur sera présent !
+        </p>
+        <p>
+          L'emploi du temps hebdomadaire complet de chaque site et de chaque classe est publié chaque semaine en direct sur notre site internet dans la rubrique <strong>Programmes des TD</strong>.
+        </p>
+        <p>
+          Vous pouvez le consulter 24h/24 depuis votre téléphone pour préparer vos matières à l'avance. »
+        </p>
+      </div>
+    </section>
+
+    <!-- POINT 6 : RÈGLES DE PAIEMENT & SUSPENSION -->
+    <section class="speech-section">
+      <h2><span class="section-number">7</span> Discipline Financière, Suspension Automatique & Pénalités</h2>
+      <div class="speaker-note">
+        ⚠️ <strong>Attention :</strong> Être extrêmement précis. Prévenir que le système est automatisé et que les responsables de site ne peuvent pas contourner les règles du robot.
+      </div>
+
+      <div class="warning-box">
+        <p style="font-weight: 700; margin-bottom: 0.5rem;">⚠️ Ce que vous et vos parents devez impérativement savoir :</p>
+        <ul style="margin-left: 1.5rem; margin-bottom: 0.5rem; font-size: 0.9rem;">
+          <li><strong>Date limite de paiement :</strong> Les frais de TD se règlent par anticipation, au plus tard le <strong>1er de chaque mois</strong>.</li>
+          <li><strong>Suspension automatique :</strong> Le 1er du mois à minuit, le système informatique suspend automatiquement l'accès à la classe à tout élève non à jour.</li>
+          <li><strong>Pénalité de réinscription :</strong> Tout élève suspendu pour défaut de paiement devra s'acquitter de <strong>frais de pénalité de réinscription</strong> pour que son dossier soit réactivé dans le système.</li>
+        </ul>
+      </div>
+
+      <div class="speech-box">
+        <p>
+          « C'est une règle d'or : <strong>le système informatique est programmé et ne négocie pas</strong>. Les professeurs et chefs de site ne peuvent pas autoriser l'accès en classe à un compte suspendu par le serveur.
+        </p>
+        <p>
+          Informez vos parents dès aujourd'hui pour qu'ils anticipent les règlements via Mobile Money (MoMo) ou en présentiel avant la fin de chaque mois afin de vous éviter toute interruption de cours et des frais supplémentaires. »
+        </p>
+      </div>
+    </section>
+
+    <!-- POINT 7 : FIN D'ANNÉE -->
+    <section class="speech-section">
+      <h2><span class="section-number">8</span> Clôture d'Année & Passage en Classe Supérieure</h2>
+      <div class="speech-box">
+        <p>
+          « À la fin de l'année scolaire, le passage dans la classe supérieure s'effectue automatiquement dans le système en fonction de vos résultats et de votre assiduité.
+        </p>
+        <p>
+          Les dossiers des élèves sortants ou suspendus non régularisés sont définitivement clôturés et archivés. Pour garantir votre place d'une année sur l'autre, votre dossier doit rester exemplaire du premier au dernier jour. »
+        </p>
+      </div>
+    </section>
+
+    <!-- CONCLUSION -->
+    <section class="speech-section">
+      <h2><span class="section-number">9</span> Conclusion & Engagement</h2>
+      <div class="speech-box">
+        <p>
+          « Chers élèves, tous ces outils ont été construits pour une seule raison : <strong>vous offrir le meilleur encadrement possible</strong> pour garantir 100% de réussite à vos examens officiels.
+        </p>
+        <p>
+          Donnez le meilleur de vous-mêmes. Soyez réguliers, soyez assidus, visez les 20/20, encaissez vos récompenses mensuelles et faites la fierté de vos familles.
+        </p>
+        <p>
+          Nous vous souhaitons une année d'excellence et de plein succès ! Nous passons maintenant à vos questions. »
+        </p>
+      </div>
+    </section>
+
+    <!-- TABLEAU RÉCAPITULATIF -->
+    <section style="margin-top: 3rem; border-top: 2px dashed var(--gray-400); padding-top: 2rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--dark); margin-bottom: 1rem;">
+        📋 Fiche Mémo Rapide (À distribuer ou projeter)
+      </h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Fonctionnalité</th>
+            <th>Règle Clé</th>
+            <th>Bénéfice pour l'élève</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="highlight">Récompenses Notes</td>
+            <td>20/20 en Sciences = 200F<br>≥ 18/20 en Devoirs = 500F</td>
+            <td>Prime financière mensuelle en argent cash réel.</td>
+          </tr>
+          <tr>
+            <td class="highlight">Notes & Moyennes</td>
+            <td>Saisie numérique continue</td>
+            <td>Calcul automatique et transparent des moyennes semestrielles.</td>
+          </tr>
+          <tr>
+            <td class="highlight">Présences</td>
+            <td>Pointage numérique par séance</td>
+            <td>Historique d'assiduité valorisé dans le dossier.</td>
+          </tr>
+          <tr>
+            <td class="highlight">Portail Parents</td>
+            <td>Connexion par matricule</td>
+            <td>Suivi en direct des notes, présences et reçus de paiement.</td>
+          </tr>
+          <tr>
+            <td class="highlight">Programmes des TD</td>
+            <td>Planning en ligne sur le site</td>
+            <td>Consultation 24h/24 des cours et professeurs assignés.</td>
+          </tr>
+          <tr>
+            <td class="highlight">Paiements & Délais</td>
+            <td>Au plus tard le 1er du mois</td>
+            <td>Évite la suspension automatique du compte et les pénalités.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </div>
+
+</body>
+</html>
