@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Play, BookOpen, Users, Trophy, ChevronDown, CheckCircle, Phone } from "lucide-react";
 import { useState, useEffect } from "react";
+import RecrutementProfModal from "@/components/vitrine/RecrutementProfModal";
 
 /** Images de la page d'accueil hébergées dans le bucket public "galerie" (dossier vitrine/accueil), remplace public/images. */
 const STORAGE_ACCUEIL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie/vitrine/accueil`;
@@ -425,6 +426,9 @@ export default function HomeClient() {
           </div>
         </div>
       </section>
+
+      {/* Modal Popup Recrutement Professeurs */}
+      <RecrutementProfModal />
     </div>
   );
 }

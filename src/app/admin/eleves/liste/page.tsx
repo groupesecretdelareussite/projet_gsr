@@ -7,7 +7,7 @@ import { ActionsBar } from "@/components/admin/ActionsBar";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { Button } from "@/components/ui/button";
-import { ACTIONS_HOVER_REVEAL, HOVER_ONLY_LABEL, cn } from "@/lib/utils";
+import { ACTIONS_HOVER_REVEAL, cn } from "@/lib/utils";
 import { SuspendreDialog } from "@/components/admin/eleves/SuspendreDialog";
 import { ReinitialiserMotDePasseParentDialog } from "@/components/admin/eleves/ReinitialiserMotDePasseParentDialog";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";

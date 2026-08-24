@@ -31,7 +31,7 @@ SQL migrations live in `sql/` and are applied manually to Supabase in numeric or
 ## Current implementation state
 
 All 7 core phases of `GSR_ARCHITECTURE.md` are now built, plus Portail TD, Comptabilité globale, Notes/Moyennes, et Récompenses. As of now:
-- **Vitrine** (public site): `src/app/(vitrine)/*` — complete (actualités, galerie, tarifs, sites, programmes, mentions légales).
+- **Vitrine** (public site): `src/app/(vitrine)/*` — complete (actualités, galerie, tarifs, sites, programmes, mentions légales). Popup campagne recrutement enseignant (`src/components/vitrine/RecrutementProfModal.tsx`) avec temporisation 2s et affichage unique par session (`sessionStorage`).
 - **Admin — élèves module**: login, inscription, liste, modification, suspension/réinscription, deux contacts parents (`src/app/admin/eleves/*`, `src/actions/eleves.ts`).
 - **Admin — paiements module**: enregistrement, historique, à-jour, en-retard (filtre par mois, relance WhatsApp journalisée), suppression avec mot de passe+motif, pénalité de réinscription (`src/app/admin/paiements/*`, `src/actions/paiements.ts`, `src/lib/paiements.ts`).
 - **Admin — récompenses module** (2026-08-18) : `src/app/admin/recompenses/*`, `src/actions/recompenses.ts`, `src/lib/recompenses.ts`, `sql/023_recompenses.sql`. Suivi mensuel et cumul annuel des récompenses financières d'excellence (Interros sciences = 20/20 -> 200F, Devoirs toutes matières >= 18/20 -> 500F). Paiement unitaire et "Tout payer" reliés directement aux dépenses annexes (catégorie `'Récompense'`). Gardé par rôle (`coordonnateur`/`comptable`/`superviseur`).
