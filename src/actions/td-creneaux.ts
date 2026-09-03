@@ -52,12 +52,16 @@ export async function creerCreneauTD(input: CreerCreneauInput): Promise<{ error?
     .select("statut, date_debut, date_fin")
     .eq("id", input.semaineId)
     .single();
-  if (!semaine || semaine.statut !== "brouillon") {
-    return { error: "Les créneaux ne peuvent être créés que sur une semaine en brouillon." };
+  if (!semaine || (semaine.statut !== "brouillon" && semaine.statut !== "publiee")) {
+    return { error: "Les créneaux ne peuvent être créés que sur une semaine en brouillon ou publiée." };
   }
   if (input.dateTd < semaine.date_debut || input.dateTd > semaine.date_fin) {
     return { error: "La date du créneau doit être comprise dans la semaine sélectionnée." };
   }
+
+  // Si la semaine est déjà publiée, le créneau est inséré directement en "public"
+  // pour être visible immédiatement par les professeurs.
+  const statutCreneau = semaine.statut === "publiee" ? "public" : "brouillon";
 
   const { error } = await supabaseAdmin.schema("td").from("creneaux").insert({
     semaine_id: input.semaineId,
@@ -67,6 +71,7 @@ export async function creerCreneauTD(input: CreerCreneauInput): Promise<{ error?
     heure_debut: input.heureDebut,
     heure_fin: input.heureFin,
     montant_prevu: input.montantPrevu,
+    statut_creneau: statutCreneau,
   });
 
   if (error) {
