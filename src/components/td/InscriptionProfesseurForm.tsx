@@ -203,7 +203,7 @@ export function InscriptionProfesseurForm({ zones, matieres }: InscriptionProfes
 
         <div>
           <label htmlFor="zone" className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-            Zone de résidence / préférence <span className="text-red-500">*</span>
+            Zone - Préférence <span className="text-red-500">*</span>
           </label>
           <select
             id="zone"

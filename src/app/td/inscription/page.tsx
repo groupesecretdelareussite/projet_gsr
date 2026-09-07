@@ -44,7 +44,7 @@ export default async function TdInscriptionPage() {
           <p className="text-primary text-xs font-bold uppercase tracking-widest mb-1.5">Rejoindre l&apos;équipe</p>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Créer votre compte.</h1>
           <p className="text-xs text-gray-500 mt-1">
-            Renseignez vos coordonnées pour postuler aux créneaux de Travaux Dirigés.
+            Renseignez vos coordonnées pour la création de votre espace prof.
           </p>
         </div>
 
