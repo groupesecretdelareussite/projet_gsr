@@ -23,6 +23,9 @@ async function getScopeAndAssert(): Promise<UserScope> {
 
 function revalidateConfigPath(onglet: string) {
   revalidatePath(`/td/coord/config/${onglet}`);
+  revalidatePath("/td/coord/config/professeurs");
+  revalidatePath("/td/coord/config/inscriptions");
+  revalidatePath("/td/inscription");
 }
 
 // ---------------------------------------------------------------------------

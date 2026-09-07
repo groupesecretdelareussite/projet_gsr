@@ -9,6 +9,8 @@ export const metadata = {
   description: "Formulaire d'inscription pour les enseignants de Travaux Dirigés du Groupe Secret de la Réussite.",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function TdInscriptionPage() {
   const supabaseAdmin = createServiceRoleClient();
 
