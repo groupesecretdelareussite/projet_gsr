@@ -153,6 +153,17 @@ export default function TdLoginPage() {
             {isPending ? "Connexion..." : "Se connecter"}
             <ArrowRight className="w-4 h-4" />
           </button>
+
+          {typeCompte === "professeur" && (
+            <div className="text-center pt-1">
+              <p className="text-xs text-gray-500">
+                Vous êtes enseignant et n&apos;avez pas encore de compte ?{" "}
+                <Link href="/td/inscription" className="font-semibold text-primary hover:underline">
+                  Créer un compte
+                </Link>
+              </p>
+            </div>
+          )}
         </form>
 
         <div className="border-t border-gray-100 mt-8 pt-6">

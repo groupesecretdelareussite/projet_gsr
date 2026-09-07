@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope, type UserScope } from "@/lib/auth-scope";
+import { normaliserNumero, validerNumeroTelephone } from "@/lib/telephone";
 
 /**
  * §10.6 GSR_ARCHITECTURE.md — configuration TD réservée au coordonnateur.
@@ -223,5 +224,177 @@ export async function reactiverProfesseurTD(professeurId: number): Promise<{ err
   if (error) return { error: error.message };
 
   revalidateConfigPath("professeurs");
+  return {};
+}
+
+// ---------------------------------------------------------------------------
+// Inscriptions en libre-service & Validation coordonnateur
+// ---------------------------------------------------------------------------
+
+export interface InscrireProfesseurInput {
+  nom: string;
+  prenom: string;
+  telephone: string;
+  email: string;
+  motDePasse: string;
+  zoneId: number;
+  matierePrincipaleId: number;
+}
+
+/**
+ * Inscription en autonomie par l'enseignant.
+ * Le compte est créé avec `valide: false` et `actif: false`.
+ * Il doit être validé par le coordonnateur avant toute connexion.
+ */
+export async function inscrireProfesseurTD(input: InscrireProfesseurInput): Promise<{ error?: string }> {
+  const nom = input.nom?.trim();
+  const prenom = input.prenom?.trim();
+  if (!nom || nom.length < 2 || nom.length > 100) {
+    return { error: "Le nom doit comporter entre 2 et 100 caractères" };
+  }
+  if (!prenom || prenom.length < 2 || prenom.length > 100) {
+    return { error: "Le prénom doit comporter entre 2 et 100 caractères" };
+  }
+
+  const email = input.email?.trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email) || email.length > 150) {
+    return { error: "Adresse email invalide" };
+  }
+
+  const telNormalise = normaliserNumero(input.telephone ?? "");
+  const erreurTel = validerNumeroTelephone(telNormalise);
+  if (erreurTel) {
+    return { error: erreurTel };
+  }
+
+  if (!input.motDePasse || input.motDePasse.length < 8) {
+    return { error: "Le mot de passe doit contenir au moins 8 caractères" };
+  }
+  if (input.motDePasse.length > 128) {
+    return { error: "Le mot de passe ne doit pas dépasser 128 caractères" };
+  }
+
+  if (!input.zoneId || isNaN(input.zoneId)) {
+    return { error: "Veuillez sélectionner une zone géographique" };
+  }
+  if (!input.matierePrincipaleId || isNaN(input.matierePrincipaleId)) {
+    return { error: "Veuillez sélectionner votre matière principale" };
+  }
+
+  const supabaseAdmin = createServiceRoleClient();
+
+  // Vérifier doublon email
+  const { data: profEmail } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (profEmail) {
+    return { error: "Cette adresse email est déjà associée à un compte professeur" };
+  }
+
+  // Vérifier doublon téléphone
+  const { data: profTel } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .select("id")
+    .eq("telephone", telNormalise)
+    .maybeSingle();
+
+  if (profTel) {
+    return { error: "Ce numéro de téléphone est déjà associé à un compte professeur" };
+  }
+
+  // Vérifier l'existence de la zone et de la matière
+  const [{ data: zone }, { data: matiere }] = await Promise.all([
+    supabaseAdmin.schema("td").from("zones").select("id").eq("id", input.zoneId).maybeSingle(),
+    supabaseAdmin.schema("td").from("matieres_td").select("id").eq("id", input.matierePrincipaleId).maybeSingle(),
+  ]);
+
+  if (!zone) return { error: "La zone sélectionnée n'existe pas" };
+  if (!matiere) return { error: "La matière sélectionnée n'existe pas" };
+
+  const hash = await bcrypt.hash(input.motDePasse, 10);
+
+  const { error: insertError } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .insert({
+      nom,
+      prenom,
+      telephone: telNormalise,
+      email,
+      mot_de_passe: hash,
+      zone_id: input.zoneId,
+      matiere_principale_id: input.matierePrincipaleId,
+      actif: false,
+      valide: false,
+    });
+
+  if (insertError) {
+    return { error: insertError.message };
+  }
+
+  revalidateConfigPath("inscriptions");
+  return {};
+}
+
+/**
+ * Validation d'une inscription par le coordonnateur.
+ * Passe le professeur à `valide = true` et `actif = true`.
+ */
+export async function validerProfesseurTD(professeurId: number): Promise<{ error?: string }> {
+  await getScopeAndAssert();
+  const supabaseAdmin = createServiceRoleClient();
+
+  const { error } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .update({ valide: true, actif: true })
+    .eq("id", professeurId);
+
+  if (error) return { error: error.message };
+
+  revalidateConfigPath("inscriptions");
+  revalidateConfigPath("professeurs");
+  return {};
+}
+
+/**
+ * Refus / rejet d'une inscription en attente par le coordonnateur.
+ * Supprime la demande de la table td.professeurs.
+ * Garde-fou de sécurité : ne peut supprimer qu'un compte encore non validé (valide = false).
+ */
+export async function refuserProfesseurTD(professeurId: number): Promise<{ error?: string }> {
+  await getScopeAndAssert();
+  const supabaseAdmin = createServiceRoleClient();
+
+  const { data: prof } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .select("id, valide")
+    .eq("id", professeurId)
+    .maybeSingle();
+
+  if (!prof) {
+    return { error: "Demande introuvable" };
+  }
+  if (prof.valide) {
+    return { error: "Impossible de refuser un professeur déjà validé. Utilisez la désactivation." };
+  }
+
+  const { error } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .delete()
+    .eq("id", professeurId)
+    .eq("valide", false);
+
+  if (error) return { error: error.message };
+
+  revalidateConfigPath("inscriptions");
   return {};
 }

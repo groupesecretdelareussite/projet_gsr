@@ -18,6 +18,9 @@ import {
   creerProfesseurTD,
   reinitialiserMotDePasseProfTD,
   desactiverProfesseurTD,
+  validerProfesseurTD,
+  refuserProfesseurTD,
+  inscrireProfesseurTD,
 } from "./td-config";
 
 function makeScope(overrides: Partial<UserScope>): UserScope {
@@ -98,4 +101,61 @@ describe("Configuration TD — réservée au coordonnateur (§10.6)", () => {
       await expect(desactiverProfesseurTD(1)).rejects.toThrow("Non autorisé");
     }
   );
+
+  it.each(["comptable", "superviseur", "chef_site", "secretaire"] as const)(
+    "rejette le rôle %s pour validerProfesseurTD",
+    async (role) => {
+      vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role, isGlobal: false }));
+      await expect(validerProfesseurTD(1)).rejects.toThrow("Non autorisé");
+    }
+  );
+
+  it.each(["comptable", "superviseur", "chef_site", "secretaire"] as const)(
+    "rejette le rôle %s pour refuserProfesseurTD",
+    async (role) => {
+      vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role, isGlobal: false }));
+      await expect(refuserProfesseurTD(1)).rejects.toThrow("Non autorisé");
+    }
+  );
+});
+
+describe("Inscriptions professeurs en autonomie (inscrireProfesseurTD)", () => {
+  it("rejette un mot de passe trop court (< 8 caractères)", async () => {
+    const res = await inscrireProfesseurTD({
+      nom: "Dupont",
+      prenom: "Jean",
+      telephone: "+2290197000000",
+      email: "jean.dupont@test.com",
+      motDePasse: "court",
+      zoneId: 1,
+      matierePrincipaleId: 1,
+    });
+    expect(res.error).toBe("Le mot de passe doit contenir au moins 8 caractères");
+  });
+
+  it("rejette une adresse email mal formatée", async () => {
+    const res = await inscrireProfesseurTD({
+      nom: "Dupont",
+      prenom: "Jean",
+      telephone: "+2290197000000",
+      email: "email-invalide",
+      motDePasse: "motdepasse123",
+      zoneId: 1,
+      matierePrincipaleId: 1,
+    });
+    expect(res.error).toBe("Adresse email invalide");
+  });
+
+  it("rejette un numéro béninois au mauvais format", async () => {
+    const res = await inscrireProfesseurTD({
+      nom: "Dupont",
+      prenom: "Jean",
+      telephone: "+22912345",
+      email: "jean.dupont@test.com",
+      motDePasse: "motdepasse123",
+      zoneId: 1,
+      matierePrincipaleId: 1,
+    });
+    expect(res.error).toContain("Numéro béninois invalide");
+  });
 });

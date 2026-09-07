@@ -28,14 +28,20 @@ export default async function ProfesseursTDPage() {
   await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
 
-  const [{ data: professeurs }, { data: zones }, { data: matieres }] = await Promise.all([
+  const [{ data: professeurs }, { data: zones }, { data: matieres }, { count: countPending }] = await Promise.all([
     supabaseAdmin
       .schema("td")
       .from("professeurs")
-      .select("id, nom, prenom, telephone, email, zone_id, matiere_principale_id, actif")
+      .select("id, nom, prenom, telephone, email, zone_id, matiere_principale_id, actif, valide")
+      .neq("valide", false)
       .order("nom"),
     supabaseAdmin.schema("td").from("zones").select("id, nom_zone").order("nom_zone"),
     supabaseAdmin.schema("td").from("matieres_td").select("id, nom_matiere").order("nom_matiere"),
+    supabaseAdmin
+      .schema("td")
+      .from("professeurs")
+      .select("id", { count: "exact", head: true })
+      .eq("valide", false),
   ]);
 
   const rows = (professeurs ?? []) as ProfesseurRow[];
@@ -101,7 +107,7 @@ export default async function ProfesseursTDPage() {
         subtitle={`${rows.length} professeur(s)`}
         actions={<NouveauProfesseurDialog zones={zonesOptions} matieres={matieresOptions} />}
       />
-      <TdConfigTabs />
+      <TdConfigTabs nombreInscriptionsEnAttente={countPending ?? 0} />
       <DataTable
         columns={columns}
         rows={rows}

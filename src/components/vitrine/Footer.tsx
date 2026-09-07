@@ -52,6 +52,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/telecharger-app" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Application Mobile Staff
+                </Link>
+              </li>
+              <li>
                 <Link href="/mentions-legales" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Mentions légales
                 </Link>

@@ -21,11 +21,11 @@ export async function connexionProfesseurTD(email: string, motDePasse: string): 
   const { data: professeur } = await supabaseAdmin
     .schema("td")
     .from("professeurs")
-    .select("id, nom, prenom, mot_de_passe, actif")
+    .select("id, nom, prenom, mot_de_passe, actif, valide")
     .eq("email", email)
     .maybeSingle();
 
-  if (!professeur || !professeur.actif) {
+  if (!professeur || !professeur.actif || (professeur as { valide?: boolean }).valide === false) {
     await enregistrerTentative(supabaseAdmin, email, "td", false);
     return { error: "Identifiants invalides" };
   }
