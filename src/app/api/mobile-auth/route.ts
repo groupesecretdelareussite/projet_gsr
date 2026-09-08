@@ -89,7 +89,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ error: "Type d'authentification invalide" }, { status: 400 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Erreur serveur" }, { status: 500 });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Erreur serveur";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

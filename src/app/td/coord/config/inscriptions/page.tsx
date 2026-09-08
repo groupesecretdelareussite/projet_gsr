@@ -1,4 +1,4 @@
-import { UserCheck, CheckCircle2, Calendar } from "lucide-react";
+import { CheckCircle2, Calendar } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope } from "@/lib/auth-scope";
