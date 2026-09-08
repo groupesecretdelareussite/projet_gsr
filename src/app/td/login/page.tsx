@@ -49,7 +49,7 @@ export default function TdLoginPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-surface px-4 py-12">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-8 sm:p-10">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-11 h-11 rounded-lg border-2 border-primary flex items-center justify-center overflow-hidden shrink-0">
+          <div className="w-11 h-11 rounded-lg  flex items-center justify-center overflow-hidden shrink-0">
             <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain scale-150" />
           </div>
           <span className="font-bold text-xl text-gray-900">Portail TD</span>
