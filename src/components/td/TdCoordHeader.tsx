@@ -85,7 +85,7 @@ export function TdCoordHeader() {
                 <span className="font-bold text-gray-900 text-sm sm:text-base leading-tight">Portail TD</span>
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary">
                   <ShieldCheck className="w-3 h-3" />
-                  Coord
+                  Coordonnateur
                 </span>
               </div>
             </div>
