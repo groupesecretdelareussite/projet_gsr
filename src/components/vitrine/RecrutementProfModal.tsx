@@ -64,23 +64,13 @@ export default function RecrutementProfModal() {
         className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Bouton de fermeture (Croix en haut à droite) */}
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          aria-label="Fermer la fenêtre"
-          className="absolute top-4 right-4 z-10 w-9 h-9 flex items-center justify-center rounded-full bg-white/90 sm:bg-white text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
         {/* En-tête avec dégradé et badge */}
         <div className="bg-gradient-to-br from-primary via-primary-dark to-emerald-950 p-6 sm:p-8 text-white relative overflow-hidden">
           {/* Effets décoratifs de fond */}
           <div className="absolute -right-8 -bottom-8 w-36 h-36 bg-white/10 rounded-full blur-xl pointer-events-none" />
           <div className="absolute top-0 right-1/4 w-24 h-24 bg-emerald-400/10 rounded-full blur-lg pointer-events-none" />
 
-          <div className="relative z-10">
+          <div className="relative z-10 pr-10">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-emerald-100 text-xs font-semibold uppercase tracking-wider backdrop-blur-sm mb-3">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>Recrutement</span>
@@ -101,6 +91,16 @@ export default function RecrutementProfModal() {
             </div>
           </div>
         </div>
+
+        {/* Bouton de fermeture (Croix en haut à droite) */}
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          aria-label="Fermer la fenêtre"
+          className="absolute top-4 right-4 z-30 w-9 h-9 flex items-center justify-center rounded-full bg-white/90 sm:bg-white text-gray-600 hover:text-gray-900 hover:bg-white transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
         {/* Corps du modal */}
         <div className="p-6 sm:p-8 space-y-5">

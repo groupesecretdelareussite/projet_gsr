@@ -32,14 +32,11 @@ export default async function TdInscriptionPage() {
               <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain scale-150" />
             </div>
             <div>
-              <span className="font-bold text-lg text-gray-900 block leading-tight">Portail TD</span>
+              <span className="font-bold text-lg text-gray-900 block leading-tight">Portail TD - Enseignants</span>
               <span className="text-xs text-gray-400">Groupe Secret de la Réussite</span>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
-            <GraduationCap className="w-4 h-4" />
-            <span>Enseignants</span>
-          </div>
+          
         </div>
 
         <div className="mb-6">
