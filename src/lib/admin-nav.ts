@@ -14,6 +14,7 @@ import {
   Settings,
   CalendarClock,
   Trophy,
+  Bot,
 } from "lucide-react";
 import type { UserRole } from "@/lib/constants";
 
@@ -39,6 +40,13 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/admin/tableau-de-bord",
     icon: LayoutDashboard,
     roles: ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"],
+    enabled: true,
+  },
+  {
+    label: "Agent IA",
+    href: "/admin/agent-ia",
+    icon: Bot,
+    roles: ["coordonnateur", "comptable", "superviseur"],
     enabled: true,
   },
   {

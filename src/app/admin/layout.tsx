@@ -7,6 +7,7 @@ import { ScopeProvider } from "@/components/admin/ScopeProvider";
 import { Sidebar } from "@/components/admin/Sidebar";
 import { Topbar } from "@/components/admin/Topbar";
 import { AdminInactivityWatcher } from "@/components/admin/AdminInactivityWatcher";
+import { FloatingAgentWidget } from "@/components/admin/agent-ia/FloatingAgentWidget";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -60,6 +61,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </div>
       <Toaster richColors position="top-right" />
       <AdminInactivityWatcher />
+      <FloatingAgentWidget />
     </ScopeProvider>
   );
 }

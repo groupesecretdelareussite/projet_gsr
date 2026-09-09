@@ -33,6 +33,20 @@ export const SECTIONS_AIDE_ADMIN: SectionAide[] = [
     ),
   },
   {
+    href: "/admin/agent-ia",
+    titre: "Agent IA",
+    corps: (
+      <Carte titre="Assistant décisionnel & analytique" route="/admin/agent-ia">
+        <p>
+          Assistant propulsé par Gemini en <strong>mode lecture seule</strong>. Il permet de poser des questions en langage naturel pour analyser le recouvrement, consulter la fiche d&apos;un élève, vérifier les retards de paiement, synthétiser les présences ou préparer les séances TD.
+        </p>
+        <p>
+          Accessible également depuis n&apos;importe quelle page via le bouton flottant en bas à droite.
+        </p>
+      </Carte>
+    ),
+  },
+  {
     href: "/admin/eleves/liste",
     titre: "Élèves",
     corps: (
