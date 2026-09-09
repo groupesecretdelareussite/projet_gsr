@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
-import { getGeminiClient, GEMINI_MODEL_DEFAULT, GSR_SYSTEM_INSTRUCTION } from "@/lib/ai/gemini";
+import { getGeminiClient, generateGsrContent, messageUtilisateurGemini, GSR_SYSTEM_INSTRUCTION } from "@/lib/ai/gemini";
 import { GEMINI_TOOL_DECLARATIONS, executeToolCall } from "@/lib/ai/tools";
 
 // Rôles explicitement autorisés (§ GSR_ARCHITECTURE.md)
@@ -86,14 +86,10 @@ INFORMATIONS SUR L'UTILISATEUR CONNECTÉ :
         while (maxToolSteps > 0) {
           maxToolSteps--;
 
-          const response = await ai.models.generateContent({
-            model: GEMINI_MODEL_DEFAULT,
+          const response = await generateGsrContent(ai, {
             contents: currentContents,
-            config: {
-              systemInstruction,
-              tools: [{ functionDeclarations: GEMINI_TOOL_DECLARATIONS as any }],
-              temperature: 0.2, // Température basse pour une factualité maximale
-            },
+            systemInstruction,
+            tools: [{ functionDeclarations: GEMINI_TOOL_DECLARATIONS as any }],
           });
 
           const candidate = response.candidates?.[0];
@@ -153,7 +149,7 @@ INFORMATIONS SUR L'UTILISATEUR CONNECTÉ :
       } catch (err: any) {
         console.error("Erreur agent-ia route:", err);
         sendEvent("error", {
-          message: err?.message || "Une erreur inattendue est survenue lors de l'analyse avec Gemini.",
+          message: messageUtilisateurGemini(err),
         });
         controller.close();
       }

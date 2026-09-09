@@ -13,6 +13,90 @@ export function getGeminiClient(): GoogleGenAI {
 
 export const GEMINI_MODEL_DEFAULT = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
+const GEMINI_FALLBACKS_DEFAUT = [
+  "gemini-3.5-flash",
+  "gemini-3-flash-preview",
+  "gemini-2.5-flash-lite",
+];
+
+export function modelesGeminiAEssayer(): string[] {
+  const extra = (process.env.GEMINI_MODEL_FALLBACKS || "")
+    .split(",")
+    .map((m) => m.trim())
+    .filter(Boolean);
+  const ordered = [GEMINI_MODEL_DEFAULT, ...extra, ...GEMINI_FALLBACKS_DEFAUT];
+  return [...new Set(ordered)];
+}
+
+export function texteErreurGemini(err: unknown): string {
+  if (!err) return "";
+  if (typeof err === "string") return err;
+  const e = err as { message?: string; status?: string; code?: unknown };
+  return [e.message, e.status, e.code].filter(Boolean).join(" ");
+}
+
+export function isErreurGeminiTransitoire(err: unknown): boolean {
+  return /UNAVAILABLE|high demand|try again later|RESOURCE_EXHAUSTED|overloaded|\b503\b|\b429\b/i.test(
+    texteErreurGemini(err),
+  );
+}
+
+export function isErreurGeminiModeleIntrouvable(err: unknown): boolean {
+  return /NOT_FOUND|no longer available|is not found/i.test(texteErreurGemini(err));
+}
+
+export function messageUtilisateurGemini(err: unknown): string {
+  if (isErreurGeminiTransitoire(err)) {
+    return "Gemini est temporairement saturé. Réessayez dans quelques instants.";
+  }
+  if (isErreurGeminiModeleIntrouvable(err)) {
+    return "Le modèle Gemini configuré n'est plus disponible. Vérifiez GEMINI_MODEL.";
+  }
+  if (/INVALID_ARGUMENT/i.test(texteErreurGemini(err))) {
+    return "La requête vers Gemini a été rejetée (format invalide).";
+  }
+  return "Une erreur inattendue est survenue lors de l'analyse avec Gemini.";
+}
+
+function pause(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function generateGsrContent(
+  ai: GoogleGenAI,
+  params: {
+    contents: unknown[];
+    systemInstruction: string;
+    tools: unknown;
+  },
+) {
+  let lastError: unknown;
+  const models = modelesGeminiAEssayer();
+
+  for (const model of models) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        return await ai.models.generateContent({
+          model,
+          contents: params.contents as any,
+          config: {
+            systemInstruction: params.systemInstruction,
+            tools: params.tools as any,
+            temperature: 0.2,
+          },
+        });
+      } catch (err) {
+        lastError = err;
+        if (isErreurGeminiModeleIntrouvable(err)) break;
+        if (!isErreurGeminiTransitoire(err)) throw err;
+        await pause(400 * 2 ** attempt);
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 /**
  * Prompt système institutionnel GSR injecté à chaque session.
  * Définit la personnalité, les règles métier, la sécurité en lecture seule
