@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Image from "next/image";
-import { Sparkles, Trash2, ShieldCheck, AlertCircle } from "lucide-react";
+import { Sparkles, Trash2, ShieldCheck } from "lucide-react";
 import { useUserScope } from "@/hooks/useUserScope";
 import { ChatMessage, type MessageItem } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { PromptSuggestions } from "./PromptSuggestions";
 import { ROLE_LABELS } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface ChatContainerProps {
@@ -20,6 +20,7 @@ export function ChatContainer({ initialPrompt, isCompact = false }: ChatContaine
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [input, setInput] = useState(initialPrompt || "");
   const [isLoading, setIsLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -34,6 +35,7 @@ export function ChatContainer({ initialPrompt, isCompact = false }: ChatContaine
     }
     setMessages([]);
     setIsLoading(false);
+    setShowSuggestions(false);
     toast.info("Nouvelle session de discussion démarrée.");
   }
 
@@ -50,6 +52,7 @@ export function ChatContainer({ initialPrompt, isCompact = false }: ChatContaine
     if (!textToSend || isLoading) return;
 
     setInput("");
+    setShowSuggestions(false);
 
     const userMessage: MessageItem = {
       id: `user-${Date.now()}`,
@@ -210,15 +213,31 @@ export function ChatContainer({ initialPrompt, isCompact = false }: ChatContaine
         </div>
 
         {messages.length > 0 && (
-          <button
-            onClick={handleReset}
-            type="button"
-            className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition"
-            title="Effacer la conversation"
-          >
-            <Trash2 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Effacer</span>
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setShowSuggestions((prev) => !prev)}
+              type="button"
+              className={cn(
+                "flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg transition border cursor-pointer",
+                showSuggestions
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-2xs font-medium"
+                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-100 border-gray-200/60"
+              )}
+              title={showSuggestions ? "Masquer les suggestions" : "Afficher des idées de questions"}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden sm:inline">Idées</span>
+            </button>
+            <button
+              onClick={handleReset}
+              type="button"
+              className="flex items-center gap-1 text-xs text-gray-500 hover:text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition cursor-pointer"
+              title="Effacer la conversation"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Effacer</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -239,7 +258,11 @@ export function ChatContainer({ initialPrompt, isCompact = false }: ChatContaine
             </p>
 
             <div className="w-full">
-              <PromptSuggestions role={scope.role} onSelect={(text) => handleSend(text)} />
+              <PromptSuggestions
+                role={scope.role}
+                onSelect={(text) => handleSend(text)}
+                isCompact={isCompact}
+              />
             </div>
           </div>
         ) : (
@@ -250,9 +273,17 @@ export function ChatContainer({ initialPrompt, isCompact = false }: ChatContaine
 
       {/* Zone de saisie inférieure */}
       <div className="p-3 bg-white border-t border-gray-200">
-        {messages.length > 0 && (
-          <div className="mb-2">
-            <PromptSuggestions role={scope.role} onSelect={(text) => handleSend(text)} />
+        {showSuggestions && messages.length > 0 && (
+          <div className="mb-2.5 p-2.5 bg-emerald-50/50 rounded-xl border border-emerald-100 animate-in fade-in duration-150">
+            <PromptSuggestions
+              role={scope.role}
+              onSelect={(text) => {
+                setShowSuggestions(false);
+                handleSend(text);
+              }}
+              onClose={() => setShowSuggestions(false)}
+              isCompact={isCompact}
+            />
           </div>
         )}
         <ChatInput
