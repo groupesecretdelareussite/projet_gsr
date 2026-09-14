@@ -56,7 +56,7 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
     .from("annees_scolaires")
     .select("id, date_debut, date_fin")
     .eq("statut", "en_cours")
-    .single();
+    .maybeSingle();
 
   const moisVisibles = moisVisiblesRetard(
     new Date(),

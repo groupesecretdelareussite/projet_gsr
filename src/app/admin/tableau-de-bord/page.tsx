@@ -80,7 +80,7 @@ export default async function TableauDeBordPage() {
     .from("annees_scolaires")
     .select("id, libelle, date_debut, date_fin")
     .eq("statut", "en_cours")
-    .single();
+    .maybeSingle();
 
   const mois = moisCourant(maintenant);
   let nonAJourCeMois = 0;

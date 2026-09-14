@@ -56,7 +56,7 @@ export default async function PaiementsAJourPage() {
     .from("annees_scolaires")
     .select("id")
     .eq("statut", "en_cours")
-    .single();
+    .maybeSingle();
 
   const { data: eleves } = await supabase
     .from("eleves")
