@@ -12,12 +12,12 @@ import { FloatingAgentWidget } from "@/components/admin/agent-ia/FloatingAgentWi
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // Pas de session : soit la page /admin/login (rendue sans habillage), soit
+  // Pas d'utilisateur : soit la page /admin/login (rendue sans habillage), soit
   // une route protégée déjà interceptée par proxy.ts avant d'arriver ici.
-  if (!session) {
+  if (!user) {
     return <>{children}</>;
   }
 
@@ -25,9 +25,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   try {
     scope = await getUserScope(supabase);
   } catch {
-    // Compte désactivé/supprimé ou profil inaccessible : déconnexion propre pour éviter
-    // toute boucle de redirection infinie (ERR_TOO_MANY_REDIRECTS) avec le middleware proxy.
-    await supabase.auth.signOut();
+    // Compte désactivé/supprimé ou profil inaccessible : redirection vers la connexion.
+    // proxy.ts purgera les cookies obsolètes lors de la visite de /admin/login.
     redirect("/admin/login");
   }
 

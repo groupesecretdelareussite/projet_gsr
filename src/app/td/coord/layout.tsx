@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import { Toaster } from "sonner";
 import { createClient } from "@/lib/supabase/server";
@@ -12,7 +13,13 @@ import { TdCoordHeader } from "@/components/td/TdCoordHeader";
  * coordonnateur + aux professeurs (jamais comptable/superviseur/chef_site/secretaire).
  */
 export default async function TdCoordLayout({ children }: { children: React.ReactNode }) {
-  const scope = await getUserScope(await createClient());
+  let scope;
+  try {
+    const supabase = await createClient();
+    scope = await getUserScope(supabase);
+  } catch {
+    redirect("/td/login");
+  }
 
   if (scope.role !== "coordonnateur") {
     return (
