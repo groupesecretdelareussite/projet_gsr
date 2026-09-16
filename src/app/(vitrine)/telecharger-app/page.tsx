@@ -13,9 +13,6 @@ export default function TelechargerAppPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* En-tête */}
         <div className="text-center mb-12">
-          <div className="inline-flex p-3 bg-primary/10 rounded-2xl mb-4">
-            <Image src="/logo.png" alt="GSR Logo" width={64} height={64} className="h-16 w-auto object-contain" />
-          </div>
           <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
             Application Mobile GSR
           </h1>

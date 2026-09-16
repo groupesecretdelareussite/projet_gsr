@@ -20,7 +20,7 @@ export function HistoriqueModeTabs({ active }: { active: (typeof MODES)[number][
       {MODES.map((m) => {
         const Icon = m.icon;
         return (
-          <Link key={m.key} href={m.href}>
+          <Link key={m.key} href={m.href} prefetch={true}>
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium border-b-2 whitespace-nowrap transition-colors",
