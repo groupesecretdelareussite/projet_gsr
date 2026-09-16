@@ -13,9 +13,17 @@ interface CreneauRow {
   heure_debut: string;
   heure_fin: string;
   montant_prevu: number;
+  semaine_id?: number;
+  semaines?: { id: number; statut: string } | { id: number; statut: string }[] | null;
 }
 
-/** §10.7 GSR_ARCHITECTURE.md — affectations confirmées + historique + total cumulé. */
+function getStatutSemaine(c: CreneauRow): string | undefined {
+  if (!c.semaines) return undefined;
+  if (Array.isArray(c.semaines)) return c.semaines[0]?.statut;
+  return c.semaines.statut;
+}
+
+/** §10.7 GSR_ARCHITECTURE.md — affectations confirmées + historique + total cumulé des semaines clôturées. */
 export default async function DashboardProfesseurPage() {
   const session = await getTdProfesseurSession();
   const professeurId = session.professeurId!;
@@ -25,7 +33,7 @@ export default async function DashboardProfesseurPage() {
     supabaseAdmin
       .schema("td")
       .from("postulations")
-      .select("creneau_id, creneaux(id, classe_id, matiere_id, date_td, heure_debut, heure_fin, montant_prevu)")
+      .select("creneau_id, creneaux(id, classe_id, matiere_id, date_td, heure_debut, heure_fin, montant_prevu, semaine_id, semaines(id, statut))")
       .eq("professeur_id", professeurId)
       .eq("statut_validation", "Valide"),
     supabaseAdmin.from("classes").select("id, nom_classe, sites(nom_site)"),
@@ -45,13 +53,15 @@ export default async function DashboardProfesseurPage() {
     .filter((c): c is CreneauRow => c !== null)
     .sort((a, b) => (a.date_td < b.date_td ? 1 : -1));
 
-  const totalCumule = affectations.reduce((sum, c) => sum + Number(c.montant_prevu), 0);
+  const affectationsCloturees = affectations.filter((c) => getStatutSemaine(c) === "cloturee");
+
+  const totalCumule = affectationsCloturees.reduce((sum, c) => sum + Number(c.montant_prevu), 0);
   const aujourdHui = new Date().toISOString().slice(0, 10);
   const aVenir = affectations.filter((c) => c.date_td >= aujourdHui);
   const historique = affectations.filter((c) => c.date_td < aujourdHui);
 
   const moisCourant = aujourdHui.slice(0, 7); // "YYYY-MM"
-  const totalCumuleMois = affectations
+  const totalCumuleMois = affectationsCloturees
     .filter((c) => c.date_td.slice(0, 7) === moisCourant)
     .reduce((sum, c) => sum + Number(c.montant_prevu), 0);
 
