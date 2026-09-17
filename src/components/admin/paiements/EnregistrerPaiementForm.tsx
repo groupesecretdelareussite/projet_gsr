@@ -246,7 +246,7 @@ export function EnregistrerPaiementForm() {
               : "text-gray-500 hover:text-gray-900"
           )}
         >
-          Paiement unitaire (1 mois)
+          Paiement unitaire
         </button>
         <button
           type="button"
@@ -259,7 +259,7 @@ export function EnregistrerPaiementForm() {
           )}
         >
           <Gift className="w-3.5 h-3.5" />
-          <span>Paiement multi-mois (Offre 3 ou 6 mois)</span>
+          <span>Paiement multi-mois</span>
         </button>
       </div>
 
@@ -416,9 +416,9 @@ export function EnregistrerPaiementForm() {
           <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl space-y-2">
             <div className="flex items-center justify-between">
               <div className="text-xs font-semibold text-gray-800">
-                Sélectionnez les mois consécutifs à régler comptant ({moisMulti.length} mois)
+                Sélectionnez les mois consécutifs ({moisMulti.length} mois)
               </div>
-              <div className="flex gap-1.5 text-xs">
+              {/* <div className="flex gap-1.5 text-xs">
                 <button
                   type="button"
                   onClick={() => appliquerPresetMulti(3)}
@@ -433,7 +433,7 @@ export function EnregistrerPaiementForm() {
                 >
                   6 mois (Oct-Mar)
                 </button>
-              </div>
+              </div> */}
             </div>
 
             <div className="grid grid-cols-4 gap-2 pt-1">
