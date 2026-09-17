@@ -38,8 +38,11 @@ export default async function CoefficientsPage(props: { searchParams: Promise<{ 
     ? (classes ?? []).filter((c) => String(c.site_id) === searchParams.site_id)
     : classes ?? [];
 
-  const classeId = searchParams.classe_id ? Number(searchParams.classe_id) : undefined;
-  const classeSelectionnee = (classes ?? []).find((c) => c.id === classeId);
+  const classeId =
+    searchParams.classe_id && classesFiltrees.some((c) => String(c.id) === searchParams.classe_id)
+      ? Number(searchParams.classe_id)
+      : undefined;
+  const classeSelectionnee = classesFiltrees.find((c) => c.id === classeId);
 
   let coefficientsExistants: { matiere_id: number; coefficient: number }[] = [];
   if (classeId) {
@@ -64,7 +67,7 @@ export default async function CoefficientsPage(props: { searchParams: Promise<{ 
             </option>
           ))}
         </select>
-        <select name="classe_id" defaultValue={searchParams.classe_id ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+        <select name="classe_id" defaultValue={classeId ? String(classeId) : ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
           <option value="">Choisir une classe</option>
           {classesFiltrees.map((c) => (
             <option key={c.id} value={c.id}>

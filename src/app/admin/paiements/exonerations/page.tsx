@@ -9,6 +9,7 @@ import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 
 interface ExonerationRow {
   id: number;
@@ -77,12 +78,25 @@ export default async function ExonerationsPage(props: {
     query = query.in("eleves.classes.site_id", scope.siteIds);
   }
 
-  if (searchParams.site_id) {
-    query = query.eq("eleves.classes.site_id", Number(searchParams.site_id));
+  const siteIdEffectif =
+    searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
+
+  const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
+  const classesFiltrees = siteIdEffectif
+    ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
+    : classes ?? [];
+
+  const classeIdValide =
+    searchParams.classe_id && classesFiltrees.some((c) => String(c.id) === searchParams.classe_id)
+      ? searchParams.classe_id
+      : undefined;
+
+  if (siteIdEffectif) {
+    query = query.eq("eleves.classes.site_id", Number(siteIdEffectif));
   }
 
-  if (searchParams.classe_id) {
-    query = query.eq("eleves.classes.id", Number(searchParams.classe_id));
+  if (classeIdValide) {
+    query = query.eq("eleves.classes.id", Number(classeIdValide));
   }
 
   if (searchParams.type) {
@@ -202,7 +216,7 @@ export default async function ExonerationsPage(props: {
           <label className="block text-xs font-medium text-gray-600 mb-1">Site</label>
           <select
             name="site_id"
-            defaultValue={searchParams.site_id ?? ""}
+            defaultValue={siteIdEffectif ?? ""}
             className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-white text-gray-700"
           >
             <option value="">Tous les sites</option>
@@ -218,13 +232,13 @@ export default async function ExonerationsPage(props: {
           <label className="block text-xs font-medium text-gray-600 mb-1">Classe</label>
           <select
             name="classe_id"
-            defaultValue={searchParams.classe_id ?? ""}
+            defaultValue={classeIdValide ?? ""}
             className="px-3 py-1.5 border border-gray-200 rounded-lg text-xs bg-white text-gray-700"
           >
             <option value="">Toutes les classes</option>
-            {(classes ?? []).map((c) => (
+            {classesFiltrees.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.nom_classe}
+                {siteIdEffectif ? c.nom_classe : `${c.nom_classe} — ${nomSiteParId.get(c.site_id) ?? "?"}`}
               </option>
             ))}
           </select>

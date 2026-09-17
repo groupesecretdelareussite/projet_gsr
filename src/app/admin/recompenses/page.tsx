@@ -96,6 +96,11 @@ export default async function RecompensesPage(
     ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
     : classes ?? [];
 
+  const classeIdValide =
+    searchParams.classe_id && classesFiltrees.some((c) => String(c.id) === searchParams.classe_id)
+      ? searchParams.classe_id
+      : undefined;
+
   const moisSelectionne = (
     MOIS_SCOLAIRES.includes(searchParams.mois as MoisScolaire) ? searchParams.mois : MOIS_SCOLAIRES[0]
   ) as MoisScolaire;
@@ -196,8 +201,8 @@ export default async function RecompensesPage(
   if (siteIdEffectif) {
     elevesMeritants = elevesMeritants.filter((e) => String(e.siteId) === siteIdEffectif);
   }
-  if (searchParams.classe_id) {
-    elevesMeritants = elevesMeritants.filter((e) => String(e.classeId) === searchParams.classe_id);
+  if (classeIdValide) {
+    elevesMeritants = elevesMeritants.filter((e) => String(e.classeId) === classeIdValide);
   }
   if (searchParams.statut && searchParams.statut !== "tous") {
     if (searchParams.statut === "paye") {
@@ -382,7 +387,7 @@ export default async function RecompensesPage(
 
         <select
           name="classe_id"
-          defaultValue={searchParams.classe_id ?? ""}
+          defaultValue={classeIdValide ?? ""}
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
         >
           <option value="">Toutes les classes</option>

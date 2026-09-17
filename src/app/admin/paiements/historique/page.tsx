@@ -63,19 +63,26 @@ export default async function HistoriquePaiementsPage(
     )
     .order("date_paiement", { ascending: false });
 
-  const anneeFiltre = searchParams.annee_scolaire_id ?? (anneeParDefaut ? String(anneeParDefaut) : undefined);
+  const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
   const siteIdEffectif =
     searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
+  const classesFiltrees = siteIdEffectif
+    ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
+    : classes ?? [];
+  const classeIdValide =
+    searchParams.classe_id && classesFiltrees.some((c) => String(c.id) === searchParams.classe_id)
+      ? searchParams.classe_id
+      : undefined;
+
   if (anneeFiltre) query = query.eq("annee_scolaire_id", anneeFiltre);
   if (siteIdEffectif) query = query.eq("eleves.classes.site_id", siteIdEffectif);
-  if (searchParams.classe_id) query = query.eq("eleves.classe_id", searchParams.classe_id);
+  if (classeIdValide) query = query.eq("eleves.classe_id", classeIdValide);
   if (searchParams.mois) query = query.eq("mois_souscription", searchParams.mois);
 
   const { data: paiements } = await query;
   const rows = (paiements ?? []) as unknown as PaiementRow[];
 
   const peutExporter = ["coordonnateur", "comptable", "superviseur"].includes(scope.role);
-  const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
   const nomSiteTitre = siteIdEffectif ? nomSiteParId.get(Number(siteIdEffectif)) ?? "Site inconnu" : "Tous les sites";
   const moisTitre = searchParams.mois ?? "Tous les mois";
   const dateExport = new Date().toLocaleDateString("fr-FR");
@@ -174,13 +181,13 @@ export default async function HistoriquePaiementsPage(
         </select>
         <select
           name="classe_id"
-          defaultValue={searchParams.classe_id ?? ""}
+          defaultValue={classeIdValide ?? ""}
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
         >
           <option value="">Toutes les classes</option>
-          {classes?.map((c) => (
+          {classesFiltrees.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.nom_classe}
+              {siteIdEffectif ? c.nom_classe : `${c.nom_classe} — ${nomSiteParId.get(c.site_id) ?? "?"}`}
             </option>
           ))}
         </select>

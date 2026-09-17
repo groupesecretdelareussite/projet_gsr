@@ -46,7 +46,10 @@ export default async function NotesPage(
     ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
     : classes ?? [];
 
-  const classeId = searchParams.classe_id ? Number(searchParams.classe_id) : undefined;
+  const classeId =
+    searchParams.classe_id && classesFiltrees.some((c) => String(c.id) === searchParams.classe_id)
+      ? Number(searchParams.classe_id)
+      : undefined;
 
   let eleves: EleveOption[] = [];
   let notesExistantes: NoteExistante[] = [];
@@ -116,7 +119,7 @@ export default async function NotesPage(
         )}
         <select
           name="classe_id"
-          defaultValue={searchParams.classe_id ?? ""}
+          defaultValue={classeId ? String(classeId) : ""}
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
         >
           <option value="">Choisir une classe</option>

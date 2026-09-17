@@ -258,7 +258,7 @@ export function EnregistrerPaiementForm() {
               : "text-gray-500 hover:text-gray-900"
           )}
         >
-          <Gift className="w-3.5 h-3.5" />
+          
           <span>Paiement multi-mois</span>
         </button>
       </div>
@@ -416,7 +416,7 @@ export function EnregistrerPaiementForm() {
           <div className="p-3.5 bg-gray-50 border border-gray-200 rounded-xl space-y-2">
             <div className="flex items-center justify-between">
               <div className="text-xs font-semibold text-gray-800">
-                Sélectionnez les mois consécutifs ({moisMulti.length} mois)
+                Sélectionnez les mois consécutifs ({moisMulti.length} mois sélectionnés)
               </div>
               {/* <div className="flex gap-1.5 text-xs">
                 <button
@@ -481,7 +481,7 @@ export function EnregistrerPaiementForm() {
 
           <div className="grid sm:grid-cols-2 gap-4">
             <div>
-              <Label>Mode de paiement (Comptant immédiat)</Label>
+              <Label>Mode de paiement</Label>
               <Select value={mode} onValueChange={(v) => setMode(v as ModePaiement)}>
                 <SelectTrigger>
                   <SelectValue />

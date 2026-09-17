@@ -83,6 +83,11 @@ export default async function RecompensesCumulPage(
     ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
     : classes ?? [];
 
+  const classeIdValide =
+    searchParams.classe_id && classesFiltrees.some((c) => String(c.id) === searchParams.classe_id)
+      ? searchParams.classe_id
+      : undefined;
+
   let cumulEleves: EleveCumulRow[] = [];
 
   if (anneeSelectionnee) {
@@ -176,8 +181,8 @@ export default async function RecompensesCumulPage(
   if (siteIdEffectif) {
     cumulEleves = cumulEleves.filter((e) => String(e.siteId) === siteIdEffectif);
   }
-  if (searchParams.classe_id) {
-    cumulEleves = cumulEleves.filter((e) => String(e.classeId) === searchParams.classe_id);
+  if (classeIdValide) {
+    cumulEleves = cumulEleves.filter((e) => String(e.classeId) === classeIdValide);
   }
 
   // Re-calcul des rangs après filtre éventuel
@@ -335,7 +340,7 @@ export default async function RecompensesCumulPage(
 
         <select
           name="classe_id"
-          defaultValue={searchParams.classe_id ?? ""}
+          defaultValue={classeIdValide ?? ""}
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
         >
           <option value="">Toutes les classes</option>

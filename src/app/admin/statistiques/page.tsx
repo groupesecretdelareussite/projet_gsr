@@ -56,6 +56,11 @@ export default async function StatistiquesPage(
     ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
     : classes ?? [];
 
+  const classeIdValide =
+    searchParams.classe_id && classesFiltrees.some((c) => String(c.id) === searchParams.classe_id)
+      ? searchParams.classe_id
+      : undefined;
+
   let paiements: PaiementRow[] = [];
 
   if (anneeSelectionnee) {
@@ -68,7 +73,7 @@ export default async function StatistiquesPage(
       .eq("annee_scolaire_id", anneeSelectionnee.id);
 
     if (siteIdEffectif) query = query.eq("eleves.classes.site_id", siteIdEffectif);
-    if (searchParams.classe_id) query = query.eq("eleves.classe_id", searchParams.classe_id);
+    if (classeIdValide) query = query.eq("eleves.classe_id", classeIdValide);
 
     const { data } = await query;
     paiements = (data ?? []) as unknown as PaiementRow[];
@@ -145,7 +150,7 @@ export default async function StatistiquesPage(
             </option>
           ))}
         </select>
-        <select name="classe_id" defaultValue={searchParams.classe_id ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+        <select name="classe_id" defaultValue={classeIdValide ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
           <option value="">Toutes les classes</option>
           {classesFiltrees.map((c) => (
             <option key={c.id} value={c.id}>

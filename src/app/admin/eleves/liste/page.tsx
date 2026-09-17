@@ -51,6 +51,11 @@ export default async function ListeElevesPage(
     ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
     : classes ?? [];
 
+  const classeIdValide =
+    searchParams.classe_id && classesFiltrees.some((c) => String(c.id) === searchParams.classe_id)
+      ? searchParams.classe_id
+      : undefined;
+
   let query = supabase
     .from("eleves")
     .select(
@@ -60,7 +65,7 @@ export default async function ListeElevesPage(
     .order("nom");
 
   if (siteIdEffectif) query = query.eq("classes.site_id", siteIdEffectif);
-  if (searchParams.classe_id) query = query.eq("classe_id", searchParams.classe_id);
+  if (classeIdValide) query = query.eq("classe_id", classeIdValide);
   if (searchParams.college) query = query.ilike("college", `%${searchParams.college}%`);
   if (searchParams.nom) query = query.ilike("nom", `%${searchParams.nom}%`);
 
@@ -175,7 +180,7 @@ export default async function ListeElevesPage(
         )}
         <select
           name="classe_id"
-          defaultValue={searchParams.classe_id ?? ""}
+          defaultValue={classeIdValide ?? ""}
           className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
         >
           <option value="">Toutes les classes</option>

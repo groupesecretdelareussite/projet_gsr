@@ -63,7 +63,10 @@ export default async function MoyennesPage(
     ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
     : classes ?? [];
 
-  const classeId = searchParams.classe_id ? Number(searchParams.classe_id) : undefined;
+  const classeId =
+    searchParams.classe_id && classesFiltrees.some((c) => String(c.id) === searchParams.classe_id)
+      ? Number(searchParams.classe_id)
+      : undefined;
   const matieresList = (matieres ?? []) as MatiereRef[];
 
   let eleves: EleveRow[] = [];
@@ -154,7 +157,7 @@ export default async function MoyennesPage(
             ))}
           </select>
         )}
-        <select name="classe_id" defaultValue={searchParams.classe_id ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+        <select name="classe_id" defaultValue={classeId ? String(classeId) : ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
           <option value="">Choisir une classe</option>
           {classesFiltrees.map((c) => (
             <option key={c.id} value={c.id}>

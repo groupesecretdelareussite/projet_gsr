@@ -121,7 +121,7 @@ export function ExonerationDialog({ eleveId, nomComplet, exonerationActive }: Ex
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5 text-xs font-medium">
           <Award className="w-3.5 h-3.5 text-primary" />
-          <span>{exonerationActive ? "Gérer l'exonération" : "Bourse / Exonération"}</span>
+          <span>{exonerationActive ? "Gérer l'exonération" : "Exonérer"}</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">

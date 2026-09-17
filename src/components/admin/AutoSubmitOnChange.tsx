@@ -17,7 +17,16 @@ export function AutoSubmitOnChange() {
   useEffect(() => {
     const form = ref.current?.closest("form");
     if (!form) return;
-    const handleChange = () => form.requestSubmit();
+    const handleChange = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (target?.getAttribute("name") === "site_id") {
+        const classeSelect = form.querySelector<HTMLSelectElement>('select[name="classe_id"]');
+        if (classeSelect) {
+          classeSelect.value = "";
+        }
+      }
+      form.requestSubmit();
+    };
     form.addEventListener("change", handleChange);
     return () => form.removeEventListener("change", handleChange);
   }, []);
