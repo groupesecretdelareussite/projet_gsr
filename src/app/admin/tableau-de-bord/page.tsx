@@ -31,9 +31,11 @@ function compterNonAJour(
   elevesActifs: EleveDashboard[],
   montantParClasse: Map<number, number>,
   paiementsParEleveMois: Map<string, { montant_paye: number }[]>,
-  mois: MoisScolaire
+  mois: MoisScolaire,
+  setExoneres?: Set<string>
 ): number {
   return elevesActifs.filter((e) => {
+    if (setExoneres?.has(`${e.id}-${mois}`)) return false;
     const montantAttendu = montantParClasse.get(e.classe_id);
     if (montantAttendu === undefined) return false;
     return resteAPayer(montantAttendu, paiementsParEleveMois.get(`${e.id}-${mois}`) ?? []) > 0;
@@ -100,14 +102,21 @@ export default async function TableauDeBordPage() {
         new Set([mois, ...(moisPrec ? [moisPrec] : []), ...moisVisiblesRetardCourant])
       );
 
-      const [{ data: fraisTd }, { data: paiements }] = await Promise.all([
+      const [{ data: fraisTd }, { data: paiements }, { data: exoneresData }] = await Promise.all([
         supabase.from("frais_td").select("classe_id, montant"),
         supabase
           .from("paiements")
           .select("eleve_id, montant_paye, mois_souscription")
           .eq("annee_scolaire_id", anneeEnCours.id)
           .in("mois_souscription", moisNecessaires),
+        supabase
+          .from("mois_exoneres")
+          .select("eleve_id, mois_souscription")
+          .eq("annee_scolaire_id", anneeEnCours.id)
+          .in("mois_souscription", moisNecessaires),
       ]);
+
+      const setExoneres = new Set((exoneresData ?? []).map((e) => `${e.eleve_id}-${e.mois_souscription}`));
 
       const montantParClasse = new Map((fraisTd ?? []).map((f) => [f.classe_id, Number(f.montant)]));
 
@@ -119,10 +128,10 @@ export default async function TableauDeBordPage() {
         paiementsParEleveMois.set(cle, liste);
       }
 
-      nonAJourCeMois = compterNonAJour(elevesActifs, montantParClasse, paiementsParEleveMois, mois);
+      nonAJourCeMois = compterNonAJour(elevesActifs, montantParClasse, paiementsParEleveMois, mois, setExoneres);
 
       if (moisPrec) {
-        const nonAJourMoisPrecedent = compterNonAJour(elevesActifs, montantParClasse, paiementsParEleveMois, moisPrec);
+        const nonAJourMoisPrecedent = compterNonAJour(elevesActifs, montantParClasse, paiementsParEleveMois, moisPrec, setExoneres);
         variationNonAJour = variation(nonAJourCeMois, nonAJourMoisPrecedent);
       }
 
@@ -133,6 +142,7 @@ export default async function TableauDeBordPage() {
           const montantAttendu = montantParClasse.get(e.classe_id);
           if (montantAttendu === undefined) continue;
           for (const m of moisVisiblesRetardCourant) {
+            if (setExoneres.has(`${e.id}-${m}`)) continue;
             if (resteAPayer(montantAttendu, paiementsParEleveMois.get(`${e.id}-${m}`) ?? []) > 0) {
               elevesEnRetard.add(e.id);
               break;

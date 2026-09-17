@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { moisCourant, moisVisiblesRetard, moisPrecedent, resteAPayer, moisAVerifierSuspensionAuto } from "./paiements";
+import { moisCourant, moisVisiblesRetard, moisPrecedent, resteAPayer, moisAVerifierSuspensionAuto, genererNumeroQuittance } from "./paiements";
 import { MOIS_SCOLAIRES } from "./constants";
 
 describe("moisCourant", () => {
@@ -104,5 +104,13 @@ describe("resteAPayer (§12.5)", () => {
 
   it("ne renvoie jamais un montant négatif en cas de dépassement", () => {
     expect(resteAPayer(15000, [{ montant_paye: 20000 }])).toBe(0);
+  });
+});
+
+describe("genererNumeroQuittance", () => {
+  it("génère un numéro avec le format Q-YYYY-MM-XXXX", () => {
+    expect(genererNumeroQuittance("2025-2026", "Octobre", 42)).toBe("Q-2025-10-0042");
+    expect(genererNumeroQuittance("2025-2026", "Janvier", 7)).toBe("Q-2026-01-0007");
+    expect(genererNumeroQuittance(2026, "Mars", 125)).toBe("Q-2026-03-0125");
   });
 });

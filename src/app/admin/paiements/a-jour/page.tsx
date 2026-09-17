@@ -1,20 +1,29 @@
 import { CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
-import { moisCourant, resteAPayer } from "@/lib/paiements";
+import { moisCourant, resteAPayer, genererNumeroQuittance } from "@/lib/paiements";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
+import { AJourTable, type EleveAJourItem } from "@/components/admin/paiements/AJourTable";
 
 interface EleveRow {
   id: number;
   matricule: string;
   nom: string;
   prenoms: string;
+  college: string | null;
   classe_id: number;
   classes: { nom_classe: string; sites: { nom_site: string } | null } | null;
+}
+
+interface PaiementVersementRow {
+  id: number;
+  eleve_id: number;
+  montant_paye: number;
+  date_paiement: string;
+  mode_paiement: string;
 }
 
 export default async function PaiementsAJourPage() {
@@ -54,13 +63,13 @@ export default async function PaiementsAJourPage() {
 
   const { data: anneeEnCours } = await supabase
     .from("annees_scolaires")
-    .select("id")
+    .select("id, libelle")
     .eq("statut", "en_cours")
     .maybeSingle();
 
   const { data: eleves } = await supabase
     .from("eleves")
-    .select("id, matricule, nom, prenoms, classe_id, classes(nom_classe, sites(nom_site))")
+    .select("id, matricule, nom, prenoms, college, classe_id, classes(nom_classe, sites(nom_site))")
     .eq("statut", "actif")
     .order("nom");
 
@@ -80,14 +89,20 @@ export default async function PaiementsAJourPage() {
 
   const { data: paiements } = await supabase
     .from("paiements")
-    .select("eleve_id, montant_paye")
+    .select("id, eleve_id, montant_paye, date_paiement, mode_paiement")
     .eq("annee_scolaire_id", anneeEnCours.id)
     .eq("mois_souscription", mois);
 
-  const paiementsParEleve = new Map<number, { montant_paye: number }[]>();
-  for (const p of paiements ?? []) {
+  const paiementsParEleve = new Map<number, PaiementVersementRow[]>();
+  for (const p of (paiements ?? []) as unknown as PaiementVersementRow[]) {
     const liste = paiementsParEleve.get(p.eleve_id) ?? [];
-    liste.push({ montant_paye: p.montant_paye });
+    liste.push({
+      id: p.id,
+      eleve_id: p.eleve_id,
+      montant_paye: Number(p.montant_paye),
+      date_paiement: p.date_paiement,
+      mode_paiement: p.mode_paiement,
+    });
     paiementsParEleve.set(p.eleve_id, liste);
   }
 
@@ -97,13 +112,41 @@ export default async function PaiementsAJourPage() {
     return resteAPayer(montantAttendu, paiementsParEleve.get(e.id) ?? []) === 0;
   });
 
-  const columns: DataTableColumn<EleveRow>[] = [
-    { key: "matricule", label: "Matricule", render: (e) => <span className="font-mono text-xs">{e.matricule}</span> },
-    { key: "nom", label: "Nom", render: (e) => <span className="font-medium">{e.nom}</span> },
-    { key: "prenoms", label: "Prénoms", render: (e) => e.prenoms },
-    { key: "classe", label: "Classe", render: (e) => e.classes?.nom_classe ?? "—" },
-    { key: "site", label: "Site", render: (e) => e.classes?.sites?.nom_site ?? "—" },
-  ];
+  const anneeLibelle = anneeEnCours.libelle ?? "2025-2026";
+  const itemsAJour: EleveAJourItem[] = elevesAJour.map((e) => {
+    const versements = (paiementsParEleve.get(e.id) ?? []).sort((a, b) =>
+      a.date_paiement.localeCompare(b.date_paiement)
+    );
+    const lastId = versements[versements.length - 1]?.id ?? 1;
+    const numeroQuittance = genererNumeroQuittance(anneeLibelle, mois, lastId);
+    const montantAttendu = montantParClasse.get(e.classe_id) ?? 0;
+
+    return {
+      id: e.id,
+      matricule: e.matricule,
+      nom: e.nom,
+      prenoms: e.prenoms,
+      nomClasse: e.classes?.nom_classe ?? "—",
+      nomSite: e.classes?.sites?.nom_site ?? "—",
+      quittance: {
+        numeroQuittance,
+        nomComplet: `${e.nom} ${e.prenoms}`,
+        matricule: e.matricule,
+        college: e.college ?? "",
+        nomClasse: e.classes?.nom_classe ?? "—",
+        nomSite: e.classes?.sites?.nom_site ?? "—",
+        mois,
+        anneeScolaire: anneeLibelle,
+        montantAttendu,
+        versements: versements.map((v) => ({
+          id: v.id,
+          datePaiement: v.date_paiement,
+          montantPaye: v.montant_paye,
+          modePaiement: v.mode_paiement,
+        })),
+      },
+    };
+  });
 
   const peutExporter = ["coordonnateur", "comptable", "superviseur"].includes(scope.role);
   const dateExport = new Date().toLocaleDateString("fr-FR");
@@ -132,14 +175,7 @@ export default async function PaiementsAJourPage() {
         }
       />
       <PaiementsNav active="a-jour" role={scope.role} />
-      <DataTable
-        columns={columns}
-        rows={elevesAJour}
-        rowKey={(e) => e.id}
-        emptyState={
-          <EmptyState icon={CheckCircle2} title="Aucun élève à jour" description={`Aucun élève n'a soldé le mois de ${mois}.`} />
-        }
-      />
+      <AJourTable rows={itemsAJour} mois={mois} />
     </div>
   );
 }

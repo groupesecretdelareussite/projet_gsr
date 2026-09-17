@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getTdProfesseurSession } from "@/lib/session-td";
+import { MAX_CANDIDATURES_PAR_CRENEAU } from "@/lib/constants";
 
 async function getProfesseurIdAndAssert(): Promise<number> {
   const session = await getTdProfesseurSession();
@@ -26,10 +27,29 @@ export async function soumettrePostulationTD(creneauId: number): Promise<{ error
     return { error: "Ce créneau n'est plus ouvert aux candidatures." };
   }
 
+  // Vérifier si le créneau a déjà atteint le plafond de candidatures actives (En attente)
+  const { count, error: countError } = await supabaseAdmin
+    .schema("td")
+    .from("postulations")
+    .select("*", { count: "exact", head: true })
+    .eq("creneau_id", creneauId)
+    .eq("statut_validation", "En attente");
+
+  if (countError) {
+    return { error: countError.message };
+  }
+
+  if ((count ?? 0) >= MAX_CANDIDATURES_PAR_CRENEAU) {
+    return { error: `Ce créneau a déjà atteint le nombre maximal de candidatures (${MAX_CANDIDATURES_PAR_CRENEAU}).` };
+  }
+
   const { error } = await supabaseAdmin.schema("td").from("postulations").insert({ creneau_id: creneauId, professeur_id: professeurId });
   if (error) {
     if (estErreurContrainteUnique(error)) {
       return { error: "Vous avez déjà postulé sur ce créneau." };
+    }
+    if (error.message.includes("maximal de candidatures")) {
+      return { error: `Ce créneau a déjà atteint le nombre maximal de candidatures (${MAX_CANDIDATURES_PAR_CRENEAU}).` };
     }
     return { error: error.message };
   }

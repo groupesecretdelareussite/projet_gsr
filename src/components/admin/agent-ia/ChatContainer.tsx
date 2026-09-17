@@ -297,7 +297,6 @@ export function ChatContainer({ initialPrompt, isCompact = false }: ChatContaine
           onStop={handleStop}
         />
         <div className="flex items-center justify-between mt-1.5 px-1 text-[11px] text-gray-400">
-          <span>Mode lecture seule — Zéro modification de données.</span>
           <span className="hidden sm:inline">Gemini 2.5 Flash</span>
         </div>
       </div>

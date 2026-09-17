@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Pencil, Wallet, NotebookText, ClipboardCheck, UserX, KeyRound, Trophy } from "lucide-react";
+import { Pencil, Wallet, NotebookText, ClipboardCheck, UserX, KeyRound, Trophy, CheckCircle2, AlertCircle, Clock, Info } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -11,9 +11,11 @@ import { Button } from "@/components/ui/button";
 import { SuspendreDialog } from "@/components/admin/eleves/SuspendreDialog";
 import { ReinscrireDialog } from "@/components/admin/eleves/ReinscrireDialog";
 import { ReinitialiserMotDePasseParentDialog } from "@/components/admin/eleves/ReinitialiserMotDePasseParentDialog";
+import { ExonerationDialog } from "@/components/admin/eleves/ExonerationDialog";
 import { calculerMoyenneMatiere, calculerMoyenneGenerale, type NoteMatiere } from "@/lib/moyennes";
 import { estVenuDansLeMois } from "@/lib/reinscription";
 import { formaterNumeroAffichage } from "@/lib/telephone";
+import { moisCourant, resteAPayer } from "@/lib/paiements";
 import { RAISON_LABELS, MODE_PAIEMENT_LABELS, type MoisScolaire } from "@/lib/constants";
 
 const ROLES_ELEVES = ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"];
@@ -66,10 +68,12 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
     paiementsResult,
     penalitesResult,
     moisExoneresResult,
+    exonerationResult,
     compteParentResult,
     matieresResult,
     coefficientsResult,
     anneeEnCoursResult,
+    fraisTdResult,
   ] = await Promise.all([
     eleve.statut === "suspendu"
       ? supabase
@@ -95,9 +99,16 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
     ROLES_PAIEMENTS.includes(scope.role)
       ? supabase
           .from("mois_exoneres")
-          .select("mois_souscription, date_exoneration")
+          .select("mois_souscription, date_exoneration, motif")
           .eq("eleve_id", eleve.id)
           .order("date_exoneration", { ascending: false })
+      : Promise.resolve({ data: null }),
+    ROLES_PAIEMENTS.includes(scope.role)
+      ? supabase
+          .from("eleves_exonerations")
+          .select("id, type_exoneration, nombre_mois, mois_couverts, motif")
+          .eq("eleve_id", eleve.id)
+          .maybeSingle()
       : Promise.resolve({ data: null }),
     scope.role === "coordonnateur"
       ? supabase.from("comptes_parents").select("matricule").eq("matricule", eleve.matricule).maybeSingle()
@@ -111,6 +122,9 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
     ROLES_NOTES_PRESENCES.includes(scope.role)
       ? supabase.from("annees_scolaires").select("id, date_debut").eq("statut", "en_cours").maybeSingle()
       : Promise.resolve({ data: null }),
+    ROLES_PAIEMENTS.includes(scope.role)
+      ? supabase.from("frais_td").select("montant").eq("classe_id", eleve.classe_id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const suspension = suspensionResult.data as {
@@ -122,9 +136,67 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
   } | null;
   const paiements = (paiementsResult.data ?? []) as { mois_souscription: string; montant_paye: number; date_paiement: string; mode_paiement: string }[];
   const penalites = (penalitesResult.data ?? []) as { montant: number; mode_paiement: string; date_paiement: string }[];
-  const moisExoneresListe = (moisExoneresResult.data ?? []) as { mois_souscription: string; date_exoneration: string }[];
+  const moisExoneresListe = (moisExoneresResult.data ?? []) as { mois_souscription: string; date_exoneration: string; motif?: string }[];
+  const exonerationActive = (exonerationResult.data ?? null) as {
+    id: number;
+    type_exoneration: "permanente" | "bourse";
+    typeExoneration: "permanente" | "bourse";
+    nombre_mois: number;
+    nombreMois: number;
+    mois_couverts: string[];
+    moisCouverts: string[];
+    motif: string;
+  } | null;
+  if (exonerationActive) {
+    exonerationActive.typeExoneration = exonerationActive.type_exoneration;
+    exonerationActive.nombreMois = exonerationActive.nombre_mois;
+    exonerationActive.moisCouverts = exonerationActive.mois_couverts;
+  }
   const aUnCompteParent = !!compteParentResult.data;
   const anneeEnCours = anneeEnCoursResult.data as { id: number; date_debut: string } | null;
+  const fraisTdMontant = fraisTdResult.data ? Number(fraisTdResult.data.montant) : 0;
+
+  const moisActuel = moisCourant(new Date());
+  let bilanMoisActuel: {
+    message: string;
+    icone: typeof CheckCircle2;
+    colorClass: string;
+  } | null = null;
+
+  if (ROLES_PAIEMENTS.includes(scope.role) && moisActuel && fraisTdMontant > 0) {
+    const moisExo = moisExoneresListe.find((m) => m.mois_souscription === moisActuel);
+    if (moisExo) {
+      bilanMoisActuel = {
+        message: `L'élève est exonéré pour le mois de ${moisActuel} (${moisExo.motif ?? "dispense"}).`,
+        icone: Info,
+        colorClass: "text-gray-700 bg-gray-50 border-gray-200",
+      };
+    } else {
+      const paiementsDuMois = paiements.filter((p) => p.mois_souscription === moisActuel);
+      const totalPaye = paiementsDuMois.reduce((sum, p) => sum + p.montant_paye, 0);
+      const resteDu = resteAPayer(fraisTdMontant, paiementsDuMois);
+
+      if (resteDu === 0 && totalPaye > 0) {
+        bilanMoisActuel = {
+          message: `L'élève a soldé les ${fraisTdMontant.toLocaleString("fr-FR")} F prévus pour ce mois.`,
+          icone: CheckCircle2,
+          colorClass: "text-emerald-700 bg-emerald-50 border-emerald-100",
+        };
+      } else if (totalPaye === 0) {
+        bilanMoisActuel = {
+          message: `L'élève n'a rien payé pour ce mois (reste ${fraisTdMontant.toLocaleString("fr-FR")} F à payer).`,
+          icone: AlertCircle,
+          colorClass: "text-red-700 bg-red-50 border-red-100",
+        };
+      } else {
+        bilanMoisActuel = {
+          message: `L'élève a payé ${totalPaye.toLocaleString("fr-FR")} F au total et il lui reste ${resteDu.toLocaleString("fr-FR")} F à payer pour ce mois.`,
+          icone: Clock,
+          colorClass: "text-amber-700 bg-amber-50 border-amber-100",
+        };
+      }
+    }
+  }
 
   let estVenuDansLeMoisSuspendu: boolean | null = null;
   if (suspension?.raison === "defaut_paiement" && suspension.montant_du > 0 && suspension.mois_souscription && anneeEnCours) {
@@ -154,7 +226,7 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
     })),
     ...moisExoneresListe.map((m, i) => ({
       key: `exonere-${i}`,
-      libelle: `${m.mois_souscription} — Exonéré (absence)`,
+      libelle: `${m.mois_souscription} — ${m.motif ?? "Exonéré"}`,
       montant: null,
       mode: null,
       date: m.date_exoneration,
@@ -175,7 +247,7 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
   if (ROLES_NOTES_PRESENCES.includes(scope.role) && anneeEnCours) {
     const matieres = (matieresResult.data ?? []) as { id: number; nom: string }[];
     const coefficientParMatiere = new Map(
-      ((coefficientsResult.data ?? []) as { matiere_id: number; coefficient: number }[]).map((c) => [c.matiere_id, Number(c.coefficient)])
+      ((coefficientsResult.data ?? []) as unknown as { matiere_id: number; coefficient: number }[]).map((c) => [c.matiere_id, Number(c.coefficient)])
     );
 
     const { data: notesData } = await supabase
@@ -268,12 +340,21 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
         title={`${eleve.nom} ${eleve.prenoms}`}
         subtitle={`${eleve.matricule} — ${classeInfo?.nom_classe ?? "—"} — ${classeInfo?.sites?.nom_site ?? "—"}`}
         actions={
-          <Link href={`/admin/eleves/${eleve.id}/modifier`}>
-            <Button variant="outline" size="sm">
-              <Pencil className="w-3.5 h-3.5" />
-              Modifier
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            {scope.role === "coordonnateur" && (
+              <ExonerationDialog
+                eleveId={eleve.id}
+                nomComplet={`${eleve.nom} ${eleve.prenoms}`}
+                exonerationActive={exonerationActive}
+              />
+            )}
+            <Link href={`/admin/eleves/${eleve.id}/modifier`}>
+              <Button variant="outline" size="sm">
+                <Pencil className="w-3.5 h-3.5" />
+                Modifier
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -288,6 +369,18 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
                 </Badge>
               </dd>
             </div>
+            {exonerationActive && (
+              <div className="flex justify-between sm:block">
+                <dt className="text-gray-400">Régime financier</dt>
+                <dd>
+                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+                    {exonerationActive.typeExoneration === "permanente"
+                      ? "Exonéré permanent"
+                      : `Boursier (${exonerationActive.nombreMois} mois)`}
+                  </span>
+                </dd>
+              </div>
+            )}
             {peutVoirContact && (
               <>
                 <div className="flex justify-between sm:block">
@@ -399,6 +492,12 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
               <p className="text-sm text-gray-500">Aucun paiement enregistré.</p>
             ) : (
               <DataTable bare columns={colonnesPaiements} rows={historiquePaiements} rowKey={(l) => l.key} />
+            )}
+            {bilanMoisActuel && (
+              <div className={`mt-3 pt-3 border-t border-gray-100 flex items-center gap-2.5 text-sm font-medium ${bilanMoisActuel.colorClass} px-3 py-2.5 rounded-xl border`}>
+                <bilanMoisActuel.icone className="w-4 h-4 shrink-0" />
+                <span>{bilanMoisActuel.message}</span>
+              </div>
             )}
           </Bloc>
         )}

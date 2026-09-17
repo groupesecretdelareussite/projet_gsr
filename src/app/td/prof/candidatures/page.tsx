@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { CandidatureButtonTD } from "@/components/td/CandidatureButtonTD";
+import { MAX_CANDIDATURES_PAR_CRENEAU } from "@/lib/constants";
 
 interface CreneauRow {
   id: number;
@@ -44,6 +45,23 @@ export default async function CandidaturesTDPage() {
   ]);
 
   const listeCreneaux = (creneaux ?? []) as unknown as CreneauRow[];
+  const idsCreneaux = listeCreneaux.map((c) => c.id);
+
+  const { data: candidaturesActives } = idsCreneaux.length > 0
+    ? await supabaseAdmin
+        .schema("td")
+        .from("postulations")
+        .select("creneau_id")
+        .in("creneau_id", idsCreneaux)
+        .eq("statut_validation", "En attente")
+    : { data: [] };
+
+  const nombreCandidatsParCreneau = new Map<number, number>();
+  for (const cand of (candidaturesActives ?? [])) {
+    const current = nombreCandidatsParCreneau.get(cand.creneau_id) ?? 0;
+    nombreCandidatsParCreneau.set(cand.creneau_id, current + 1);
+  }
+
   const nomClasseParId = new Map(
     ((classes ?? []) as unknown as { id: number; nom_classe: string; sites: { nom_site: string } | null }[]).map((c) => [
       c.id,
@@ -81,6 +99,7 @@ export default async function CandidaturesTDPage() {
                     creneauId={c.id}
                     postulationId={maPostulation?.id ?? null}
                     statutValidation={maPostulation?.statut_validation ?? null}
+                    estComplet={(nombreCandidatsParCreneau.get(c.id) ?? 0) >= MAX_CANDIDATURES_PAR_CRENEAU}
                   />
                 </div>
               </div>

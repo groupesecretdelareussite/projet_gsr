@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { PlusCircle, History, CheckCircle2, AlertTriangle, Trash2 } from "lucide-react";
+import { PlusCircle, History, CheckCircle2, AlertTriangle, Trash2, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { UserRole } from "@/lib/constants";
 
@@ -8,6 +8,13 @@ const ONGLETS = [
   { key: "historique", label: "Historique", href: "/admin/paiements/historique", icon: History },
   { key: "a-jour", label: "À jour", href: "/admin/paiements/a-jour", icon: CheckCircle2 },
   { key: "en-retard", label: "En retard", href: "/admin/paiements/en-retard", icon: AlertTriangle },
+  {
+    key: "exonerations",
+    label: "Exonérations",
+    href: "/admin/paiements/exonerations",
+    icon: Award,
+    roles: ["coordonnateur", "comptable", "superviseur"] as UserRole[],
+  },
   {
     key: "supprimes",
     label: "Supprimés",

@@ -156,11 +156,11 @@ async function ActifDashboard({
 
   const montantAttendu = frais ? Number(frais.montant) : 0;
 
-  let lignesMois: { mois: MoisScolaire; statut: "Soldé" | "Partiel" | "Non payé" }[] = [];
+  let lignesMois: { mois: MoisScolaire; statut: "Soldé" | "Partiel" | "Non payé" | "Exonéré" }[] = [];
   let presences: { date_presence: string; present: boolean }[] = [];
 
   if (anneeSelectionnee) {
-    const [{ data: paiements }, { data: presencesData }] = await Promise.all([
+    const [{ data: paiements }, { data: presencesData }, { data: exoneresData }] = await Promise.all([
       supabaseAdmin
         .from("paiements")
         .select("montant_paye, mois_souscription")
@@ -172,9 +172,19 @@ async function ActifDashboard({
         .eq("eleve_id", eleve.id)
         .eq("annee_scolaire_id", anneeSelectionnee.id)
         .order("date_presence", { ascending: false }),
+      supabaseAdmin
+        .from("mois_exoneres")
+        .select("mois_souscription, motif")
+        .eq("eleve_id", eleve.id)
+        .eq("annee_scolaire_id", anneeSelectionnee.id),
     ]);
 
+    const mapExo = new Map((exoneresData ?? []).map((e) => [e.mois_souscription, e.motif]));
+
     lignesMois = MOIS_SCOLAIRES.map((mois) => {
+      if (mapExo.has(mois)) {
+        return { mois, statut: "Exonéré" as const };
+      }
       const paiementsDuMois = (paiements ?? []).filter((p) => p.mois_souscription === mois);
       const totalPaye = paiementsDuMois.reduce((s, p) => s + p.montant_paye, 0);
       const reste = resteAPayer(montantAttendu, paiementsDuMois);
@@ -191,7 +201,7 @@ async function ActifDashboard({
       ? Math.round((presencesCeMois.filter((p) => p.present).length / presencesCeMois.length) * 100)
       : null;
 
-  const badgeVariant = { Soldé: "success", Partiel: "warning", "Non payé": "danger" } as const;
+  const badgeVariant = { Soldé: "success", Partiel: "warning", "Non payé": "danger", Exonéré: "neutral" } as const;
 
   return (
     <div className="space-y-6">

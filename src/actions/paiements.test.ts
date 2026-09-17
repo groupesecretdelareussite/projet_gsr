@@ -10,7 +10,7 @@ vi.mock("@/lib/auth-scope", async () => {
 });
 
 import { getUserScope } from "@/lib/auth-scope";
-import { enregistrerPaiement, supprimerPaiement } from "./paiements";
+import { enregistrerPaiement, supprimerPaiement, consulterResteAPayer } from "./paiements";
 
 function makeScope(overrides: Partial<UserScope>): UserScope {
   return {
@@ -23,6 +23,14 @@ function makeScope(overrides: Partial<UserScope>): UserScope {
     ...overrides,
   };
 }
+
+describe("consulterResteAPayer — garde de rôle", () => {
+  it.each(["chef_site", "secretaire"] as const)("rejette le rôle %s", async (role) => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role, isGlobal: false }));
+
+    await expect(consulterResteAPayer(1, "Octobre")).rejects.toThrow("Non autorisé");
+  });
+});
 
 describe("enregistrerPaiement — garde de rôle (§8.7)", () => {
   it.each(["chef_site", "secretaire"] as const)("rejette le rôle %s", async (role) => {

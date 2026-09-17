@@ -75,6 +75,14 @@ export async function executerSuspensionAutomatique(dateReference: Date): Promis
     .eq("annee_scolaire_id", anneeEnCours.id)
     .eq("mois_souscription", moisVerifie);
 
+  const { data: exoneresRows } = await supabase
+    .from("mois_exoneres")
+    .select("eleve_id")
+    .eq("annee_scolaire_id", anneeEnCours.id)
+    .eq("mois_souscription", moisVerifie);
+
+  const elevesExoneres = new Set((exoneresRows ?? []).map((r) => r.eleve_id as number));
+
   const payeParEleve = new Map<number, number>();
   for (const p of paiementsMois ?? []) {
     payeParEleve.set(p.eleve_id as number, (payeParEleve.get(p.eleve_id as number) ?? 0) + (p.montant_paye as number));
@@ -83,6 +91,7 @@ export async function executerSuspensionAutomatique(dateReference: Date): Promis
   const suspendus: EleveSuspenduAuto[] = [];
 
   for (const eleve of elevesActifs) {
+    if (elevesExoneres.has(eleve.id)) continue;
     const montantAttendu = montantParClasse.get(eleve.classe_id);
     const siteId = eleve.classes?.site_id;
     if (montantAttendu === undefined || !siteId) continue;

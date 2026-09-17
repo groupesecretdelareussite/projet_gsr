@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope, siteInScope, type UserScope } from "@/lib/auth-scope";
 import { resteAPayer } from "@/lib/paiements";
-import type { MoisScolaire, ModePaiement, UserRole } from "@/lib/constants";
+import { MOIS_SCOLAIRES, type MoisScolaire, type ModePaiement, type UserRole } from "@/lib/constants";
 
 const ROLES_PAIEMENTS = ["coordonnateur", "comptable", "superviseur"] as const;
 const ROLES_SUPPRESSION = ["coordonnateur", "comptable"] as const;
@@ -35,19 +35,64 @@ export interface EnregistrerPaiementInput {
   modePaiement: ModePaiement;
 }
 
-/** §8.7/§12.5 GSR_ARCHITECTURE.md — le montant payé ne peut jamais dépasser le reste dû. */
-export async function enregistrerPaiement(
-  input: EnregistrerPaiementInput
-): Promise<{ error?: string; resteApresPaiement?: number; montantAttendu?: number }> {
+export interface InfoResteAPayer {
+  montantAttendu: number;
+  dejaPaye: number;
+  resteAPayer: number;
+  estExonere?: boolean;
+  motifExoneration?: string;
+  versements: Array<{
+    id: number;
+    datePaiement: string;
+    montantPaye: number;
+    modePaiement: string;
+  }>;
+}
+
+export interface EnregistrerPaiementResult {
+  error?: string;
+  resteApresPaiement?: number;
+  montantAttendu?: number;
+  college?: string;
+  anneeLibelle?: string;
+  lastPaiementId?: number;
+  versements?: Array<{
+    id: number;
+    datePaiement: string;
+    montantPaye: number;
+    modePaiement: string;
+  }>;
+}
+
+export interface EnregistrerPaiementMultiMoisInput {
+  eleveId: number;
+  moisPayes: MoisScolaire[];
+  datePaiement: string;
+  modePaiement: ModePaiement;
+}
+
+export interface EnregistrerPaiementMultiMoisResult {
+  error?: string;
+  moisPayes?: MoisScolaire[];
+  montantTotalPaye?: number;
+  moisOfferts?: MoisScolaire[];
+  message?: string;
+  college?: string;
+  anneeLibelle?: string;
+}
+
+/** Consultation du reste à payer et des versements existants pour un élève et un mois. */
+export async function consulterResteAPayer(
+  eleveId: number,
+  moisSouscription: MoisScolaire
+): Promise<{ error?: string; data?: InfoResteAPayer }> {
   const scope = await getScopeAndAssert(ROLES_PAIEMENTS);
   const supabaseAdmin = createServiceRoleClient();
-
-  if (input.montantPaye <= 0) return { error: "Montant invalide" };
 
   const { data: eleve } = await supabaseAdmin
     .from("eleves")
     .select("id, statut, classe_id, classes(site_id)")
-    .eq("id", input.eleveId)
+    .eq("id", eleveId)
     .single();
 
   if (!eleve || eleve.statut !== "actif") return { error: "Élève introuvable ou suspendu" };
@@ -69,6 +114,106 @@ export async function enregistrerPaiement(
     .single();
 
   if (!anneeEnCours) return { error: "Aucune année scolaire en cours" };
+
+  const montantAttendu = Number(fraisTd.montant);
+
+  // Vérifier si ce mois est exonéré ou déjà offert
+  const { data: exo } = await supabaseAdmin
+    .from("mois_exoneres")
+    .select("motif")
+    .eq("eleve_id", eleveId)
+    .eq("mois_souscription", moisSouscription)
+    .eq("annee_scolaire_id", anneeEnCours.id)
+    .maybeSingle();
+
+  if (exo) {
+    return {
+      data: {
+        montantAttendu,
+        dejaPaye: 0,
+        resteAPayer: 0,
+        estExonere: true,
+        motifExoneration: exo.motif,
+        versements: [],
+      },
+    };
+  }
+
+  const { data: paiements } = await supabaseAdmin
+    .from("paiements")
+    .select("id, montant_paye, date_paiement, mode_paiement")
+    .eq("eleve_id", eleveId)
+    .eq("mois_souscription", moisSouscription)
+    .eq("annee_scolaire_id", anneeEnCours.id)
+    .order("date_paiement", { ascending: true })
+    .order("id", { ascending: true });
+
+  const dejaPaye = (paiements ?? []).reduce((sum, p) => sum + Number(p.montant_paye), 0);
+  const reste = Math.max(0, montantAttendu - dejaPaye);
+
+  return {
+    data: {
+      montantAttendu,
+      dejaPaye,
+      resteAPayer: reste,
+      estExonere: false,
+      versements: (paiements ?? []).map((p) => ({
+        id: p.id,
+        datePaiement: p.date_paiement,
+        montantPaye: Number(p.montant_paye),
+        modePaiement: p.mode_paiement,
+      })),
+    },
+  };
+}
+
+/** §8.7/§12.5 GSR_ARCHITECTURE.md — le montant payé ne peut jamais dépasser le reste dû. */
+export async function enregistrerPaiement(
+  input: EnregistrerPaiementInput
+): Promise<EnregistrerPaiementResult> {
+  const scope = await getScopeAndAssert(ROLES_PAIEMENTS);
+  const supabaseAdmin = createServiceRoleClient();
+
+  if (input.montantPaye <= 0) return { error: "Montant invalide" };
+
+  const { data: eleve } = await supabaseAdmin
+    .from("eleves")
+    .select("id, statut, classe_id, college, classes(site_id)")
+    .eq("id", input.eleveId)
+    .single();
+
+  if (!eleve || eleve.statut !== "actif") return { error: "Élève introuvable ou suspendu" };
+  const siteId = (eleve as unknown as { classes: { site_id: number } }).classes.site_id;
+  if (!siteInScope(scope, siteId)) return { error: "Non autorisé sur ce site" };
+
+  const { data: fraisTd } = await supabaseAdmin
+    .from("frais_td")
+    .select("montant")
+    .eq("classe_id", eleve.classe_id)
+    .single();
+
+  if (!fraisTd) return { error: "Aucun montant de frais TD configuré pour cette classe" };
+
+  const { data: anneeEnCours } = await supabaseAdmin
+    .from("annees_scolaires")
+    .select("id, libelle")
+    .eq("statut", "en_cours")
+    .single();
+
+  if (!anneeEnCours) return { error: "Aucune année scolaire en cours" };
+
+  // Bloquer le paiement si le mois est déjà exonéré ou offert
+  const { data: exo } = await supabaseAdmin
+    .from("mois_exoneres")
+    .select("motif")
+    .eq("eleve_id", input.eleveId)
+    .eq("mois_souscription", input.moisSouscription)
+    .eq("annee_scolaire_id", anneeEnCours.id)
+    .maybeSingle();
+
+  if (exo) {
+    return { error: `Ce mois est exonéré ou déjà pris en charge (${exo.motif}). Aucun paiement requis.` };
+  }
 
   const { data: paiementsExistants } = await supabaseAdmin
     .from("paiements")
@@ -95,8 +240,223 @@ export async function enregistrerPaiement(
 
   if (error) return { error: error.message };
 
+  const { data: paiementsApres } = await supabaseAdmin
+    .from("paiements")
+    .select("id, montant_paye, date_paiement, mode_paiement")
+    .eq("eleve_id", input.eleveId)
+    .eq("mois_souscription", input.moisSouscription)
+    .eq("annee_scolaire_id", anneeEnCours.id)
+    .order("date_paiement", { ascending: true })
+    .order("id", { ascending: true });
+
+  const totalPaye = (paiementsApres ?? []).reduce((sum, p) => sum + Number(p.montant_paye), 0);
+  const montantAttendu = Number(fraisTd.montant);
+  const resteApres = Math.max(0, montantAttendu - totalPaye);
+  const lastPaiementId = (paiementsApres ?? [])[(paiementsApres ?? []).length - 1]?.id;
+
   revalidatePaiementsPaths();
-  return { resteApresPaiement: resteAvant - input.montantPaye, montantAttendu: Number(fraisTd.montant) };
+  return {
+    resteApresPaiement: resteApres,
+    montantAttendu,
+    college: eleve.college,
+    anneeLibelle: anneeEnCours.libelle,
+    lastPaiementId,
+    versements: (paiementsApres ?? []).map((p) => ({
+      id: p.id,
+      datePaiement: p.date_paiement,
+      montantPaye: Number(p.montant_paye),
+      modePaiement: p.mode_paiement,
+    })),
+  };
+}
+
+/**
+ * Enregistre un paiement multi-mois comptant (100% le jour même, Présentiel ou MoMo).
+ * Applique la règle de fidélité :
+ *   - 3 mois payés consécutifs le même jour -> 1 mois offert (mois suivant)
+ *   - 6 mois payés consécutifs le même jour -> 2 mois offerts (mois suivants, année complète soldée)
+ */
+export async function enregistrerPaiementMultiMois(
+  input: EnregistrerPaiementMultiMoisInput
+): Promise<EnregistrerPaiementMultiMoisResult> {
+  const scope = await getScopeAndAssert(ROLES_PAIEMENTS);
+  const supabaseAdmin = createServiceRoleClient();
+
+  if (!input.moisPayes || input.moisPayes.length === 0) {
+    return { error: "Veuillez sélectionner au moins un mois à payer." };
+  }
+
+  // Vérifier l'élève
+  const { data: eleve } = await supabaseAdmin
+    .from("eleves")
+    .select("id, statut, classe_id, college, classes(site_id)")
+    .eq("id", input.eleveId)
+    .single();
+
+  if (!eleve || eleve.statut !== "actif") return { error: "Élève introuvable ou suspendu" };
+  const siteId = (eleve as unknown as { classes: { site_id: number } }).classes.site_id;
+  if (!siteInScope(scope, siteId)) return { error: "Non autorisé sur ce site" };
+
+  // Vérifier frais_td
+  const { data: fraisTd } = await supabaseAdmin
+    .from("frais_td")
+    .select("montant")
+    .eq("classe_id", eleve.classe_id)
+    .single();
+
+  if (!fraisTd) return { error: "Aucun montant de frais TD configuré pour cette classe" };
+  const montantMensuel = Number(fraisTd.montant);
+
+  // Vérifier année en cours
+  const { data: anneeEnCours } = await supabaseAdmin
+    .from("annees_scolaires")
+    .select("id, libelle")
+    .eq("statut", "en_cours")
+    .single();
+
+  if (!anneeEnCours) return { error: "Aucune année scolaire en cours" };
+
+  // Trier les mois selon l'ordre officiel MOIS_SCOLAIRES
+  const moisTries = [...input.moisPayes].sort(
+    (a, b) => MOIS_SCOLAIRES.indexOf(a) - MOIS_SCOLAIRES.indexOf(b)
+  );
+
+  // Vérifier la consécutivité
+  for (let i = 0; i < moisTries.length - 1; i++) {
+    const idx1 = MOIS_SCOLAIRES.indexOf(moisTries[i]);
+    const idx2 = MOIS_SCOLAIRES.indexOf(moisTries[i + 1]);
+    if (idx2 !== idx1 + 1) {
+      return { error: "Les mois sélectionnés doivent être consécutifs." };
+    }
+  }
+
+  // Vérifier que chaque mois n'est ni déjà soldé ni déjà exonéré
+  const { data: paiementsExistants } = await supabaseAdmin
+    .from("paiements")
+    .select("mois_souscription, montant_paye")
+    .eq("eleve_id", input.eleveId)
+    .eq("annee_scolaire_id", anneeEnCours.id)
+    .in("mois_souscription", moisTries);
+
+  const { data: exoneresExistants } = await supabaseAdmin
+    .from("mois_exoneres")
+    .select("mois_souscription, motif")
+    .eq("eleve_id", input.eleveId)
+    .eq("annee_scolaire_id", anneeEnCours.id)
+    .in("mois_souscription", moisTries);
+
+  if ((exoneresExistants ?? []).length > 0) {
+    const moisExo = exoneresExistants![0].mois_souscription;
+    return { error: `Le mois de ${moisExo} est déjà exonéré (${exoneresExistants![0].motif}).` };
+  }
+
+  const payeParMois = new Map<string, number>();
+  for (const p of paiementsExistants ?? []) {
+    payeParMois.set(p.mois_souscription, (payeParMois.get(p.mois_souscription) ?? 0) + Number(p.montant_paye));
+  }
+
+  for (const m of moisTries) {
+    const deja = payeParMois.get(m) ?? 0;
+    if (deja >= montantMensuel) {
+      return { error: `Le mois de ${m} est déjà intégralement soldé.` };
+    }
+  }
+
+  // Enregistrement des paiements (100% comptant pour chaque mois)
+  const paiementsAInserer = moisTries.map((m) => {
+    const deja = payeParMois.get(m) ?? 0;
+    const montantRestant = Math.max(0, montantMensuel - deja);
+    return {
+      eleve_id: input.eleveId,
+      mois_souscription: m,
+      montant_paye: montantRestant,
+      date_paiement: input.datePaiement,
+      mode_paiement: input.modePaiement,
+      annee_scolaire_id: anneeEnCours.id,
+      enregistre_par: scope.userId,
+    };
+  });
+
+  const { error: insertError } = await supabaseAdmin.from("paiements").insert(paiementsAInserer);
+  if (insertError) return { error: insertError.message };
+
+  // Règle promotionnelle :
+  // 3 mois payés -> 1 mois offert (le suivant)
+  // 6 mois payés -> 2 mois offerts (les deux suivants)
+  const moisOfferts: MoisScolaire[] = [];
+  const nbMoisPayes = moisTries.length;
+  const dernierMoisIndex = MOIS_SCOLAIRES.indexOf(moisTries[moisTries.length - 1]);
+
+  let nbMoisOffertsTheorique = 0;
+  if (nbMoisPayes >= 6) {
+    nbMoisOffertsTheorique = 2;
+  } else if (nbMoisPayes >= 3) {
+    nbMoisOffertsTheorique = 1;
+  }
+
+  for (let step = 1; step <= nbMoisOffertsTheorique; step++) {
+    const nextIdx = dernierMoisIndex + step;
+    if (nextIdx < MOIS_SCOLAIRES.length) {
+      const moisCandidat = MOIS_SCOLAIRES[nextIdx];
+      // Vérifier s'il n'est pas déjà payé ou exonéré
+      const { data: dejaPayeNext } = await supabaseAdmin
+        .from("paiements")
+        .select("id")
+        .eq("eleve_id", input.eleveId)
+        .eq("mois_souscription", moisCandidat)
+        .eq("annee_scolaire_id", anneeEnCours.id)
+        .limit(1);
+
+      const { data: dejaExoNext } = await supabaseAdmin
+        .from("mois_exoneres")
+        .select("id")
+        .eq("eleve_id", input.eleveId)
+        .eq("mois_souscription", moisCandidat)
+        .eq("annee_scolaire_id", anneeEnCours.id)
+        .limit(1);
+
+      if ((!dejaPayeNext || dejaPayeNext.length === 0) && (!dejaExoNext || dejaExoNext.length === 0)) {
+        moisOfferts.push(moisCandidat);
+      }
+    }
+  }
+
+  if (moisOfferts.length > 0) {
+    const motifPromo =
+      nbMoisPayes >= 6
+        ? "Offre 6 mois payés simultanément : mois offert (année complète soldée)"
+        : "Offre 3 mois payés simultanément : mois offert";
+
+    const lignesExo = moisOfferts.map((m) => ({
+      eleve_id: input.eleveId,
+      mois_souscription: m,
+      annee_scolaire_id: anneeEnCours.id,
+      motif: motifPromo,
+      exonere_par: scope.userId,
+    }));
+
+    await supabaseAdmin
+      .from("mois_exoneres")
+      .upsert(lignesExo, { onConflict: "eleve_id, mois_souscription, annee_scolaire_id" });
+  }
+
+  const montantTotalPaye = paiementsAInserer.reduce((sum, p) => sum + p.montant_paye, 0);
+
+  revalidatePaiementsPaths();
+
+  let message = `Paiement comptant de ${moisTries.length} mois enregistré avec succès.`;
+  if (moisOfferts.length > 0) {
+    message += ` Offre appliquée : ${moisOfferts.join(" et ")} offert${moisOfferts.length > 1 ? "s" : ""}.`;
+  }
+
+  return {
+    moisPayes: moisTries,
+    montantTotalPaye,
+    moisOfferts,
+    message,
+    college: eleve.college,
+    anneeLibelle: anneeEnCours.libelle,
+  };
 }
 
 /**

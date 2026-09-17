@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { ArbitrageButtonTD } from "@/components/td/ArbitrageButtonTD";
+import { AffecterProfesseurDirectTDDialog, type ProfesseurOptionTD } from "@/components/td/AffecterProfesseurDirectTDDialog";
 
 interface CreneauRow {
   id: number;
@@ -39,7 +40,12 @@ export default async function ArbitrageTDPage() {
       .order("heure_debut"),
     supabaseAdmin.from("classes").select("id, nom_classe, sites(nom_site)"),
     supabaseAdmin.schema("td").from("matieres_td").select("id, nom_matiere"),
-    supabaseAdmin.schema("td").from("professeurs").select("id, nom, prenom"),
+    supabaseAdmin
+      .schema("td")
+      .from("professeurs")
+      .select("id, nom, prenom, matiere_principale_id, actif")
+      .eq("actif", true)
+      .order("nom"),
   ]);
 
   const listeCreneaux = (creneaux ?? []) as CreneauRow[];
@@ -50,7 +56,9 @@ export default async function ArbitrageTDPage() {
     ])
   );
   const nomMatiereParId = new Map((matieres ?? []).map((m) => [m.id, m.nom_matiere]));
+  const nomMatiereObj = Object.fromEntries(nomMatiereParId.entries());
   const nomProfParId = new Map((professeurs ?? []).map((p) => [p.id, `${p.prenom} ${p.nom}`]));
+  const professeursOptions = (professeurs ?? []) as unknown as ProfesseurOptionTD[];
 
   const idsCreneaux = listeCreneaux.map((c) => c.id);
   let postulations: PostulationRow[] = [];
@@ -79,14 +87,24 @@ export default async function ArbitrageTDPage() {
         <div className="space-y-4">
           {creneauxAvecCandidats.map(({ creneau, candidats }) => (
             <div key={creneau.id} className="bg-white rounded-2xl border border-gray-100 p-5">
-              <div className="mb-4">
-                <p className="font-bold text-gray-900">
-                  {nomClasseParId.get(creneau.classe_id) ?? "—"} — {nomMatiereParId.get(creneau.matiere_id) ?? "—"}
-                </p>
-                <p className="text-xs text-gray-400">
-                  {new Date(creneau.date_td).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} ·{" "}
-                  {creneau.heure_debut.slice(0, 5)}–{creneau.heure_fin.slice(0, 5)} · {Number(creneau.montant_prevu).toLocaleString("fr-FR")} F
-                </p>
+              <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                <div>
+                  <p className="font-bold text-gray-900">
+                    {nomClasseParId.get(creneau.classe_id) ?? "—"} — {nomMatiereParId.get(creneau.matiere_id) ?? "—"}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {new Date(creneau.date_td).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} ·{" "}
+                    {creneau.heure_debut.slice(0, 5)}–{creneau.heure_fin.slice(0, 5)} · {Number(creneau.montant_prevu).toLocaleString("fr-FR")} F
+                  </p>
+                </div>
+                <AffecterProfesseurDirectTDDialog
+                  creneauId={creneau.id}
+                  titreCreneau={`${nomClasseParId.get(creneau.classe_id) ?? "—"} — ${nomMatiereParId.get(creneau.matiere_id) ?? "—"}`}
+                  dateHeureCreneau={`${new Date(creneau.date_td).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · ${creneau.heure_debut.slice(0, 5)}–${creneau.heure_fin.slice(0, 5)}`}
+                  matiereId={creneau.matiere_id}
+                  professeurs={professeursOptions}
+                  nomMatiereParId={nomMatiereObj}
+                />
               </div>
               <div className="space-y-2">
                 {candidats.map((p) => (

@@ -62,3 +62,31 @@ export function resteAPayer(montantAttendu: number, paiements: { montant_paye: n
   const total = paiements.reduce((sum, p) => sum + p.montant_paye, 0);
   return Math.max(0, montantAttendu - total);
 }
+
+/** Génère un numéro officiel de quittance au format Q-YYYY-MM-XXXX */
+export function genererNumeroQuittance(annee: string | number, mois: string, id: number): string {
+  const moisMap: Record<string, string> = {
+    Octobre: "10",
+    Novembre: "11",
+    Décembre: "12",
+    Decembre: "12",
+    Janvier: "01",
+    Février: "02",
+    Fevrier: "02",
+    Mars: "03",
+    Avril: "04",
+    Mai: "05",
+  };
+  const mm = moisMap[mois] ?? "00";
+  let yyyy = String(annee);
+  if (yyyy.includes("-")) {
+    const parts = yyyy.split("-");
+    if (["10", "11", "12"].includes(mm)) {
+      yyyy = parts[0]?.trim() ?? yyyy;
+    } else {
+      yyyy = parts[1]?.trim() ?? parts[0]?.trim() ?? yyyy;
+    }
+  }
+  const idStr = String(id).padStart(4, "0");
+  return `Q-${yyyy}-${mm}-${idStr}`;
+}

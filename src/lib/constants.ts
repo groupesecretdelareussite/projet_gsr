@@ -69,3 +69,6 @@ export const TYPE_NOTE_LABELS: Record<TypeNote, string> = {
 
 export const SEMESTRES = [1, 2] as const;
 export type Semestre = (typeof SEMESTRES)[number];
+
+export const MAX_CANDIDATURES_PAR_CRENEAU = 3;
+

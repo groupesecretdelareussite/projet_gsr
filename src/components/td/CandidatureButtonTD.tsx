@@ -10,9 +10,10 @@ interface CandidatureButtonTDProps {
   creneauId: number;
   postulationId: number | null;
   statutValidation: string | null;
+  estComplet?: boolean;
 }
 
-export function CandidatureButtonTD({ creneauId, postulationId, statutValidation }: CandidatureButtonTDProps) {
+export function CandidatureButtonTD({ creneauId, postulationId, statutValidation, estComplet }: CandidatureButtonTDProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -43,6 +44,14 @@ export function CandidatureButtonTD({ creneauId, postulationId, statutValidation
   }
 
   if (!postulationId) {
+    if (estComplet) {
+      return (
+        <Button variant="outline" disabled className="text-gray-400 bg-gray-50 border-gray-200 cursor-not-allowed">
+          Complet (3/3)
+        </Button>
+      );
+    }
+
     return (
       <Button onClick={postuler} disabled={isPending}>
         {isPending ? "..." : "Postuler"}

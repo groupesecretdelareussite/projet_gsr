@@ -28,3 +28,28 @@ export async function traiterArbitrageTD(creneauId: number, professeurId: number
   revalidatePath("/td/coord/planning");
   return {};
 }
+
+/**
+ * Affectation directe d'un professeur par le coordonnateur sur un créneau public.
+ * Valide directement le professeur choisi (qu'il ait postulé ou non),
+ * refuse automatiquement les autres candidats en attente du créneau,
+ * applique la Règle A pour les chevauchements, et clôture le créneau.
+ */
+export async function affecterDirectementProfesseurTD(creneauId: number, professeurId: number): Promise<{ error?: string }> {
+  const scope = await getUserScope(await createClient());
+  if (scope.role !== "coordonnateur") {
+    throw new Error("Non autorisé");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.schema("td").rpc("affecter_directement_creneau", {
+    p_creneau_id: creneauId,
+    p_professeur_id: professeurId,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath("/td/coord/arbitrage");
+  revalidatePath("/td/coord/planning");
+  return {};
+}
+
