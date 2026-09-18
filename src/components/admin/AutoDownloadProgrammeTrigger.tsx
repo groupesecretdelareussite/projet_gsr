@@ -14,18 +14,42 @@ export function AutoDownloadProgrammeTrigger() {
     if (shouldDownload && !hasTriggered.current) {
       hasTriggered.current = true;
 
-      // Déclenchement automatique du téléchargement
-      const link = document.createElement("a");
-      link.href = "/api/td/programme-pdf";
-      link.download = "";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      toast.success("Téléchargement du programme hebdomadaire lancé.");
-
-      // Nettoyage immédiat de l'URL pour ne pas redéclencher au refresh
+      // Nettoyage immédiat de l'URL pour éviter de redéclencher au refresh
       router.replace("/admin/tableau-de-bord");
+
+      // Téléchargement sécurisé via fetch
+      (async () => {
+        try {
+          const res = await fetch("/api/td/programme-pdf");
+          if (!res.ok) {
+            const errorMsg = await res.text();
+            toast.error(errorMsg || "Impossible de télécharger le programme.");
+            return;
+          }
+
+          const disposition = res.headers.get("Content-Disposition");
+          let filename = "Programme_TD.pdf";
+          if (disposition && disposition.includes("filename=")) {
+            const matches = disposition.match(/filename="?([^"]+)"?/);
+            if (matches && matches[1]) filename = matches[1];
+          }
+
+          const blob = await res.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+
+          toast.success("Programme hebdomadaire téléchargé avec succès.");
+        } catch (err) {
+          console.error("Erreur auto download :", err);
+          toast.error("Erreur lors du téléchargement automatique du programme.");
+        }
+      })();
     }
   }, [searchParams, router]);
 

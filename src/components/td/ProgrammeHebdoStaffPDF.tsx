@@ -1,5 +1,6 @@
 import React from "react";
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
+import fs from "fs";
 import path from "path";
 
 export interface LigneCreneauPDF {
@@ -29,6 +30,7 @@ export interface ProgrammeHebdoDataPDF {
 }
 
 const LOGO_PATH = path.join(process.cwd(), "public/logo.png");
+const HAS_LOGO = typeof window === "undefined" ? fs.existsSync(LOGO_PATH) : false;
 
 const styles = StyleSheet.create({
   page: {
@@ -55,6 +57,19 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     objectFit: "contain",
+  },
+  logoFallback: {
+    width: 36,
+    height: 36,
+    borderRadius: 6,
+    backgroundColor: "#12AA00",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoFallbackText: {
+    color: "#ffffff",
+    fontFamily: "Helvetica-Bold",
+    fontSize: 11,
   },
   headerBrand: {
     fontSize: 16,
@@ -224,8 +239,14 @@ export function ProgrammeHebdoStaffPDF({ data }: { data: ProgrammeHebdoDataPDF }
         {/* EN-TÊTE OFFICIEL */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {/* eslint-disable-next-line jsx-a11y/alt-text */}
-            <Image src={LOGO_PATH} style={styles.logo} />
+            {HAS_LOGO ? (
+              /* eslint-disable-next-line jsx-a11y/alt-text */
+              <Image src={LOGO_PATH} style={styles.logo} />
+            ) : (
+              <View style={styles.logoFallback}>
+                <Text style={styles.logoFallbackText}>GSR</Text>
+              </View>
+            )}
             <View>
               <Text style={styles.headerBrand}>GROUPE SECRET DE LA RÉUSSITE (GSR)</Text>
               <Text style={styles.headerDevise}>Méthode — Rigueur — Discipline</Text>

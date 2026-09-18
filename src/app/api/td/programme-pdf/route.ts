@@ -72,11 +72,6 @@ export async function GET(request: NextRequest) {
   }
 
   const { data: semaineData } = await semaineQuery.maybeSingle();
-  if (!semaineData) {
-    return new NextResponse("Aucune semaine TD publiée trouvée pour le téléchargement.", {
-      status: 404,
-    });
-  }
 
   // 4. Récupération des sites, classes et matières
   let classesQuery = supabaseAdmin.from("classes").select("id, nom_classe, site_id, ordre");
@@ -109,7 +104,7 @@ export async function GET(request: NextRequest) {
     heure_fin: string;
   }[] = [];
 
-  if (classeIds.length > 0) {
+  if (semaineData && classeIds.length > 0) {
     const { data: creneauxData } = await supabaseAdmin
       .schema("td")
       .from("creneaux")
@@ -220,11 +215,15 @@ export async function GET(request: NextRequest) {
     minute: "2-digit",
   })}`;
 
+  const libelleSemaine = semaineData?.libelle ?? "Semaine_non_publiee";
+  const dateDebut = semaineData?.date_debut ?? "";
+  const dateFin = semaineData?.date_fin ?? "";
+
   const dataPdf: ProgrammeHebdoDataPDF = {
     nomSite: nomSiteAffiche,
-    libelleSemaine: semaineData.libelle,
-    dateDebut: semaineData.date_debut,
-    dateFin: semaineData.date_fin,
+    libelleSemaine,
+    dateDebut,
+    dateFin,
     dateGeneration: dateGen,
     nomUtilisateur: scope.username,
     roleUtilisateur: scope.role,
@@ -242,7 +241,7 @@ export async function GET(request: NextRequest) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "_");
-  const nomFichier = `Programme_TD_${slugSite}_${semaineData.libelle.replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`;
+  const nomFichier = `Programme_TD_${slugSite}_${libelleSemaine.replace(/[^a-zA-Z0-9_-]/g, "_")}.pdf`;
 
   return new Response(stream as unknown as ReadableStream, {
     headers: {

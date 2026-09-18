@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, Calendar, FileDown, GraduationCap, LogIn, MapPin, ShieldCheck } from "lucide-react";
+import { BookOpen, Calendar, GraduationCap, LogIn, MapPin, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
+import { TelechargerProgrammeStaffButton } from "@/components/td/TelechargerProgrammeStaffButton";
 import {
   regrouperEtTrierCreneauxParClasse,
   type ClasseMetadata,
@@ -287,17 +288,10 @@ export default async function ProgrammesPage(props: { searchParams: Promise<{ si
 
               <div className="shrink-0">
                 {isStaff ? (
-                  <a
-                    href="/api/td/programme-pdf"
-                    download
-                    className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-white text-[#05330f] hover:bg-emerald-50 font-bold text-sm shadow-sm transition-all"
-                  >
-                    <FileDown className="w-4 h-4 text-[#05330f]" />
-                    <span>Télécharger le Programme (PDF)</span>
-                  </a>
+                  <TelechargerProgrammeStaffButton siteId={staffProfile?.site_id} />
                 ) : (
                   <Link
-                    href="/admin/login?redirect=/admin/tableau-de-bord?download_programme=1"
+                    href={`/admin/login?redirect=${encodeURIComponent("/admin/tableau-de-bord?download_programme=1")}`}
                     className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-sm shadow-md transition-all"
                   >
                     <LogIn className="w-4 h-4" />
