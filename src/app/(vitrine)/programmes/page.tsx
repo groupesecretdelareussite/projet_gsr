@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Calendar, MapPin } from "lucide-react";
+import { BookOpen, Calendar, GraduationCap, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
+import {
+  regrouperEtTrierCreneauxParClasse,
+  type ClasseMetadata,
+} from "@/lib/programmes-tri";
 
 export const metadata: Metadata = {
   title: "Nos programmes — Cours intensifs, TD et préparation examens | GSR",
@@ -60,14 +64,15 @@ export default async function ProgrammesPage(props: { searchParams: Promise<{ si
 
   const [{ data: sites }, { data: classes }, { data: matieres }] = await Promise.all([
     supabase.from("sites").select("id, nom_site").order("nom_site"),
-    supabase.from("classes").select("id, nom_classe, site_id"),
+    supabase.from("classes").select("id, nom_classe, site_id, ordre"),
     supabase.schema("td").from("matieres_td").select("id, nom_matiere"),
   ]);
 
   const listeSites = sites ?? [];
-  const siteIdParClasseId = new Map((classes ?? []).map((c) => [c.id, c.site_id]));
+  const listeClasses = (classes ?? []) as ClasseMetadata[];
+  const classesMap = new Map(listeClasses.map((c) => [c.id, c]));
+  const siteIdParClasseId = new Map(listeClasses.map((c) => [c.id, c.site_id]));
   const nomSiteParId = new Map(listeSites.map((s) => [s.id, s.nom_site]));
-  const nomClasseParId = new Map((classes ?? []).map((c) => [c.id, c.nom_classe]));
   const nomMatiereParId = new Map((matieres ?? []).map((m) => [m.id, m.nom_matiere]));
 
   const siteFiltre = searchParams.site ? Number(searchParams.site) : null;
@@ -145,43 +150,84 @@ export default async function ProgrammesPage(props: { searchParams: Promise<{ si
             </p>
           </div>
         ) : (
-          jours.map((jour) => (
-            <div key={jour} className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="bg-primary/10 rounded-lg p-2 text-primary">
-                  <Calendar className="w-5 h-5" />
-                </div>
-                <h2 className="text-lg font-bold text-gray-800 capitalize">
-                  {new Date(`${jour}T00:00:00`).toLocaleDateString("fr-FR", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                  })}
-                </h2>
-              </div>
-              <div className="space-y-2">
-                {parJour.get(jour)!.map((c) => (
-                  <div
-                    key={c.id}
-                    className="flex flex-wrap items-center justify-between gap-3 bg-white border border-gray-200 rounded-xl shadow-sm px-5 py-4"
-                  >
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        {nomClasseParId.get(c.classe_id) ?? "—"} — {nomMatiereParId.get(c.matiere_id) ?? "—"}
-                      </p>
-                      <p className="text-xs text-gray-400 flex items-center gap-1.5 mt-1">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {nomSiteParId.get(siteIdParClasseId.get(c.classe_id) ?? -1) ?? "—"}
-                      </p>
-                    </div>
-                    <span className="font-bold text-primary text-sm tracking-wide">
-                      {c.heure_debut.slice(0, 5)}–{c.heure_fin.slice(0, 5)}
-                    </span>
+          jours.map((jour) => {
+            const creneauxJour = parJour.get(jour) ?? [];
+            const groupesClasses = regrouperEtTrierCreneauxParClasse(creneauxJour, classesMap);
+
+            return (
+              <div key={jour} className="mb-10">
+                {/* ── En-tête du jour ── */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="bg-primary/10 rounded-xl p-2.5 text-primary shadow-xs">
+                    <Calendar className="w-5 h-5" />
                   </div>
-                ))}
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-900 capitalize">
+                      {new Date(`${jour}T00:00:00`).toLocaleDateString("fr-FR", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                      })}
+                    </h2>
+                    <p className="text-xs text-gray-500">
+                      {groupesClasses.length} classe{groupesClasses.length > 1 ? "s" : ""} · {creneauxJour.length} séance{creneauxJour.length > 1 ? "s" : ""} au total
+                    </p>
+                  </div>
+                </div>
+
+                {/* ── Regroupement visuel par niveau / classe ── */}
+                <div className="space-y-4">
+                  {groupesClasses.map((groupe) => (
+                    <div
+                      key={groupe.classeId}
+                      className="bg-white border border-gray-200 rounded-xl shadow-xs p-4 sm:p-5 hover:border-primary/40 transition-colors"
+                    >
+                      {/* En-tête de la classe */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-gray-100">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xs shrink-0">
+                            <GraduationCap className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-base sm:text-lg text-gray-900 leading-tight">
+                              {groupe.nomClasse}
+                            </h3>
+                            <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
+                              <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                              {nomSiteParId.get(groupe.siteId) ?? "—"}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="self-start sm:self-center text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
+                          {groupe.creneaux.length} séance{groupe.creneaux.length > 1 ? "s" : ""}
+                        </span>
+                      </div>
+
+                      {/* Liste des séances pour cette classe */}
+                      <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                        {groupe.creneaux.map((c) => (
+                          <div
+                            key={c.id}
+                            className="flex items-center justify-between gap-2.5 bg-gray-50/80 hover:bg-gray-50 rounded-lg px-3.5 py-2.5 border border-gray-200/70 transition-colors"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <BookOpen className="w-4 h-4 text-primary shrink-0" />
+                              <span className="font-semibold text-sm text-gray-800 truncate">
+                                {nomMatiereParId.get(c.matiere_id) ?? "—"}
+                              </span>
+                            </div>
+                            <span className="font-bold text-primary text-xs sm:text-sm tracking-wide bg-white px-2.5 py-1 rounded-md border border-gray-200 shadow-2xs shrink-0">
+                              {c.heure_debut.slice(0, 5)}–{c.heure_fin.slice(0, 5)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
