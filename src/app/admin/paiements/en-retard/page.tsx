@@ -11,6 +11,7 @@ import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import type { MoisScolaire } from "@/lib/constants";
+import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 
 interface EleveRow {
   id: number;
@@ -19,7 +20,7 @@ interface EleveRow {
   prenoms: string;
   classe_id: number;
   contact_parent: string | null;
-  classes: { nom_classe: string; sites: { nom_site: string } | null } | null;
+  classes: { nom_classe: string; site_id: number; sites: { nom_site: string } | null } | null;
 }
 
 interface RetardRow {
@@ -29,7 +30,9 @@ interface RetardRow {
   derniereRelance: string | null;
 }
 
-export default async function PaiementsEnRetardPage(props: { searchParams: Promise<{ mois?: string }> }) {
+export default async function PaiementsEnRetardPage(props: {
+  searchParams: Promise<{ mois?: string; site_id?: string; classe_id?: string }>;
+}) {
   const searchParams = await props.searchParams;
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
@@ -52,11 +55,34 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
     );
   }
 
-  const { data: anneeEnCours } = await supabase
-    .from("annees_scolaires")
-    .select("id, date_debut, date_fin")
-    .eq("statut", "en_cours")
-    .maybeSingle();
+  const [{ data: anneeEnCours }, { data: sites }, { data: classes }] = await Promise.all([
+    supabase
+      .from("annees_scolaires")
+      .select("id, date_debut, date_fin")
+      .eq("statut", "en_cours")
+      .maybeSingle(),
+    supabase.from("sites").select("id, nom_site").order("nom_site"),
+    supabase.from("classes").select("id, nom_classe, site_id").order("ordre"),
+  ]);
+
+  const estChefSiteOuSecretaire = scope.role === "chef_site" || scope.role === "secretaire";
+  const siteIdEffectif = estChefSiteOuSecretaire
+    ? scope.siteId?.toString()
+    : searchParams.site_id !== undefined
+      ? searchParams.site_id || undefined
+      : scope.role === "superviseur"
+        ? (await lireFiltreSiteSuperviseur())?.toString()
+        : undefined;
+
+  const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
+  const classesFiltrees = siteIdEffectif
+    ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
+    : classes ?? [];
+
+  const classeIdValide =
+    searchParams.classe_id && classesFiltrees.some((c) => String(c.id) === searchParams.classe_id)
+      ? searchParams.classe_id
+      : undefined;
 
   const moisVisibles = moisVisiblesRetard(
     new Date(),
@@ -79,22 +105,26 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
     );
   }
 
-  const { data: eleves } = await supabase
-    .from("eleves")
-    .select("id, matricule, nom, prenoms, classe_id, contact_parent, classes(nom_classe, sites(nom_site))")
-    .eq("statut", "actif")
-    .order("nom");
-
-  const elevesActifs = (eleves ?? []) as unknown as EleveRow[];
-
-  if (!anneeEnCours || elevesActifs.length === 0) {
+  if (!anneeEnCours) {
     return (
       <div>
         {header}
-        <EmptyState icon={AlertTriangle} title="Aucun retard" description="Aucun élève actif à afficher." />
+        <EmptyState icon={AlertTriangle} title="Aucune année active" description="Aucune année scolaire en cours." />
       </div>
     );
   }
+
+  let elevesQuery = supabase
+    .from("eleves")
+    .select("id, matricule, nom, prenoms, classe_id, contact_parent, classes!inner(nom_classe, site_id, sites(nom_site))")
+    .eq("statut", "actif")
+    .order("nom");
+
+  if (siteIdEffectif) elevesQuery = elevesQuery.eq("classes.site_id", siteIdEffectif);
+  if (classeIdValide) elevesQuery = elevesQuery.eq("classe_id", classeIdValide);
+
+  const { data: eleves } = await elevesQuery;
+  const elevesActifs = (eleves ?? []) as unknown as EleveRow[];
 
   const { data: fraisTd } = await supabase.from("frais_td").select("classe_id, montant");
   const montantParClasse = new Map((fraisTd ?? []).map((f) => [f.classe_id, Number(f.montant)]));
@@ -198,6 +228,9 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
   ];
 
   const peutExporter = ["coordonnateur", "comptable", "superviseur"].includes(scope.role);
+  const nomSiteTitre = siteIdEffectif ? nomSiteParId.get(Number(siteIdEffectif)) ?? "Site inconnu" : "Tous les sites";
+  const classeSelectionnee = classesFiltrees.find((c) => String(c.id) === classeIdValide);
+  const classeTitre = classeSelectionnee ? classeSelectionnee.nom_classe : "Toutes les classes";
   const dateExport = new Date().toLocaleDateString("fr-FR");
   const lignesExport = lignes.map((l) => ({
     Élève: `${l.eleve.nom} ${l.eleve.prenoms}`,
@@ -217,17 +250,18 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
         actions={
           peutExporter ? (
             <ExporterExcelButton
-              titre={`Paiements en retard — Mois de ${moisFiltre} — ${dateExport}`}
+              titre={`Paiements en retard — Mois de ${moisFiltre} — ${nomSiteTitre} — ${classeTitre} — ${dateExport}`}
               lignes={lignesExport}
-              nomFichier={`Paiements_en_retard_${moisFiltre}_${dateExport}`.replace(/\s+/g, "_")}
+              nomFichier={`Paiements_en_retard_${moisFiltre}_${nomSiteTitre}_${classeTitre}_${dateExport}`.replace(/\s+/g, "_")}
               nomFeuille="En retard"
             />
           ) : undefined
         }
       />
       <PaiementsNav active="en-retard" role={scope.role} />
-      {moisVisibles.length > 1 && (
-        <form method="get" className="flex items-center gap-2 mb-4">
+
+      <form method="get" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 max-w-2xl">
+        {moisVisibles.length > 1 ? (
           <select
             name="mois"
             defaultValue={moisFiltre}
@@ -239,14 +273,43 @@ export default async function PaiementsEnRetardPage(props: { searchParams: Promi
               </option>
             ))}
           </select>
-          <AutoSubmitOnChange />
-        </form>
-      )}
+        ) : (
+          <input type="hidden" name="mois" value={moisFiltre} />
+        )}
+        {!estChefSiteOuSecretaire && (
+          <select
+            name="site_id"
+            defaultValue={siteIdEffectif ?? ""}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+          >
+            <option value="">Tous les sites</option>
+            {sites?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nom_site}
+              </option>
+            ))}
+          </select>
+        )}
+        <select
+          name="classe_id"
+          defaultValue={classeIdValide ?? ""}
+          className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+        >
+          <option value="">Toutes les classes</option>
+          {classesFiltrees.map((c) => (
+            <option key={c.id} value={c.id}>
+              {siteIdEffectif ? c.nom_classe : `${c.nom_classe} — ${nomSiteParId.get(c.site_id) ?? "?"}`}
+            </option>
+          ))}
+        </select>
+        <AutoSubmitOnChange />
+      </form>
+
       <DataTable
         columns={columns}
         rows={lignes}
         rowKey={(l) => `${l.eleve.id}-${l.mois}`}
-        emptyState={<EmptyState icon={AlertTriangle} title="Aucun retard" description="Tous les élèves sont à jour." />}
+        emptyState={<EmptyState icon={AlertTriangle} title="Aucun retard" description="Tous les élèves sont à jour ou aucun retard ne correspond aux filtres." />}
       />
     </div>
   );

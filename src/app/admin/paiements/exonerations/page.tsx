@@ -79,7 +79,11 @@ export default async function ExonerationsPage(props: {
   }
 
   const siteIdEffectif =
-    searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
+    searchParams.site_id !== undefined
+      ? searchParams.site_id || undefined
+      : scope.role === "superviseur"
+        ? (await lireFiltreSiteSuperviseur())?.toString()
+        : undefined;
 
   const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
   const classesFiltrees = siteIdEffectif

@@ -63,9 +63,17 @@ export default async function HistoriquePaiementsPage(
     )
     .order("date_paiement", { ascending: false });
 
+  const anneeFiltre = searchParams.annee_scolaire_id ?? (anneeParDefaut ? String(anneeParDefaut) : undefined);
+  const estChefSiteOuSecretaire = scope.role === "chef_site" || scope.role === "secretaire";
+  const siteIdEffectif = estChefSiteOuSecretaire
+    ? scope.siteId?.toString()
+    : searchParams.site_id !== undefined
+      ? searchParams.site_id || undefined
+      : scope.role === "superviseur"
+        ? (await lireFiltreSiteSuperviseur())?.toString()
+        : undefined;
+
   const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
-  const siteIdEffectif =
-    searchParams.site_id ?? (scope.role === "superviseur" ? (await lireFiltreSiteSuperviseur())?.toString() : undefined);
   const classesFiltrees = siteIdEffectif
     ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
     : classes ?? [];
@@ -167,18 +175,20 @@ export default async function HistoriquePaiementsPage(
             </option>
           ))}
         </select>
-        <select
-          name="site_id"
-          defaultValue={siteIdEffectif ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
-        >
-          <option value="">Tous les sites</option>
-          {sites?.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nom_site}
-            </option>
-          ))}
-        </select>
+        {!estChefSiteOuSecretaire && (
+          <select
+            name="site_id"
+            defaultValue={siteIdEffectif ?? ""}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          >
+            <option value="">Tous les sites</option>
+            {sites?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nom_site}
+              </option>
+            ))}
+          </select>
+        )}
         <select
           name="classe_id"
           defaultValue={classeIdValide ?? ""}

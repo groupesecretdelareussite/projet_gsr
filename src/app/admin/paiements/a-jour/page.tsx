@@ -7,6 +7,8 @@ import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 import { AJourTable, type EleveAJourItem } from "@/components/admin/paiements/AJourTable";
+import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
+import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 
 interface EleveRow {
   id: number;
@@ -15,7 +17,7 @@ interface EleveRow {
   prenoms: string;
   college: string | null;
   classe_id: number;
-  classes: { nom_classe: string; sites: { nom_site: string } | null } | null;
+  classes: { nom_classe: string; site_id: number; sites: { nom_site: string } | null } | null;
 }
 
 interface PaiementVersementRow {
@@ -26,7 +28,10 @@ interface PaiementVersementRow {
   mode_paiement: string;
 }
 
-export default async function PaiementsAJourPage() {
+export default async function PaiementsAJourPage(props: {
+  searchParams: Promise<{ site_id?: string; classe_id?: string }>;
+}) {
+  const searchParams = await props.searchParams;
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
   const mois = moisCourant(new Date());
@@ -61,28 +66,51 @@ export default async function PaiementsAJourPage() {
     );
   }
 
-  const { data: anneeEnCours } = await supabase
-    .from("annees_scolaires")
-    .select("id, libelle")
-    .eq("statut", "en_cours")
-    .maybeSingle();
+  const [{ data: anneeEnCours }, { data: sites }, { data: classes }] = await Promise.all([
+    supabase.from("annees_scolaires").select("id, libelle").eq("statut", "en_cours").maybeSingle(),
+    supabase.from("sites").select("id, nom_site").order("nom_site"),
+    supabase.from("classes").select("id, nom_classe, site_id").order("ordre"),
+  ]);
 
-  const { data: eleves } = await supabase
-    .from("eleves")
-    .select("id, matricule, nom, prenoms, college, classe_id, classes(nom_classe, sites(nom_site))")
-    .eq("statut", "actif")
-    .order("nom");
-
-  const elevesActifs = (eleves ?? []) as unknown as EleveRow[];
-
-  if (!anneeEnCours || elevesActifs.length === 0) {
+  if (!anneeEnCours) {
     return (
       <div>
         {header}
-        <EmptyState icon={CheckCircle2} title="Aucun élève" description="Aucun élève actif à afficher." />
+        <EmptyState icon={CheckCircle2} title="Aucune année scolaire active" description="Aucune année scolaire en cours." />
       </div>
     );
   }
+
+  const estChefSiteOuSecretaire = scope.role === "chef_site" || scope.role === "secretaire";
+  const siteIdEffectif = estChefSiteOuSecretaire
+    ? scope.siteId?.toString()
+    : searchParams.site_id !== undefined
+      ? searchParams.site_id || undefined
+      : scope.role === "superviseur"
+        ? (await lireFiltreSiteSuperviseur())?.toString()
+        : undefined;
+
+  const nomSiteParId = new Map((sites ?? []).map((s) => [s.id, s.nom_site]));
+  const classesFiltrees = siteIdEffectif
+    ? (classes ?? []).filter((c) => String(c.site_id) === siteIdEffectif)
+    : classes ?? [];
+
+  const classeIdValide =
+    searchParams.classe_id && classesFiltrees.some((c) => String(c.id) === searchParams.classe_id)
+      ? searchParams.classe_id
+      : undefined;
+
+  let elevesQuery = supabase
+    .from("eleves")
+    .select("id, matricule, nom, prenoms, college, classe_id, classes!inner(nom_classe, site_id, sites(nom_site))")
+    .eq("statut", "actif")
+    .order("nom");
+
+  if (siteIdEffectif) elevesQuery = elevesQuery.eq("classes.site_id", siteIdEffectif);
+  if (classeIdValide) elevesQuery = elevesQuery.eq("classe_id", classeIdValide);
+
+  const { data: eleves } = await elevesQuery;
+  const elevesActifs = (eleves ?? []) as unknown as EleveRow[];
 
   const { data: fraisTd } = await supabase.from("frais_td").select("classe_id, montant");
   const montantParClasse = new Map((fraisTd ?? []).map((f) => [f.classe_id, Number(f.montant)]));
@@ -149,6 +177,9 @@ export default async function PaiementsAJourPage() {
   });
 
   const peutExporter = ["coordonnateur", "comptable", "superviseur"].includes(scope.role);
+  const nomSiteTitre = siteIdEffectif ? nomSiteParId.get(Number(siteIdEffectif)) ?? "Site inconnu" : "Tous les sites";
+  const classeSelectionnee = classesFiltrees.find((c) => String(c.id) === classeIdValide);
+  const classeTitre = classeSelectionnee ? classeSelectionnee.nom_classe : "Toutes les classes";
   const dateExport = new Date().toLocaleDateString("fr-FR");
   const lignesExport = elevesAJour.map((e) => ({
     Matricule: e.matricule,
@@ -166,15 +197,46 @@ export default async function PaiementsAJourPage() {
         actions={
           peutExporter ? (
             <ExporterExcelButton
-              titre={`Paiements à jour — Mois de ${mois} — ${dateExport}`}
+              titre={`Paiements à jour — Mois de ${mois} — ${nomSiteTitre} — ${classeTitre} — ${dateExport}`}
               lignes={lignesExport}
-              nomFichier={`Paiements_a_jour_${mois}_${dateExport}`.replace(/\s+/g, "_")}
+              nomFichier={`Paiements_a_jour_${mois}_${nomSiteTitre}_${classeTitre}_${dateExport}`.replace(/\s+/g, "_")}
               nomFeuille="À jour"
             />
           ) : undefined
         }
       />
       <PaiementsNav active="a-jour" role={scope.role} />
+
+      <form method="get" className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 max-w-xl">
+        {!estChefSiteOuSecretaire && (
+          <select
+            name="site_id"
+            defaultValue={siteIdEffectif ?? ""}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+          >
+            <option value="">Tous les sites</option>
+            {sites?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nom_site}
+              </option>
+            ))}
+          </select>
+        )}
+        <select
+          name="classe_id"
+          defaultValue={classeIdValide ?? ""}
+          className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+        >
+          <option value="">Toutes les classes</option>
+          {classesFiltrees.map((c) => (
+            <option key={c.id} value={c.id}>
+              {siteIdEffectif ? c.nom_classe : `${c.nom_classe} — ${nomSiteParId.get(c.site_id) ?? "?"}`}
+            </option>
+          ))}
+        </select>
+        <AutoSubmitOnChange />
+      </form>
+
       <AJourTable rows={itemsAJour} mois={mois} />
     </div>
   );
