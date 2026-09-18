@@ -1,17 +1,18 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { User, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck } from "lucide-react";
 import { login } from "@/actions/auth";
 
-export default function AdminLogin() {
+function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -26,7 +27,14 @@ export default function AdminLogin() {
         setError(result.error);
         return;
       }
-      router.push("/admin/tableau-de-bord");
+      const rawRedirect = searchParams.get("redirect");
+      // Protection anti open-redirect : doit commencer par / et ne pas commencer par //
+      const destination =
+        rawRedirect && rawRedirect.startsWith("/") && !rawRedirect.startsWith("//")
+          ? rawRedirect
+          : "/admin/tableau-de-bord";
+
+      router.push(destination);
       router.refresh();
     });
   }
@@ -144,5 +152,13 @@ export default function AdminLogin() {
         © {new Date().getFullYear()} Groupe Secret de la Réussite. Tous droits réservés.
       </p>
     </div>
+  );
+}
+
+export default function AdminLogin() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-surface" />}>
+      <LoginForm />
+    </Suspense>
   );
 }

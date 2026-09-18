@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, Calendar, GraduationCap, MapPin } from "lucide-react";
+import { BookOpen, Calendar, GraduationCap, LogIn, MapPin, ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
+import { TelechargerProgrammeStaffButton } from "@/components/td/TelechargerProgrammeStaffButton";
 import {
   regrouperEtTrierCreneauxParClasse,
   type ClasseMetadata,
@@ -85,6 +86,33 @@ export default async function ProgrammesPage(props: { searchParams: Promise<{ si
     parJour.set(c.date_td, [...(parJour.get(c.date_td) ?? []), c]);
   }
   const jours = Array.from(parJour.keys()).sort();
+
+  // ── Détection d'un membre du personnel staff connecté ──
+  const { data: authData } = await supabase.auth.getUser();
+  let staffProfile: { username: string; role: string; site_id: number | null } | null = null;
+  if (authData.user) {
+    const { data: userRow } = await supabase
+      .from("users")
+      .select("username, role, site_id")
+      .eq("id", authData.user.id)
+      .eq("actif", true)
+      .maybeSingle();
+    staffProfile = userRow;
+  }
+  const isStaff =
+    staffProfile !== null &&
+    ["chef_site", "coordonnateur", "superviseur", "comptable"].includes(staffProfile.role);
+  const staffNomSite = staffProfile?.site_id ? nomSiteParId.get(staffProfile.site_id) : null;
+  const staffRoleLabel =
+    staffProfile?.role === "chef_site"
+      ? "Chef de site"
+      : staffProfile?.role === "coordonnateur"
+      ? "Coordonnateur"
+      : staffProfile?.role === "comptable"
+      ? "Comptable"
+      : staffProfile?.role === "superviseur"
+      ? "Superviseur"
+      : "Membre du personnel";
 
   return (
     <div>
@@ -229,6 +257,59 @@ export default async function ProgrammesPage(props: { searchParams: Promise<{ si
             );
           })
         )}
+
+        {/* ── Section Réservée au Personnel Staff ── */}
+        <div className="mt-14 pt-8 border-t border-gray-200">
+          <div className="bg-gradient-to-br from-[#05330f] via-[#084514] to-[#0a5c10] rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
+            <ShieldCheck className="w-48 h-48 text-white/5 absolute -right-12 -bottom-12 pointer-events-none" />
+
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="max-w-2xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-3 border border-white/10">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                  Espace Réservé au Personnel Staff
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+                  Programme Officiel &amp; Attribution des Professeurs
+                </h3>
+                {isStaff ? (
+                  <p className="text-white/80 text-sm leading-relaxed">
+                    Connecté en tant que <strong className="text-white">{staffProfile?.username}</strong> (
+                    {staffRoleLabel}
+                    {staffNomSite ? ` — Site ${staffNomSite}` : ""}). Vous pouvez télécharger la
+                    feuille de route hebdomadaire complète au format paysage avec les coordonnées
+                    directes des professeurs pour chaque séance.
+                  </p>
+                ) : (
+                  <p className="text-white/80 text-sm leading-relaxed">
+                    Vous êtes Chef de site ou membre de l&apos;équipe GSR ? Connectez-vous avec vos
+                    identifiants pour télécharger la feuille de route hebdomadaire complète (PDF
+                    paysage) avec la liste des professeurs attribués à chaque créneau.
+                  </p>
+                )}
+              </div>
+
+              <div className="shrink-0">
+                {isStaff ? (
+                  <TelechargerProgrammeStaffButton siteId={staffProfile?.site_id} />
+                ) : (
+                  <Link
+                    href={`/admin/login?redirect=${encodeURIComponent("/admin/tableau-de-bord?download_programme=1")}`}
+                    className="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-sm shadow-md transition-all"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>Connexion Staff &amp; Téléchargement</span>
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-white/10 text-[11px] text-white/60 flex flex-wrap items-center justify-between gap-2">
+              <span>Document administratif confidentiel réservé à l&apos;encadrement GSR.</span>
+              <span>Format Paysage (A4) · Tableau par jour · Scoping sécurisé par site</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Users, UserX, UserPlus, GraduationCap, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
@@ -7,6 +8,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { DashboardChart } from "@/components/admin/DashboardChart";
 import { AlertesPanel, type Alerte } from "@/components/admin/AlertesPanel";
+import { AutoDownloadProgrammeTrigger } from "@/components/admin/AutoDownloadProgrammeTrigger";
 
 interface EleveDashboard {
   id: number;
@@ -170,6 +172,10 @@ export default async function TableauDeBordPage() {
 
   return (
     <div>
+      <Suspense fallback={null}>
+        <AutoDownloadProgrammeTrigger />
+      </Suspense>
+
       <PageHeader
         title={`Bonjour, ${nomAffiche}`}
         subtitle={
