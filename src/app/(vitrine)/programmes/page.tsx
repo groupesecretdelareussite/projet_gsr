@@ -100,13 +100,16 @@ export default async function ProgrammesPage(props: { searchParams: Promise<{ si
     staffProfile = userRow;
   }
   const isStaff =
-    staffProfile !== null && ["chef_site", "coordonnateur", "superviseur"].includes(staffProfile.role);
+    staffProfile !== null &&
+    ["chef_site", "coordonnateur", "superviseur", "comptable"].includes(staffProfile.role);
   const staffNomSite = staffProfile?.site_id ? nomSiteParId.get(staffProfile.site_id) : null;
   const staffRoleLabel =
     staffProfile?.role === "chef_site"
       ? "Chef de site"
       : staffProfile?.role === "coordonnateur"
       ? "Coordonnateur"
+      : staffProfile?.role === "comptable"
+      ? "Comptable"
       : staffProfile?.role === "superviseur"
       ? "Superviseur"
       : "Membre du personnel";

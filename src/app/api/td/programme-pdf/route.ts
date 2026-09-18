@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     return new NextResponse("Non authentifié : veuillez vous connecter.", { status: 401 });
   }
 
-  const rolesAutorises = ["chef_site", "coordonnateur", "superviseur"];
+  const rolesAutorises = ["chef_site", "coordonnateur", "superviseur", "comptable"];
   if (!rolesAutorises.includes(scope.role)) {
     return new NextResponse("Accès refusé : réservé aux membres du personnel staff autorisés.", {
       status: 403,
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
     } else {
       targetSiteId = scope.siteIds[0] ?? null;
     }
-  } else if (scope.role === "coordonnateur") {
+  } else if (scope.role === "coordonnateur" || scope.role === "comptable") {
     targetSiteId = requestedSiteId ?? null;
   }
 
