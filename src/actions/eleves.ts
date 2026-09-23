@@ -420,7 +420,7 @@ export async function reinscrireEleve(eleveId: number, input: ReinscrireInput): 
 
   const { data: eleve } = await supabaseAdmin
     .from("eleves")
-    .select("id, statut, classes(site_id)")
+    .select("id, statut, nom, prenoms, matricule, classes(site_id, nom_classe)")
     .eq("id", eleveId)
     .single();
 
@@ -493,6 +493,15 @@ export async function reinscrireEleve(eleveId: number, input: ReinscrireInput): 
     .delete()
     .eq("eleve_id", eleveId);
   if (deleteError) return { error: deleteError.message };
+
+  const classeNom = (eleve as unknown as { classes: { nom_classe?: string } })?.classes?.nom_classe;
+  const classeLabel = classeNom ? `, ${classeNom}` : "";
+
+  await supabaseAdmin.from("notifications").insert({
+    site_id: siteId,
+    contenu: `Réinscription : ${eleve.nom} ${eleve.prenoms} (${eleve.matricule}${classeLabel}) a été réinscrit(e).`,
+    roles_cibles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
+  });
 
   revalidatePath("/admin/eleves/liste");
   revalidatePath("/admin/eleves/suspendus");

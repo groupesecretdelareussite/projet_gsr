@@ -11,7 +11,7 @@ vi.mock("@/lib/auth-scope", async () => {
 
 import { getUserScope } from "@/lib/auth-scope";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
-import { marquerToutesNotificationsLues } from "./notifications";
+import { marquerNotificationLue, marquerToutesNotificationsLues } from "./notifications";
 
 type AdminClient = ReturnType<typeof CreateServiceRoleClient>;
 
@@ -79,4 +79,70 @@ describe("marquerToutesNotificationsLues — filtre par périmètre (régression
 
     expect(idsMisAJour).toEqual([10, 20]);
   });
+
+  it("exclut les notifications dont les roles_cibles ne contiennent pas le rôle de l'utilisateur", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "secretaire", siteId: 1, isGlobal: false }));
+    const { client, idsMisAJour } = makeToutesClient([
+      { id: 10, site_id: 1, roles_cibles: ["coordonnateur", "comptable", "superviseur", "chef_site"] } as any, // secrétaire non ciblé
+      { id: 11, site_id: 1, roles_cibles: null } as any, // notification générale
+    ]);
+    vi.mocked(createServiceRoleClient).mockReturnValue(client);
+
+    await marquerToutesNotificationsLues([10, 11]);
+
+    expect(idsMisAJour).toEqual([11]);
+  });
 });
+
+describe("marquerNotificationLue — respect de roles_cibles", () => {
+  it("autorise le marquage si le rôle fait partie des roles_cibles", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "chef_site", siteId: 1, isGlobal: false }));
+    const updateSpy = vi.fn(() => ({ eq: vi.fn(() => Promise.resolve({ error: null })) }));
+    const mockClient = {
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn(() =>
+              Promise.resolve({
+                data: { site_id: 1, roles_cibles: ["coordonnateur", "superviseur", "chef_site"] },
+              })
+            ),
+          })),
+        })),
+        update: updateSpy,
+      })),
+    };
+    vi.mocked(createServiceRoleClient).mockReturnValue(mockClient as any);
+
+    const result = await marquerNotificationLue(42);
+
+    expect(result.error).toBeUndefined();
+    expect(updateSpy).toHaveBeenCalledWith({ lu: true });
+  });
+
+  it("interdit le marquage si le rôle ne fait pas partie des roles_cibles", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "secretaire", siteId: 1, isGlobal: false }));
+    const updateSpy = vi.fn();
+    const mockClient = {
+      from: vi.fn(() => ({
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            maybeSingle: vi.fn(() =>
+              Promise.resolve({
+                data: { site_id: 1, roles_cibles: ["coordonnateur", "comptable", "superviseur", "chef_site"] },
+              })
+            ),
+          })),
+        })),
+        update: updateSpy,
+      })),
+    };
+    vi.mocked(createServiceRoleClient).mockReturnValue(mockClient as any);
+
+    const result = await marquerNotificationLue(42);
+
+    expect(result.error).toBe("Non autorisé");
+    expect(updateSpy).not.toHaveBeenCalled();
+  });
+});
+

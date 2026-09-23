@@ -9,9 +9,14 @@ export async function marquerNotificationLue(id: number): Promise<{ error?: stri
   const scope = await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
 
-  const { data: notif } = await supabaseAdmin.from("notifications").select("site_id").eq("id", id).maybeSingle();
+  const { data: notif } = await supabaseAdmin
+    .from("notifications")
+    .select("site_id, roles_cibles")
+    .eq("id", id)
+    .maybeSingle();
   if (!notif) return { error: "Notification introuvable" };
   if (!siteInScope(scope, notif.site_id)) return { error: "Non autorisé" };
+  if (notif.roles_cibles && !notif.roles_cibles.includes(scope.role)) return { error: "Non autorisé" };
 
   const { error } = await supabaseAdmin.from("notifications").update({ lu: true }).eq("id", id);
   if (error) return { error: error.message };
@@ -23,8 +28,13 @@ export async function marquerToutesNotificationsLues(ids: number[]): Promise<{ e
   const scope = await getUserScope(await createClient());
   const supabaseAdmin = createServiceRoleClient();
 
-  const { data: notifs } = await supabaseAdmin.from("notifications").select("id, site_id").in("id", ids);
-  const idsAutorises = (notifs ?? []).filter((n) => siteInScope(scope, n.site_id)).map((n) => n.id);
+  const { data: notifs } = await supabaseAdmin
+    .from("notifications")
+    .select("id, site_id, roles_cibles")
+    .in("id", ids);
+  const idsAutorises = (notifs ?? [])
+    .filter((n) => siteInScope(scope, n.site_id) && (!n.roles_cibles || n.roles_cibles.includes(scope.role)))
+    .map((n) => n.id);
   if (idsAutorises.length === 0) return {};
 
   const { error } = await supabaseAdmin.from("notifications").update({ lu: true }).in("id", idsAutorises);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { Search, X, Check, Gift } from "lucide-react";
@@ -517,8 +518,14 @@ export function EnregistrerPaiementForm() {
           </Button>
 
           {messageMultiSucces && (
-            <div className="p-3.5 bg-green-50 border border-green-200 rounded-lg text-xs text-green-900">
-              {messageMultiSucces}
+            <div className="p-3.5 bg-green-50 border border-green-200 rounded-lg text-xs text-green-900 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <span>{messageMultiSucces}</span>
+              <Link
+                href="/admin/paiements/a-jour"
+                className="font-semibold text-primary hover:underline underline-offset-2 shrink-0"
+              >
+                Télécharger les quittances (onglet À jour) →
+              </Link>
             </div>
           )}
         </form>

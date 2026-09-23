@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import type { UserScope } from "@/lib/auth-scope";
 
 vi.mock("@/lib/supabase/server", () => ({ createClient: vi.fn() }));
+vi.mock("@/lib/supabase/admin", () => ({ createServiceRoleClient: vi.fn() }));
 vi.mock("@/lib/auth-scope", async () => {
   const actual = await vi.importActual<typeof import("@/lib/auth-scope")>("@/lib/auth-scope");
   return { ...actual, getUserScope: vi.fn() };

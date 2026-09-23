@@ -492,14 +492,14 @@ export async function supprimerPaiement(
   const { data: paiement } = await supabaseAdmin
     .from("paiements")
     .select(
-      "id, mois_souscription, montant_paye, date_paiement, mode_paiement, eleves(matricule, classes(site_id))"
+      "id, mois_souscription, montant_paye, date_paiement, mode_paiement, eleves(nom, prenoms, matricule, classes(site_id))"
     )
     .eq("id", paiementId)
     .single();
 
   if (!paiement) return { error: "Paiement introuvable" };
 
-  const eleve = (paiement as unknown as { eleves: { matricule: string; classes: { site_id: number } } }).eleves;
+  const eleve = (paiement as unknown as { eleves: { nom?: string; prenoms?: string; matricule: string; classes: { site_id: number } } }).eleves;
   if (!siteInScope(scope, eleve.classes.site_id)) return { error: "Non autorisé sur ce site" };
 
   const { error: insertError } = await supabaseAdmin.from("paiements_supprimes").insert({
@@ -515,6 +515,15 @@ export async function supprimerPaiement(
 
   const { error: deleteError } = await supabaseAdmin.from("paiements").delete().eq("id", paiementId);
   if (deleteError) return { error: deleteError.message };
+
+  const nomComplet = [eleve.nom, eleve.prenoms].filter(Boolean).join(" ");
+  const cibleAffichee = nomComplet ? `${nomComplet} (${eleve.matricule})` : eleve.matricule;
+
+  await supabaseAdmin.from("notifications").insert({
+    site_id: eleve.classes.site_id,
+    contenu: `Paiement supprimé : ${paiement.montant_paye.toLocaleString("fr-FR")} F (${paiement.mois_souscription}) annulé pour ${cibleAffichee} par ${scope.username} — Motif : ${motif.trim()}`,
+    roles_cibles: ["coordonnateur", "comptable"],
+  });
 
   revalidatePaiementsPaths();
   return {};

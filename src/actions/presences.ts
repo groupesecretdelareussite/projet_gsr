@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope, type UserScope } from "@/lib/auth-scope";
 import type { UserRole } from "@/lib/constants";
 
@@ -66,6 +67,64 @@ export async function enregistrerAppelDuJour(input: EnregistrerAppelInput): Prom
 
   const { error } = await supabase.from("presences").upsert(rows, { onConflict: "eleve_id,date_presence" });
   if (error) return { error: error.message };
+
+  const absentsDuJour = input.presences.filter((p) => !p.present);
+  if (absentsDuJour.length > 0) {
+    try {
+      const supabaseAdmin = createServiceRoleClient();
+      const idsAbsents = absentsDuJour.map((p) => p.eleveId);
+
+      const [anneeStr, moisStr] = input.datePresence.split("-");
+      const annee = Number(anneeStr);
+      const mois = Number(moisStr);
+      const dernierJour = new Date(annee, mois, 0).getDate();
+      const debutMois = `${anneeStr}-${moisStr}-01`;
+      const finMois = `${anneeStr}-${moisStr}-${String(dernierJour).padStart(2, "0")}`;
+
+      const { data: absencesMois } = await supabaseAdmin
+        .from("presences")
+        .select("eleve_id")
+        .in("eleve_id", idsAbsents)
+        .eq("present", false)
+        .gte("date_presence", debutMois)
+        .lte("date_presence", finMois);
+
+      const compteAbsences = new Map<number, number>();
+      for (const a of absencesMois ?? []) {
+        compteAbsences.set(a.eleve_id, (compteAbsences.get(a.eleve_id) ?? 0) + 1);
+      }
+
+      // Option A : déclenchement uniquement à la 2ème absence du mois
+      const elevesSeuilAtteint = idsAbsents.filter((id) => compteAbsences.get(id) === 2);
+
+      if (elevesSeuilAtteint.length > 0) {
+        const { data: elevesInfos } = await supabaseAdmin
+          .from("eleves")
+          .select("id, nom, prenoms, matricule, classes(nom_classe)")
+          .in("id", elevesSeuilAtteint);
+
+        const nomMois = new Date(annee, mois - 1, 1).toLocaleDateString("fr-FR", { month: "long" });
+        const nomMoisMaj = nomMois.charAt(0).toUpperCase() + nomMois.slice(1);
+
+        const notificationsAInserer = (elevesInfos ?? []).map((e) => {
+          const classeNom = (e as unknown as { classes: { nom_classe?: string } })?.classes?.nom_classe;
+          const classeLabel = classeNom ? `${classeNom}, ` : "";
+          return {
+            site_id: input.siteId,
+            contenu: `⚠️ Alerte assiduité : ${e.nom} ${e.prenoms} (${classeLabel}${e.matricule}) a cumulé 2 absences au cours du mois de ${nomMoisMaj}.`,
+            roles_cibles: ["coordonnateur", "superviseur", "chef_site"],
+          };
+        });
+
+        if (notificationsAInserer.length > 0) {
+          await supabaseAdmin.from("notifications").insert(notificationsAInserer);
+        }
+      }
+    } catch (e) {
+      console.error("Erreur lors de la génération de la notification d'assiduité :", e);
+    }
+  }
+
   return {};
 }
 
