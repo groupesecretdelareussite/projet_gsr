@@ -16,11 +16,7 @@ import { moisCourant, genererNumeroQuittance } from "@/lib/paiements";
 import { cn } from "@/lib/utils";
 import type { QuittanceData } from "@/components/admin/paiements/QuittancePDF";
 
-// @react-pdf/renderer pèse ~480 kB — chargé uniquement quand une quittance existe vraiment (mois soldé), jamais au chargement initial du formulaire.
-const QuittanceDownloadButton = dynamic(
-  () => import("@/components/admin/paiements/QuittanceDownloadButton").then((m) => m.QuittanceDownloadButton),
-  { ssr: false, loading: () => <span className="text-xs text-gray-400">Préparation de la quittance...</span> }
-);
+import { QuittanceDownloadButton } from "@/components/admin/paiements/QuittanceDownloadButton";
 
 interface EleveResultat {
   id: number;
@@ -180,6 +176,7 @@ export function EnregistrerPaiementForm() {
           result.lastPaiementId ?? 1
         );
         setQuittance({
+          eleveId: eleve.id,
           numeroQuittance,
           nomComplet: `${eleve.nom} ${eleve.prenoms}`,
           matricule: eleve.matricule,

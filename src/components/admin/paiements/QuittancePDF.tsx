@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import { Document, Page, Text, View, StyleSheet, Image } from "@react-pdf/renderer";
 
 export interface VersementQuittance {
@@ -8,6 +10,7 @@ export interface VersementQuittance {
 }
 
 export interface QuittanceData {
+  eleveId?: number;
   numeroQuittance?: string;
   nomComplet: string;
   matricule: string;
@@ -21,6 +24,9 @@ export interface QuittanceData {
   modePaiement?: string;
   versements?: VersementQuittance[];
 }
+
+const LOGO_PATH = path.join(process.cwd(), "public/logo.png");
+const HAS_LOGO = typeof window === "undefined" ? fs.existsSync(LOGO_PATH) : false;
 
 const styles = StyleSheet.create({
   page: {
@@ -47,6 +53,19 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     objectFit: "contain",
+  },
+  logoFallback: {
+    width: 38,
+    height: 38,
+    borderRadius: 6,
+    backgroundColor: "#12AA00",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoFallbackText: {
+    color: "#ffffff",
+    fontFamily: "Helvetica-Bold",
+    fontSize: 12,
   },
   headerBrand: {
     fontSize: 18,
@@ -215,8 +234,14 @@ export function QuittancePDF({ data }: { data: QuittanceData }) {
         {/* EN-TÊTE OFFICIEL */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            {/* eslint-disable-next-line jsx-a11y/alt-text */}
-            <Image src="/logo.png" style={styles.logo} />
+            {HAS_LOGO ? (
+              /* eslint-disable-next-line jsx-a11y/alt-text */
+              <Image src={LOGO_PATH} style={styles.logo} />
+            ) : (
+              <View style={styles.logoFallback}>
+                <Text style={styles.logoFallbackText}>GSR</Text>
+              </View>
+            )}
             <View>
               <Text style={styles.headerBrand}>GROUPE SECRET DE LA REUSSITE</Text>
               <Text style={styles.headerDevise}>Méthode - Rigueur - Discipline</Text>

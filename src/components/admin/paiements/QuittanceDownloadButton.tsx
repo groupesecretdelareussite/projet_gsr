@@ -4,21 +4,32 @@ import { useState } from "react";
 import { FileDown, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { QuittancePDF, type QuittanceData } from "@/components/admin/paiements/QuittancePDF";
+import type { QuittanceData } from "@/components/admin/paiements/QuittancePDF";
 
-/** Télécharge de manière universelle et fiable un document PDF de quittance. */
+/** Télécharge de manière universelle et fiable un document PDF de quittance via l'API serveur. */
 async function telechargerDocumentQuittance(data: QuittanceData) {
-  const { pdf } = await import("@react-pdf/renderer");
-  const blob = await pdf(<QuittancePDF data={data} />).toBlob();
-  const url = URL.createObjectURL(blob);
+  if (!data.eleveId) {
+    throw new Error("Identifiant de l'élève manquant pour la quittance.");
+  }
+
+  const url = `/api/paiements/quittance-pdf?eleveId=${data.eleveId}&mois=${encodeURIComponent(data.mois)}`;
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    const errorText = await res.text().catch(() => "Erreur lors de la génération");
+    throw new Error(errorText || "Impossible de générer la quittance PDF.");
+  }
+
+  const blob = await res.blob();
+  const blobUrl = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url;
+  a.href = blobUrl;
   a.download = `Quittance_${data.matricule}_${data.mois}.pdf`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   // Révocation différée pour laisser le temps au navigateur d'initialiser le téléchargement
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
 }
 
 /** Bouton de téléchargement immédiat après validation dans le formulaire. */
@@ -33,7 +44,7 @@ export function QuittanceDownloadButton({ data }: { data: QuittanceData }) {
       toast.success("Quittance téléchargée avec succès.");
     } catch (err) {
       console.error("Erreur lors de la génération de la quittance :", err);
-      toast.error("Impossible de générer la quittance PDF.");
+      toast.error(err instanceof Error ? err.message : "Impossible de générer la quittance PDF.");
     } finally {
       setChargement(false);
     }
@@ -72,9 +83,10 @@ export function TelechargerQuittanceButton({ data }: { data: QuittanceData }) {
     setChargement(true);
     try {
       await telechargerDocumentQuittance(data);
+      toast.success("Quittance téléchargée avec succès.");
     } catch (err) {
       console.error("Erreur lors de la génération de la quittance :", err);
-      toast.error("Impossible de générer la quittance PDF.");
+      toast.error(err instanceof Error ? err.message : "Impossible de générer la quittance PDF.");
     } finally {
       setChargement(false);
     }

@@ -157,6 +157,7 @@ export default async function PaiementsAJourPage(props: {
       nomClasse: e.classes?.nom_classe ?? "—",
       nomSite: e.classes?.sites?.nom_site ?? "—",
       quittance: {
+        eleveId: e.id,
         numeroQuittance,
         nomComplet: `${e.nom} ${e.prenoms}`,
         matricule: e.matricule,
