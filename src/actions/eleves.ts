@@ -7,7 +7,7 @@ import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope, siteInScope } from "@/lib/auth-scope";
 import { genererMatricule } from "@/lib/matricule";
 import { estVenuDansLeMois, PENALITE_REINSCRIPTION_MONTANT } from "@/lib/reinscription";
-import { normaliserNumero, validerNumeroTelephone } from "@/lib/telephone";
+import { normaliserNumero, validerNumeroTelephone, formaterNumeroAffichage } from "@/lib/telephone";
 import { validerLigneImport, type LigneImportBrute } from "@/lib/import-eleves";
 import type { MoisScolaire, ModePaiement } from "@/lib/constants";
 
@@ -517,3 +517,74 @@ export async function reinscrireEleve(eleveId: number, input: ReinscrireInput): 
     penalite: PENALITE_REINSCRIPTION_MONTANT,
   };
 }
+
+/**
+ * Récupère l'intégralité des élèves correspondant aux critères de filtrage
+ * (sans restriction de page) pour alimenter l'export Excel complet.
+ * Effectue une pagination par lots (batching) côté serveur pour s'assurer qu'aucun
+ * élève n'est tronqué par la limite PostgREST de Supabase.
+ */
+export async function recupererTousLesElevesPourExport(filtres: {
+  siteId?: string;
+  classeId?: string;
+  college?: string;
+  nom?: string;
+}): Promise<Record<string, string | number>[]> {
+  const supabase = await createClient();
+  const scope = await getUserScope(supabase);
+
+  const estChefSiteOuSecretaire = scope.role === "chef_site" || scope.role === "secretaire";
+  const siteIdEffectif = estChefSiteOuSecretaire ? scope.siteId?.toString() : filtres.siteId;
+
+  const BATCH_SIZE = 1000;
+  let from = 0;
+  interface EleveExportRow {
+    matricule: string;
+    nom: string;
+    prenoms: string;
+    contact_parent: string | null;
+    contact_parent_2: string | null;
+    classes: { nom_classe: string; sites: { nom_site: string } | null } | null;
+  }
+  const allEleves: EleveExportRow[] = [];
+  let continueFetching = true;
+
+  while (continueFetching) {
+    let batchQuery = supabase
+      .from("eleves")
+      .select(
+        "id, matricule, nom, prenoms, contact_parent, contact_parent_2, option_m, classes!inner(nom_classe, site_id, sites(nom_site))"
+      )
+      .eq("statut", "actif")
+      .order("nom")
+      .range(from, from + BATCH_SIZE - 1);
+
+    if (siteIdEffectif) batchQuery = batchQuery.eq("classes.site_id", siteIdEffectif);
+    if (filtres.classeId) batchQuery = batchQuery.eq("classe_id", filtres.classeId);
+    if (filtres.college) batchQuery = batchQuery.ilike("college", `%${filtres.college}%`);
+    if (filtres.nom) batchQuery = batchQuery.ilike("nom", `%${filtres.nom}%`);
+
+    const { data, error } = await batchQuery;
+    if (error || !data || data.length === 0) {
+      break;
+    }
+
+    allEleves.push(...(data as unknown as EleveExportRow[]));
+    if (data.length < BATCH_SIZE) {
+      continueFetching = false;
+    } else {
+      from += BATCH_SIZE;
+    }
+  }
+
+  return allEleves.map((e) => ({
+    Matricule: e.matricule,
+    Nom: e.nom,
+    Prénoms: e.prenoms,
+    Classe: e.classes?.nom_classe ?? "—",
+    Site: e.classes?.sites?.nom_site ?? "—",
+    "Contact parent": formaterNumeroAffichage(e.contact_parent),
+    "Contact parent 2": formaterNumeroAffichage(e.contact_parent_2),
+  }));
+}
+

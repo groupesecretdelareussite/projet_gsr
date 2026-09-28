@@ -14,6 +14,8 @@ import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 import { formaterNumeroAffichage } from "@/lib/telephone";
 import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
+import { PaginationNav } from "@/components/admin/PaginationNav";
+import { recupererTousLesElevesPourExport } from "@/actions/eleves";
 
 interface EleveRow {
   id: number;
@@ -28,7 +30,7 @@ interface EleveRow {
 
 export default async function ListeElevesPage(
   props: {
-    searchParams: Promise<{ site_id?: string; classe_id?: string; college?: string; nom?: string }>;
+    searchParams: Promise<{ site_id?: string; classe_id?: string; college?: string; nom?: string; page?: string }>;
   }
 ) {
   const searchParams = await props.searchParams;
@@ -56,34 +58,34 @@ export default async function ListeElevesPage(
       ? searchParams.classe_id
       : undefined;
 
+  const PAGE_SIZE = 50;
+  const pageNumber = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
+  const from = (pageNumber - 1) * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
   let query = supabase
     .from("eleves")
     .select(
-      "id, matricule, nom, prenoms, contact_parent, contact_parent_2, option_m, classes!inner(nom_classe, site_id, sites(nom_site))"
+      "id, matricule, nom, prenoms, contact_parent, contact_parent_2, option_m, classes!inner(nom_classe, site_id, sites(nom_site))",
+      { count: "exact" }
     )
     .eq("statut", "actif")
-    .order("nom");
+    .order("nom")
+    .range(from, to);
 
   if (siteIdEffectif) query = query.eq("classes.site_id", siteIdEffectif);
   if (classeIdValide) query = query.eq("classe_id", classeIdValide);
   if (searchParams.college) query = query.ilike("college", `%${searchParams.college}%`);
   if (searchParams.nom) query = query.ilike("nom", `%${searchParams.nom}%`);
 
-  const { data: eleves } = await query;
+  const { data: eleves, count: totalElevesBrut } = await query;
+  const totalEleves = totalElevesBrut ?? 0;
+  const totalPages = Math.ceil(totalEleves / PAGE_SIZE);
 
   const elevesFiltres = (eleves ?? []) as unknown as EleveRow[];
 
   const nomSiteTitre = siteIdEffectif ? nomSiteParId.get(Number(siteIdEffectif)) ?? "Site inconnu" : "Tous les sites";
   const dateExport = new Date().toLocaleDateString("fr-FR");
-  const lignesExport = elevesFiltres.map((e) => ({
-    Matricule: e.matricule,
-    Nom: e.nom,
-    Prénoms: e.prenoms,
-    Classe: e.classes?.nom_classe ?? "—",
-    Site: e.classes?.sites?.nom_site ?? "—",
-    "Contact parent": formaterNumeroAffichage(e.contact_parent),
-    "Contact parent 2": formaterNumeroAffichage(e.contact_parent_2),
-  }));
 
   const columns: DataTableColumn<EleveRow>[] = [
     { key: "matricule", label: "Matricule", render: (e) => <span className="font-mono text-xs">{e.matricule}</span> },
@@ -133,7 +135,11 @@ export default async function ListeElevesPage(
     <div>
       <PageHeader
         title="Élèves"
-        subtitle={`${elevesFiltres.length} élève(s) actif(s)`}
+        subtitle={
+          totalPages > 1
+            ? `${totalEleves} élève(s) actif(s) — Page ${pageNumber} sur ${totalPages}`
+            : `${totalEleves} élève(s) actif(s)`
+        }
         actions={
           peutGerer ? (
             <Link href="/admin/eleves/inscription">
@@ -156,7 +162,12 @@ export default async function ListeElevesPage(
         {peutGerer && (
           <ExporterExcelButton
             titre={`Liste des élèves — ${nomSiteTitre} — ${dateExport}`}
-            lignes={lignesExport}
+            onExport={recupererTousLesElevesPourExport.bind(null, {
+              siteId: siteIdEffectif,
+              classeId: classeIdValide,
+              college: searchParams.college,
+              nom: searchParams.nom,
+            })}
             nomFichier={`Liste_eleves_${nomSiteTitre}_${dateExport}`.replace(/\s+/g, "_")}
             nomFeuille="Élèves"
           />
@@ -212,6 +223,14 @@ export default async function ListeElevesPage(
         emptyState={
           <EmptyState icon={Users} title="Aucun élève" description="Aucun élève ne correspond aux filtres actuels." />
         }
+      />
+
+      <PaginationNav
+        pageActuelle={pageNumber}
+        totalPages={totalPages}
+        totalItems={totalEleves}
+        taillePage={PAGE_SIZE}
+        itemLabel="élèves"
       />
     </div>
   );

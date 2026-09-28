@@ -54,12 +54,13 @@ export default async function TableauDeBordPage() {
   const scope = await getUserScope(supabase);
   const nomAffiche = scope.username.charAt(0).toUpperCase() + scope.username.slice(1);
 
-  const { data: eleves } = await supabase
+  const { data: eleves, count: totalActifs } = await supabase
     .from("eleves")
-    .select("id, classe_id, date_inscription, classes(nom_classe)")
+    .select("id, classe_id, date_inscription, classes(nom_classe)", { count: "exact" })
     .eq("statut", "actif");
 
   const elevesActifs = (eleves ?? []) as unknown as EleveDashboard[];
+  const nombreElevesActifs = totalActifs ?? elevesActifs.length;
   const maintenant = new Date();
 
   // --- Nouveaux élèves ce mois / mois précédent (calendaire) ---
@@ -187,7 +188,7 @@ export default async function TableauDeBordPage() {
       />
 
       <div className="grid sm:grid-cols-3 gap-4 mb-6">
-        <KpiCard icon={Users} label="Élèves actifs" value={elevesActifs.length} />
+        <KpiCard icon={Users} label="Élèves actifs" value={nombreElevesActifs} />
         {peutVoirKpiNonAJour && (
           <KpiCard
             icon={UserX}

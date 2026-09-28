@@ -52,34 +52,10 @@ export interface ToutPayerRecompensesInput {
   eleves: EleveToutPayerInput[];
 }
 
-/** Récupère ou résout l'ID de la catégorie de dépense "Récompense". */
-async function obtenirCategorieRecompense(supabaseAdmin: ReturnType<typeof createServiceRoleClient>): Promise<number> {
-  const { data: cat } = await supabaseAdmin
-    .from("categories_depenses")
-    .select("id")
-    .ilike("nom", "récompense%")
-    .maybeSingle();
-
-  if (cat) return cat.id;
-
-  // Fallback si pas encore créée
-  const { data: nouvelleCat, error } = await supabaseAdmin
-    .from("categories_depenses")
-    .insert({ nom: "Récompense", systeme: true })
-    .select("id")
-    .single();
-
-  if (error || !nouvelleCat) {
-    throw new Error("Impossible de trouver ou créer la catégorie de dépense 'Récompense'");
-  }
-  return nouvelleCat.id;
-}
-
 /**
  * Enregistre le paiement des récompenses pour un élève spécifique :
- * 1. Crée une ligne dans `depenses_annexes` rattachée à la catégorie 'Récompense'.
- * 2. Insère les lignes correspondantes dans `public.recompenses` pour verrouiller
- *    chaque note payée et éviter tout double décaissement.
+ * Insère les lignes correspondantes dans `public.recompenses` pour verrouiller
+ * chaque note payée et éviter tout double décaissement.
  */
 export async function payerRecompensesEleve(input: PayerRecompensesEleveInput): Promise<{ error?: string }> {
   const scope = await getScopeAndAssert();
@@ -123,30 +99,9 @@ export async function payerRecompensesEleve(input: PayerRecompensesEleveInput): 
     return { error: "Toutes les récompenses sélectionnées ont déjà été payées." };
   }
 
-  const montantTotal = notesAPayer.reduce((sum, n) => sum + n.montant, 0);
-  const categorieId = await obtenirCategorieRecompense(supabaseAdmin);
   const datePaiement = new Date().toISOString().slice(0, 10);
-  const nomClasse = eleveInfo.classes?.nom_classe ?? "";
 
-  // 1. Création de la dépense annexe
-  const { data: depense, error: depenseError } = await supabaseAdmin
-    .from("depenses_annexes")
-    .insert({
-      categorie_id: categorieId,
-      libelle: `Récompense ${input.mois} — ${eleveInfo.nom} ${eleveInfo.prenoms} (${nomClasse})`,
-      montant: montantTotal,
-      date_depense: datePaiement,
-      saisi_par: scope.userId,
-      annee_scolaire_id: input.anneeScolaireId,
-    })
-    .select("id")
-    .single();
-
-  if (depenseError || !depense) {
-    return { error: depenseError?.message ?? "Erreur lors de la création de la dépense" };
-  }
-
-  // 2. Insertion dans public.recompenses
+  // Insertion dans public.recompenses (autonome, non rattachée à depenses_annexes)
   const recompensesRows = notesAPayer.map((n) => ({
     note_id: n.noteId,
     eleve_id: input.eleveId,
@@ -154,7 +109,7 @@ export async function payerRecompensesEleve(input: PayerRecompensesEleveInput): 
     mois: input.mois,
     type_gain: n.typeGain,
     montant: n.montant,
-    depense_id: depense.id,
+    depense_id: null,
     paye_par: scope.userId,
     date_paiement: datePaiement,
   }));
@@ -180,7 +135,6 @@ export async function toutPayerRecompenses(input: ToutPayerRecompensesInput): Pr
   }
 
   const supabaseAdmin = createServiceRoleClient();
-  const categorieId = await obtenirCategorieRecompense(supabaseAdmin);
   const datePaiement = new Date().toISOString().slice(0, 10);
 
   // Filtrer les élèves éligibles dans le scope de l'utilisateur
@@ -206,23 +160,6 @@ export async function toutPayerRecompenses(input: ToutPayerRecompensesInput): Pr
 
     if (notesAPayer.length === 0) continue;
 
-    const montantTotal = notesAPayer.reduce((sum, n) => sum + n.montant, 0);
-
-    const { data: depense, error: depenseError } = await supabaseAdmin
-      .from("depenses_annexes")
-      .insert({
-        categorie_id: categorieId,
-        libelle: `Récompense ${input.mois} — ${e.nom} ${e.prenoms} (${e.nomClasse})`,
-        montant: montantTotal,
-        date_depense: datePaiement,
-        saisi_par: scope.userId,
-        annee_scolaire_id: input.anneeScolaireId,
-      })
-      .select("id")
-      .single();
-
-    if (depenseError || !depense) continue;
-
     const recompensesRows = notesAPayer.map((n) => ({
       note_id: n.noteId,
       eleve_id: e.eleveId,
@@ -230,7 +167,7 @@ export async function toutPayerRecompenses(input: ToutPayerRecompensesInput): Pr
       mois: input.mois,
       type_gain: n.typeGain,
       montant: n.montant,
-      depense_id: depense.id,
+      depense_id: null,
       paye_par: scope.userId,
       date_paiement: datePaiement,
     }));

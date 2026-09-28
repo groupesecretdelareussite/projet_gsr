@@ -65,7 +65,7 @@ export default async function ComptabilitePage(
     );
   }
 
-  const [{ data: paiements }, { data: penalites }, { data: creneaux }, { data: postulations }, { data: depenses }] = await Promise.all([
+  const [{ data: paiements }, { data: penalites }, { data: creneaux }, { data: postulations }, { data: depenses }, { data: recompenses }] = await Promise.all([
     supabaseAdmin.from("paiements").select("montant_paye, mois_souscription").eq("annee_scolaire_id", anneeSelectionnee.id),
     supabaseAdmin.from("penalites_reinscription").select("montant, date_paiement").eq("annee_scolaire_id", anneeSelectionnee.id),
     // §8 CLAUDE.md prohibition #8 — pas de JOIN cross-schéma : td.creneaux/td.postulations sont dans le même schéma td,
@@ -83,6 +83,10 @@ export default async function ComptabilitePage(
       .select("id, categorie_id, libelle, montant, date_depense, categories_depenses(nom)")
       .eq("annee_scolaire_id", anneeSelectionnee.id)
       .order("date_depense", { ascending: false }),
+    supabaseAdmin
+      .from("recompenses")
+      .select("montant, mois, date_paiement")
+      .eq("annee_scolaire_id", anneeSelectionnee.id),
   ]);
 
   const creneauxPourvusIds = new Set((postulations ?? []).map((p) => p.creneau_id));
@@ -99,14 +103,16 @@ export default async function ComptabilitePage(
     ? (penalites ?? []).filter((p) => moisCourant(new Date(p.date_paiement)) === moisFiltre)
     : penalites ?? [];
   const creneauxKpi = moisFiltre ? creneauxRemuneres.filter((c) => moisCourant(new Date(c.date_td)) === moisFiltre) : creneauxRemuneres;
+  const recompensesKpi = moisFiltre ? (recompenses ?? []).filter((r) => r.mois === moisFiltre) : recompenses ?? [];
   const depensesKpi = moisFiltre ? depensesRows.filter((d) => moisCourant(new Date(d.date_depense)) === moisFiltre) : depensesRows;
 
   const totalPaiementsTd = paiementsKpi.reduce((s, p) => s + p.montant_paye, 0);
   const totalPenalites = penalitesKpi.reduce((s, p) => s + Number(p.montant), 0);
   const totalEntrees = totalPaiementsTd + totalPenalites;
   const totalRemunerations = creneauxKpi.reduce((s, c) => s + Number(c.montant_prevu), 0);
+  const totalRecompensesEleves = recompensesKpi.reduce((s, r) => s + Number(r.montant), 0);
   const totalDepensesAnnexes = depensesKpi.reduce((s, d) => s + Number(d.montant), 0);
-  const totalSorties = totalRemunerations + totalDepensesAnnexes;
+  const totalSorties = totalRemunerations + totalRecompensesEleves + totalDepensesAnnexes;
   const resultatNet = totalEntrees - totalSorties;
 
   // --- Graphique mensuel — toujours les 8 mois, indépendant du filtre "mois" ---
@@ -122,6 +128,10 @@ export default async function ComptabilitePage(
   for (const c of creneauxRemuneres) {
     const m = moisCourant(new Date(c.date_td));
     if (m) sortiesParMois.set(m, (sortiesParMois.get(m) ?? 0) + Number(c.montant_prevu));
+  }
+  for (const r of recompenses ?? []) {
+    const m = r.mois as MoisScolaire;
+    if (m) sortiesParMois.set(m, (sortiesParMois.get(m) ?? 0) + Number(r.montant));
   }
   for (const d of depensesRows) {
     const m = moisCourant(new Date(d.date_depense));
@@ -170,7 +180,7 @@ export default async function ComptabilitePage(
     <div>
       <PageHeader
         title="Comptabilité"
-        subtitle="Vue consolidée entrées (paiements élèves) / sorties (rémunérations professeurs + dépenses annexes)"
+        subtitle="Vue consolidée entrées / sorties (rémunérations professeurs, récompenses élèves, dépenses annexes)"
         actions={
           <>
             <NouvelleDepenseDialog categoriesInitiales={categories ?? []} anneeScolaireId={anneeSelectionnee.id} />
@@ -229,6 +239,10 @@ export default async function ComptabilitePage(
           <div className="flex justify-between pl-4">
             <span className="text-gray-400">Rémunérations professeurs</span>
             <span className="text-gray-600">{totalRemunerations.toLocaleString("fr-FR")} F</span>
+          </div>
+          <div className="flex justify-between pl-4">
+            <span className="text-gray-400">Récompenses élèves</span>
+            <span className="text-gray-600">{totalRecompensesEleves.toLocaleString("fr-FR")} F</span>
           </div>
           <div className="flex justify-between pl-4">
             <span className="text-gray-400">Dépenses annexes</span>
