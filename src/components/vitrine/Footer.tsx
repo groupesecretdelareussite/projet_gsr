@@ -58,7 +58,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/mentions-legales" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Mentions légales
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Mentions légales & Confidentialité
                 </Link>
               </li>
               

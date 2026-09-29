@@ -65,6 +65,15 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/politique-de-confidentialite",
+        destination: "/mentions-legales",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
