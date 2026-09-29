@@ -533,8 +533,11 @@ export async function recupererTousLesElevesPourExport(filtres: {
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
 
-  const estChefSiteOuSecretaire = scope.role === "chef_site" || scope.role === "secretaire";
-  const siteIdEffectif = estChefSiteOuSecretaire ? scope.siteId?.toString() : filtres.siteId;
+  if (scope.role === "chef_site" || scope.role === "secretaire") {
+    throw new Error("Non autorisé : l'export des élèves n'est pas accessible à votre rôle.");
+  }
+
+  const siteIdEffectif = filtres.siteId;
 
   const BATCH_SIZE = 1000;
   let from = 0;
@@ -577,14 +580,20 @@ export async function recupererTousLesElevesPourExport(filtres: {
     }
   }
 
+  const peutVoirContacts = ["coordonnateur", "comptable", "superviseur"].includes(scope.role);
+
   return allEleves.map((e) => ({
     Matricule: e.matricule,
     Nom: e.nom,
     Prénoms: e.prenoms,
     Classe: e.classes?.nom_classe ?? "—",
     Site: e.classes?.sites?.nom_site ?? "—",
-    "Contact parent": formaterNumeroAffichage(e.contact_parent),
-    "Contact parent 2": formaterNumeroAffichage(e.contact_parent_2),
+    ...(peutVoirContacts
+      ? {
+          "Contact parent": formaterNumeroAffichage(e.contact_parent),
+          "Contact parent 2": formaterNumeroAffichage(e.contact_parent_2),
+        }
+      : {}),
   }));
 }
 

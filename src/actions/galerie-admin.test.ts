@@ -74,7 +74,10 @@ describe("supprimerPhotoGalerieAdmin — suppression limitée au propriétaire p
     vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "coordonnateur" }));
     const deleteMock = vi.fn(() => ({ eq: () => Promise.resolve({ error: null }) }));
     vi.mocked(createClient).mockResolvedValue({
-      from: () => ({ delete: deleteMock }),
+      from: () => ({
+        select: () => ({ eq: () => ({ maybeSingle: () => Promise.resolve({ data: { ajoute_par: "autre_user", storage_path: "path.jpg" }, error: null }) }) }),
+        delete: deleteMock,
+      }),
       storage: { from: () => ({ remove: () => Promise.resolve({ error: null }) }) },
     } as never);
 

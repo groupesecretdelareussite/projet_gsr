@@ -186,6 +186,52 @@ export async function enregistrerPaiement(
   const siteId = (eleve as unknown as { classes: { site_id: number } }).classes.site_id;
   if (!siteInScope(scope, siteId)) return { error: "Non autorisé sur ce site" };
 
+  // 1. Tenter l'enregistrement atomique via RPC PostgreSQL avec verrouillage FOR UPDATE anti-concurrence (VULN-07)
+  const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc("enregistrer_paiement_atomique", {
+    p_eleve_id: input.eleveId,
+    p_mois_souscription: input.moisSouscription,
+    p_montant_paye: input.montantPaye,
+    p_date_paiement: input.datePaiement,
+    p_mode_paiement: input.modePaiement,
+    p_enregistre_par: scope.userId,
+  });
+
+  if (!rpcError && rpcResult) {
+    const res = typeof rpcResult === "string" ? JSON.parse(rpcResult) : rpcResult;
+    if (!res.success) {
+      return { error: res.error };
+    }
+
+    const { data: paiementsApres } = await supabaseAdmin
+      .from("paiements")
+      .select("id, montant_paye, date_paiement, mode_paiement")
+      .eq("eleve_id", input.eleveId)
+      .eq("mois_souscription", input.moisSouscription)
+      .order("date_paiement", { ascending: true })
+      .order("id", { ascending: true });
+
+    revalidatePaiementsPaths();
+    return {
+      resteApresPaiement: res.reste_apres_paiement,
+      montantAttendu: res.montant_attendu,
+      college: res.college,
+      anneeLibelle: res.annee_libelle,
+      lastPaiementId: res.last_paiement_id,
+      versements: (paiementsApres ?? []).map((p) => ({
+        id: p.id,
+        datePaiement: p.date_paiement,
+        montantPaye: Number(p.montant_paye),
+        modePaiement: p.mode_paiement,
+      })),
+    };
+  }
+
+  // Si l'erreur RPC est une erreur de validation/domaine retournée directement par la fonction
+  if (rpcError && rpcError.message && !rpcError.message.includes("Could not find the function")) {
+    return { error: rpcError.message };
+  }
+
+  // 2. Fallback applicatif si la fonction SQL n'est pas encore appliquée sur l'environnement de base de données
   const { data: fraisTd } = await supabaseAdmin
     .from("frais_td")
     .select("montant")

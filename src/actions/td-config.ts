@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope, type UserScope } from "@/lib/auth-scope";
 import { normaliserNumero, validerNumeroTelephone } from "@/lib/telephone";
+import { extraireIpClient, tropDeTentatives, enregistrerTentative } from "@/lib/brute-force";
 
 /**
  * §10.6 GSR_ARCHITECTURE.md — configuration TD réservée au coordonnateur.
@@ -250,6 +251,7 @@ export interface InscrireProfesseurInput {
  * Il doit être validé par le coordonnateur avant toute connexion.
  */
 export async function inscrireProfesseurTD(input: InscrireProfesseurInput): Promise<{ error?: string }> {
+  const ip = await extraireIpClient();
   const nom = input.nom?.trim();
   const prenom = input.prenom?.trim();
   if (!nom || nom.length < 2 || nom.length > 100) {
@@ -287,6 +289,12 @@ export async function inscrireProfesseurTD(input: InscrireProfesseurInput): Prom
 
   const supabaseAdmin = createServiceRoleClient();
 
+  // Garde-fou anti brute-force / HashDoS : bloquer les soumissions répétées abusives
+  const identifiant = email || ip || "inscription-prof";
+  if (await tropDeTentatives(supabaseAdmin, identifiant, "td", ip)) {
+    return { error: "Trop de tentatives. Veuillez réessayer dans 15 minutes." };
+  }
+
   // Vérifier doublon email
   const { data: profEmail } = await supabaseAdmin
     .schema("td")
@@ -296,6 +304,7 @@ export async function inscrireProfesseurTD(input: InscrireProfesseurInput): Prom
     .maybeSingle();
 
   if (profEmail) {
+    await enregistrerTentative(supabaseAdmin, identifiant, "td", false, ip);
     return { error: "Cette adresse email est déjà associée à un compte professeur" };
   }
 
@@ -308,6 +317,7 @@ export async function inscrireProfesseurTD(input: InscrireProfesseurInput): Prom
     .maybeSingle();
 
   if (profTel) {
+    await enregistrerTentative(supabaseAdmin, identifiant, "td", false, ip);
     return { error: "Ce numéro de téléphone est déjà associé à un compte professeur" };
   }
 
@@ -317,8 +327,14 @@ export async function inscrireProfesseurTD(input: InscrireProfesseurInput): Prom
     supabaseAdmin.schema("td").from("matieres_td").select("id").eq("id", input.matierePrincipaleId).maybeSingle(),
   ]);
 
-  if (!zone) return { error: "La zone sélectionnée n'existe pas" };
-  if (!matiere) return { error: "La matière sélectionnée n'existe pas" };
+  if (!zone) {
+    await enregistrerTentative(supabaseAdmin, identifiant, "td", false, ip);
+    return { error: "La zone sélectionnée n'existe pas" };
+  }
+  if (!matiere) {
+    await enregistrerTentative(supabaseAdmin, identifiant, "td", false, ip);
+    return { error: "La matière sélectionnée n'existe pas" };
+  }
 
   const hash = await bcrypt.hash(input.motDePasse, 10);
 
@@ -338,8 +354,11 @@ export async function inscrireProfesseurTD(input: InscrireProfesseurInput): Prom
     });
 
   if (insertError) {
+    await enregistrerTentative(supabaseAdmin, identifiant, "td", false, ip);
     return { error: insertError.message };
   }
+
+  await enregistrerTentative(supabaseAdmin, identifiant, "td", true, ip);
 
   revalidateConfigPath("inscriptions");
   return {};

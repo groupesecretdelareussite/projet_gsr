@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope } from "@/lib/auth-scope";
 import { getParentSession } from "@/lib/session-parent";
-import { tropDeTentatives, enregistrerTentative } from "@/lib/brute-force";
+import { tropDeTentatives, enregistrerTentative, extraireIpClient } from "@/lib/brute-force";
 
 /**
  * §9 Écran A. Service role obligatoire : les parents n'ont pas de session
@@ -14,8 +14,9 @@ import { tropDeTentatives, enregistrerTentative } from "@/lib/brute-force";
  */
 export async function connexionParent(matricule: string, motDePasse: string): Promise<{ error?: string }> {
   const supabaseAdmin = createServiceRoleClient();
+  const ip = await extraireIpClient();
 
-  if (await tropDeTentatives(supabaseAdmin, matricule, "parent")) {
+  if (await tropDeTentatives(supabaseAdmin, matricule, "parent", ip)) {
     return { error: "Trop de tentatives, réessayez dans 15 minutes." };
   }
 
@@ -26,12 +27,12 @@ export async function connexionParent(matricule: string, motDePasse: string): Pr
     .maybeSingle();
 
   if (!compte) {
-    await enregistrerTentative(supabaseAdmin, matricule, "parent", false);
+    await enregistrerTentative(supabaseAdmin, matricule, "parent", false, ip);
     return { error: "Identifiants invalides" };
   }
 
   const valide = await bcrypt.compare(motDePasse, compte.mot_de_passe);
-  await enregistrerTentative(supabaseAdmin, matricule, "parent", valide);
+  await enregistrerTentative(supabaseAdmin, matricule, "parent", valide, ip);
 
   if (!valide) {
     return { error: "Identifiants invalides" };
@@ -70,8 +71,9 @@ export async function creerCompteParent(input: CreerCompteParentInput): Promise<
   }
 
   const supabaseAdmin = createServiceRoleClient();
+  const ip = await extraireIpClient();
 
-  if (await tropDeTentatives(supabaseAdmin, input.matricule, "parent")) {
+  if (await tropDeTentatives(supabaseAdmin, input.matricule, "parent", ip)) {
     return { error: "Trop de tentatives, réessayez dans 15 minutes." };
   }
 
@@ -81,7 +83,7 @@ export async function creerCompteParent(input: CreerCompteParentInput): Promise<
     .eq("matricule", input.matricule)
     .maybeSingle();
   if (!eleve) {
-    await enregistrerTentative(supabaseAdmin, input.matricule, "parent", false);
+    await enregistrerTentative(supabaseAdmin, input.matricule, "parent", false, ip);
     return { error: ERREUR_CREATION_GENERIQUE };
   }
 
@@ -91,7 +93,7 @@ export async function creerCompteParent(input: CreerCompteParentInput): Promise<
     .eq("matricule", input.matricule)
     .maybeSingle();
   if (compteExistant) {
-    await enregistrerTentative(supabaseAdmin, input.matricule, "parent", false);
+    await enregistrerTentative(supabaseAdmin, input.matricule, "parent", false, ip);
     return { error: ERREUR_CREATION_GENERIQUE };
   }
 
@@ -101,7 +103,7 @@ export async function creerCompteParent(input: CreerCompteParentInput): Promise<
     .insert({ matricule: input.matricule, mot_de_passe: hash });
   if (error) return { error: error.message };
 
-  await enregistrerTentative(supabaseAdmin, input.matricule, "parent", true);
+  await enregistrerTentative(supabaseAdmin, input.matricule, "parent", true, ip);
 
   const session = await getParentSession();
   session.matricule = input.matricule;

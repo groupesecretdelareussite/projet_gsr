@@ -52,9 +52,14 @@ async function uploaderImages(
   images: File[],
   ordreDepart: number
 ): Promise<string | null> {
+  const MIME_TO_EXT: Record<string, string> = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+  };
   let ordre = ordreDepart;
   for (const image of images) {
-    const extension = image.name.split(".").pop() ?? "jpg";
+    const extension = MIME_TO_EXT[image.type] ?? "jpg";
     const chemin = `vitrine/actualites/${actualiteId}/${crypto.randomUUID()}.${extension}`;
 
     const { error: uploadError } = await supabaseAdmin.storage.from(BUCKET).upload(chemin, image);

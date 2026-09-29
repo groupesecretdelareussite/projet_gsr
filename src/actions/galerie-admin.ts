@@ -36,7 +36,15 @@ export async function uploaderPhotoGalerieAdmin(formData: FormData): Promise<{ e
     return { error: "Fichier trop volumineux (10 Mo maximum)" };
   }
 
-  const extension = fichier.name.split(".").pop() ?? "jpg";
+  const MIME_TO_EXT: Record<string, string> = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/webp": "webp",
+  };
+  const extension = MIME_TO_EXT[fichier.type];
+  if (!extension) {
+    return { error: "Format non supporté (PNG, JPEG ou WEBP uniquement)" };
+  }
   const chemin = `${crypto.randomUUID()}.${extension}`;
 
   const { error: uploadError } = await supabase.storage.from(BUCKET).upload(chemin, fichier);
@@ -61,19 +69,29 @@ export async function uploaderPhotoGalerieAdmin(formData: FormData): Promise<{ e
  * §discussion 2026-08-16 — chef_site/secretaire ne peuvent supprimer que
  * leurs propres photos (RLS sql/021 l'impose déjà au niveau base ; ce
  * contrôle applicatif donne un message clair plutôt qu'un échec RLS opaque).
+ * Résolution autoritaire du storage_path depuis la BDD (protection anti-suppression arbitraire).
  */
-export async function supprimerPhotoGalerieAdmin(id: number, storagePath: string): Promise<{ error?: string }> {
+export async function supprimerPhotoGalerieAdmin(id: number, _storagePath?: string): Promise<{ error?: string }> {
   const scope = await getScopeAndAssert();
   const supabase = await createClient();
 
+  const { data: photo, error: fetchError } = await supabase
+    .from("galerie_admin")
+    .select("ajoute_par, storage_path")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError || !photo) {
+    return { error: "Photo introuvable" };
+  }
+
   if (scope.role === "chef_site" || scope.role === "secretaire") {
-    const { data: photo } = await supabase.from("galerie_admin").select("ajoute_par").eq("id", id).maybeSingle();
-    if (!photo || photo.ajoute_par !== scope.userId) {
+    if (photo.ajoute_par !== scope.userId) {
       return { error: "Vous ne pouvez supprimer que vos propres photos" };
     }
   }
 
-  const { error: storageError } = await supabase.storage.from(BUCKET).remove([storagePath]);
+  const { error: storageError } = await supabase.storage.from(BUCKET).remove([photo.storage_path]);
   if (storageError) return { error: storageError.message };
 
   const { error } = await supabase.from("galerie_admin").delete().eq("id", id);

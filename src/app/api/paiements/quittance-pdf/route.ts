@@ -10,7 +10,7 @@ import { QuittancePDF, type QuittanceData } from "@/components/admin/paiements/Q
 
 export const dynamic = "force-dynamic";
 
-const ROLES_AUTORISES = ["coordonnateur", "comptable", "superviseur", "chef_site"];
+const ROLES_AUTORISES = ["coordonnateur", "comptable", "superviseur"];
 
 // Normalisation des mois pour accepter par exemple "octobre" ou "Octobre"
 function normaliserMois(moisInput: string): MoisScolaire | null {

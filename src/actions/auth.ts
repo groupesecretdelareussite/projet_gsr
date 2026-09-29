@@ -1,10 +1,19 @@
 "use server";
 
-import { headers, cookies } from "next/headers";
+import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
-import { tropDeTentatives, enregistrerTentative } from "@/lib/brute-force";
+import { tropDeTentatives, enregistrerTentative, extraireIpClient } from "@/lib/brute-force";
 import { ADMIN_ACTIVITY_COOKIE, ADMIN_ACTIVITY_COOKIE_OPTIONS } from "@/lib/admin-activity-cookie";
+
+function getAppBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, "");
+  }
+  return process.env.NODE_ENV === "production"
+    ? "https://groupe-secretdelareussite.com"
+    : "http://localhost:3000";
+}
 
 /**
  * §5.1 GSR_ARCHITECTURE.md — l'écran /admin/login ne demande que
@@ -14,8 +23,9 @@ import { ADMIN_ACTIVITY_COOKIE, ADMIN_ACTIVITY_COOKIE_OPTIONS } from "@/lib/admi
  */
 export async function login(username: string, password: string): Promise<{ error?: string }> {
   const supabaseAdmin = createServiceRoleClient();
+  const ip = await extraireIpClient();
 
-  if (await tropDeTentatives(supabaseAdmin, username, "admin")) {
+  if (await tropDeTentatives(supabaseAdmin, username, "admin", ip)) {
     return { error: "Trop de tentatives, réessayez dans 15 minutes." };
   }
 
@@ -26,7 +36,7 @@ export async function login(username: string, password: string): Promise<{ error
     .single();
 
   if (!profile || !profile.actif) {
-    await enregistrerTentative(supabaseAdmin, username, "admin", false);
+    await enregistrerTentative(supabaseAdmin, username, "admin", false, ip);
     return { error: "Identifiants invalides" };
   }
 
@@ -36,7 +46,7 @@ export async function login(username: string, password: string): Promise<{ error
     password,
   });
 
-  await enregistrerTentative(supabaseAdmin, username, "admin", !error);
+  await enregistrerTentative(supabaseAdmin, username, "admin", !error, ip);
 
   if (error) {
     return { error: "Identifiants invalides" };
@@ -103,12 +113,10 @@ export async function changerMonMotDePasse(ancienMdp: string, nouveauMdp: string
  */
 export async function demanderReinitialisationMotDePasse(email: string): Promise<void> {
   const supabase = await createClient();
-  const h = await headers();
-  const host = h.get("host");
-  const proto = h.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+  const baseUrl = getAppBaseUrl();
 
   await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${proto}://${host}/admin/auth/confirm`,
+    redirectTo: `${baseUrl}/admin/auth/confirm`,
   });
 }
 

@@ -3,7 +3,7 @@
 import bcrypt from "bcryptjs";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getTdProfesseurSession } from "@/lib/session-td";
-import { tropDeTentatives, enregistrerTentative } from "@/lib/brute-force";
+import { tropDeTentatives, enregistrerTentative, extraireIpClient } from "@/lib/brute-force";
 
 /**
  * §10.1 GSR_ARCHITECTURE.md — branche "Professeur" du sélecteur /td/login,
@@ -13,8 +13,9 @@ import { tropDeTentatives, enregistrerTentative } from "@/lib/brute-force";
  */
 export async function connexionProfesseurTD(email: string, motDePasse: string): Promise<{ error?: string }> {
   const supabaseAdmin = createServiceRoleClient();
+  const ip = await extraireIpClient();
 
-  if (await tropDeTentatives(supabaseAdmin, email, "td")) {
+  if (await tropDeTentatives(supabaseAdmin, email, "td", ip)) {
     return { error: "Trop de tentatives, réessayez dans 15 minutes." };
   }
 
@@ -26,12 +27,12 @@ export async function connexionProfesseurTD(email: string, motDePasse: string): 
     .maybeSingle();
 
   if (!professeur || !professeur.actif || (professeur as { valide?: boolean }).valide === false) {
-    await enregistrerTentative(supabaseAdmin, email, "td", false);
+    await enregistrerTentative(supabaseAdmin, email, "td", false, ip);
     return { error: "Identifiants invalides" };
   }
 
   const valide = await bcrypt.compare(motDePasse, professeur.mot_de_passe);
-  await enregistrerTentative(supabaseAdmin, email, "td", valide);
+  await enregistrerTentative(supabaseAdmin, email, "td", valide, ip);
 
   if (!valide) {
     return { error: "Identifiants invalides" };
