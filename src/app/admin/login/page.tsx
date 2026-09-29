@@ -13,6 +13,8 @@ function LoginForm() {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const erreurParam = searchParams.get("erreur");
+  const succesParam = searchParams.get("succes");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -58,6 +60,17 @@ function LoginForm() {
         <p className="text-gray-500 text-sm mb-8 leading-relaxed">
           Identifiez-vous avec votre compte professionnel pour accéder au tableau de bord.
         </p>
+
+        {erreurParam === "lien_invalide" && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2.5 mb-5">
+            Le lien de réinitialisation est invalide ou a expiré. Veuillez refaire une demande.
+          </p>
+        )}
+        {succesParam === "mdp_reinitialise" && (
+          <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 mb-5">
+            Votre mot de passe a été mis à jour avec succès. Vous pouvez maintenant vous connecter.
+          </p>
+        )}
 
         {/* Formulaire */}
         <form onSubmit={handleSubmit} className="space-y-5">

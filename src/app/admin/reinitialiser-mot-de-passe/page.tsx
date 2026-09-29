@@ -30,7 +30,7 @@ export default function ReinitialiserMotDePassePage() {
         setError(result.error);
         return;
       }
-      router.push("/admin/login");
+      router.push("/admin/login?succes=mdp_reinitialise");
     });
   }
 

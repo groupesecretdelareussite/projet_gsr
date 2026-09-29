@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
 import { Toaster } from "sonner";
@@ -10,13 +11,25 @@ import { AdminInactivityWatcher } from "@/components/admin/AdminInactivityWatche
 import { FloatingAgentWidget } from "@/components/admin/agent-ia/FloatingAgentWidget";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const h = await headers();
+  const pathname = h.get("x-pathname");
+
+  // Les écrans d'authentification autonomes (connexion, mot de passe oublié, réinitialisation)
+  // sont rendus sans la sidebar et la topbar d'administration.
+  if (
+    pathname === "/admin/reinitialiser-mot-de-passe" ||
+    pathname === "/admin/mot-de-passe-oublie" ||
+    pathname === "/admin/login"
+  ) {
+    return <>{children}</>;
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Pas d'utilisateur : soit la page /admin/login (rendue sans habillage), soit
-  // une route protégée déjà interceptée par proxy.ts avant d'arriver ici.
+  // Pas d'utilisateur : rendu sans habillage
   if (!user) {
     return <>{children}</>;
   }
