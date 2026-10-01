@@ -87,14 +87,14 @@ export default async function DashboardProfesseurPage() {
       <PageHeader title={`Bonjour, ${session.prenom} ${session.nom}`} subtitle="Voici un aperçu de vos affectations TD." />
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <KpiCard icon={LayoutDashboard} label="Affectations à venir" value={String(aVenir.length)} />
+        <KpiCard icon={LayoutDashboard} label="Nouvelles affectations" value={String(aVenir.length)} />
         <KpiCard icon={CalendarClock} label="Total cumulé du mois" value={`${totalCumuleMois.toLocaleString("fr-FR")} F`} />
         <KpiCard icon={Wallet} label="Total cumulé" value={`${totalCumule.toLocaleString("fr-FR")} F`} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <div>
-          <h2 className="font-bold text-gray-900 mb-3">Affectations à venir</h2>
+          <h2 className="font-bold text-gray-900 mb-3">Nouvelles affectations</h2>
           {aVenir.length === 0 ? (
             <EmptyState icon={LayoutDashboard} title="Aucune affectation" description="Postulez sur un créneau ouvert." />
           ) : (
