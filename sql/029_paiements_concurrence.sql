@@ -98,7 +98,7 @@ BEGIN
     p_montant_paye,
     p_date_paiement,
     p_mode_paiement,
-    p_annee_id,
+    v_annee_id,
     p_enregistre_par
   ) RETURNING id INTO v_nouveau_paiement_id;
 
@@ -111,7 +111,8 @@ BEGIN
     'reste_apres_paiement', v_reste_apres,
     'montant_attendu', v_montant_frais,
     'college', v_college,
-    'annee_libelle', v_annee_libelle
+    'annee_libelle', v_annee_libelle,
+    'annee_id', v_annee_id
   );
 END;
 $$;

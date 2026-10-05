@@ -214,6 +214,7 @@ export const AIDE_CONNEXION_SECURITE: ReactNode = (
  */
 export const AIDE_CONNEXION_SECURITE_PROF_TD: ReactNode = (
   <ul className="list-disc pl-5 text-sm text-gray-600 space-y-1.5">
+    <li><strong>Changement de mot de passe</strong> : accessible à tout moment depuis l&apos;onglet <strong>Mon compte</strong> (votre mot de passe actuel vous est redemandé par sécurité).</li>
     <li><strong>Déconnexion automatique</strong> après 20 minutes d&apos;inactivité.</li>
     <li><strong>Blocage anti-intrusion</strong> : 5 tentatives échouées bloquent l&apos;identifiant 15 minutes.</li>
     <li><strong>Mot de passe oublié</strong> : contactez le coordonnateur pour une réinitialisation — pas de lien envoyé par email pour les comptes professeur.</li>

@@ -12,6 +12,7 @@ import {
   Menu,
   X,
   GraduationCap,
+  KeyRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { deconnexionProfesseurTD } from "@/actions/auth-td";
@@ -19,6 +20,7 @@ import { deconnexionProfesseurTD } from "@/actions/auth-td";
 const NAV_ITEMS = [
   { label: "Tableau de bord", href: "/td/prof/dashboard", icon: LayoutDashboard },
   { label: "Candidatures", href: "/td/prof/candidatures", icon: ClipboardList },
+  { label: "Mon compte", href: "/td/prof/mon-compte", icon: KeyRound },
 ];
 
 export function TdProfHeader() {

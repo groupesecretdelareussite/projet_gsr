@@ -202,11 +202,17 @@ export async function enregistrerPaiement(
       return { error: res.error };
     }
 
-    const { data: paiementsApres } = await supabaseAdmin
+    let queryPaiements = supabaseAdmin
       .from("paiements")
       .select("id, montant_paye, date_paiement, mode_paiement")
       .eq("eleve_id", input.eleveId)
-      .eq("mois_souscription", input.moisSouscription)
+      .eq("mois_souscription", input.moisSouscription);
+
+    if (res.annee_id) {
+      queryPaiements = queryPaiements.eq("annee_scolaire_id", res.annee_id);
+    }
+
+    const { data: paiementsApres } = await queryPaiements
       .order("date_paiement", { ascending: true })
       .order("id", { ascending: true });
 
