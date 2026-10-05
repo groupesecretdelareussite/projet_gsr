@@ -170,6 +170,12 @@ Repères pour ne pas reperdre le contexte d'une session à l'autre. Le détail f
   - **Feedback utilisateur** : Ajout de toasts Sonner (`toast.success` en cas de réussite, `toast.error` explicite en cas d'échec au lieu du silence applicatif antérieur).
   - **Harmonisation** : `TelechargerQuittanceButton` (utilisé dans le tableau des Élèves à jour, `AJourTable.tsx`) réutilise désormais la même fonction utilitaire partagée pour bénéficier des mêmes garanties de robustesse.
   - **Paiements multi-mois** : Dans `EnregistrerPaiementForm.tsx`, ajout d'un lien direct vers `/admin/paiements/a-jour` dans le bandeau de succès du paiement multi-mois pour faciliter l'accès aux quittances des mois soldés.
+- **Refonte Responsive Mobile Sidebar & Topbar Admin (2026-10-05)** :
+  - **Sidebar masquée sur mobile** : Suppression complète de l'ancien rail permanent d'icônes de 64px (`w-16`, `lg:hidden`) dans `src/components/admin/Sidebar.tsx` afin de restituer 100% de la largeur d'affichage utile aux tableaux, graphiques et formulaires sur smartphone.
+  - **Topbar mobile à gauche** : Ajout du bouton Hamburger `[ ☰ ]` (`Menu`) et du Logo GSR cliquable vers `/admin/tableau-de-bord` à gauche de `src/components/admin/Topbar.tsx` (masqués sur desktop via `lg:hidden`).
+  - **Alignement des icônes à droite** : Regroupement unifié avec `ml-auto shrink-0` de l'ensemble des actions de la Topbar (loupe de recherche mobile, notifications, paramètres, aide) pour les accoler directement au séparateur vertical et au cercle de profil « Mon compte ».
+  - **Gestion d'état découplée** : Création de `AdminSidebarContext` (`src/components/admin/AdminSidebarContext.tsx` et hook `useAdminSidebar`) enveloppant le layout admin (`src/app/admin/layout.tsx`). Permet à la Topbar d'ouvrir le tiroir latéral coulissant (Drawer avec voile sombre `bg-black/40 backdrop-blur-xs`, bouton de fermeture `[ ✕ ]`, auto-fermeture sur navigation, clic extérieur ou touche Échap) sans impacter le Server Component `AdminLayout`.
+  - **Confort mobile** : Padding principal du contenu de `AdminLayout` assoupli de `p-6` à `p-4 sm:p-6`.
 
 ## Architecture
 
@@ -210,6 +216,7 @@ Client-side, `useUserScope()` (`src/hooks/useUserScope.ts`) reads scope from `Sc
 - **Lexend is the single font sitewide** (admin, TD, portail parents, vitrine) — loaded once in `src/app/layout.tsx` (`--font-lexend` → Tailwind `font-sans`). Decided 2026-08-15. Before that: Inter sitewide by default with a vitrine-only Lexend override — and this doc used to claim a third, system-font treatment for admin/TD that never matched any actual code (caught by audit 2026-08-14).
 - Brand green `#12AA00` / `#0e8f00` gradient on primary buttons, page headers, and the admin sidebar; `#f6b40a` accent is vitrine-only.
 - Recurring admin patterns to follow when adding pages: gradient `PageHeader`, `ActionsBar` (icon+label buttons, label hidden on mobile), responsive `DataTable` (cards on mobile via `data-label`), `EmptyState`, colored pill `Badge`s — all already implemented in `src/components/admin/`.
+- **Navigation responsive Admin** : Sur grand écran (`≥ lg`), sidebar desktop permanente de 280px. Sur mobile (`< lg`), la sidebar est 100% masquée au repos ; elle est déclenchée sous forme de tiroir coulissant (Drawer avec voile sombre et touche Échap) par le bouton Hamburger `[ ☰ ]` situé à gauche de la Topbar avec le Logo GSR (`AdminSidebarContext`). Toutes les icônes d'actions de la Topbar sont regroupées à droite (`ml-auto`) à côté du cercle « Mon compte ». Main content padding assoupli à `p-4 sm:p-6`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

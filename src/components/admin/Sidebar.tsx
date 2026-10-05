@@ -4,9 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
-import { UserPlus, LogOut, ChevronRight, ChevronLeft } from "lucide-react";
+import { UserPlus, LogOut, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserScope } from "@/hooks/useUserScope";
+import { useAdminSidebar } from "@/components/admin/AdminSidebarContext";
 import { logout } from "@/actions/auth";
 import { NAV_ITEMS, ROLES_INSCRIPTION } from "@/lib/admin-nav";
 
@@ -15,7 +16,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const { isOpen: mobileOpen, close: closeSidebar } = useAdminSidebar();
   const items = NAV_ITEMS.filter((item) => item.roles.includes(role));
 
   // Empêche le scroll du contenu derrière le panneau déplié sur mobile
@@ -115,24 +116,7 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Rail icônes seules, visible en dessous de lg (remplace l'ancien sidebar totalement masqué sur mobile) */}
-      <aside className="w-16 shrink-0 bg-white border-r border-gray-100 sticky top-0 h-screen py-6 px-2 flex flex-col items-center lg:hidden">
-        <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain mb-4" />
-
-        <button
-          onClick={() => setMobileOpen(true)}
-          aria-label="Déplier le menu"
-          className="flex items-center justify-center w-10 h-10 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-primary transition-colors mb-3"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-
-        {renderInscriptionCta(true)}
-        {renderNav(true)}
-        {renderLogoutButton(true)}
-      </aside>
-
-      {/* Sidebar complet desktop, comportement inchangé */}
+      {/* Sidebar complet desktop, masqué sur mobile */}
       <aside className="w-[280px] shrink-0 bg-white border-r border-gray-100 sticky top-0 h-screen py-6 px-4 hidden lg:flex lg:flex-col">
         <div className="flex items-center gap-2 px-2 mb-5">
           <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain" />
@@ -144,27 +128,32 @@ export function Sidebar() {
         {renderLogoutButton(false)}
       </aside>
 
-      {/* Panneau déplié en overlay au-dessus du contenu, sur mobile uniquement */}
+      {/* Panneau déplié en tiroir coulissant au-dessus du contenu, sur mobile uniquement */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} aria-hidden="true" />
-          <aside className="absolute left-0 top-0 h-full w-[280px] bg-white shadow-xl py-6 px-4 flex flex-col">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+            onClick={closeSidebar}
+            aria-hidden="true"
+          />
+          <aside className="absolute left-0 top-0 h-full w-[280px] max-w-[85vw] bg-white shadow-2xl py-6 px-4 flex flex-col z-10 animate-in slide-in-from-left duration-200">
             <div className="flex items-center justify-between px-2 mb-5">
               <div className="flex items-center gap-2">
                 <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain" />
                 <span className="font-bold text-gray-900">Admin GSR</span>
               </div>
               <button
-                onClick={() => setMobileOpen(false)}
-                aria-label="Rétracter le menu"
-                className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-50 hover:text-primary transition-colors"
+                type="button"
+                onClick={closeSidebar}
+                aria-label="Fermer le menu"
+                className="flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors cursor-pointer"
               >
-                <ChevronLeft className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {renderInscriptionCta(false, () => setMobileOpen(false))}
-            {renderNav(false, () => setMobileOpen(false))}
+            {renderInscriptionCta(false, closeSidebar)}
+            {renderNav(false, closeSidebar)}
             {renderLogoutButton(false)}
           </aside>
         </div>

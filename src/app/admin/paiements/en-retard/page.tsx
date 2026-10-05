@@ -246,7 +246,7 @@ export default async function PaiementsEnRetardPage(props: {
     <div>
       <PageHeader
         title="Paiements en retard"
-        subtitle="Règle du 15 — le mois courant n'apparaît qu'à partir du 16"
+        subtitle="Les retards du mois courant n'apparaît qu'à partir du 16"
         actions={
           peutExporter ? (
             <ExporterExcelButton

@@ -2,9 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Search, Settings, HelpCircle, type LucideIcon } from "lucide-react";
+import { Menu, Search, Settings, HelpCircle, type LucideIcon } from "lucide-react";
 import { useUserScope } from "@/hooks/useUserScope";
+import { useAdminSidebar } from "@/components/admin/AdminSidebarContext";
 import { NotificationBadge } from "@/components/admin/NotificationBadge";
 import { ROLE_LABELS, type UserRole } from "@/lib/constants";
 
@@ -57,7 +59,7 @@ function RechercheElevesDesktop() {
   }
 
   return (
-    <div ref={conteneurRef} className="hidden md:block relative flex-1 min-w-0 max-w-sm">
+    <div ref={conteneurRef} className="hidden lg:block relative flex-1 min-w-0 max-w-sm">
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
       <input
         value={requete}
@@ -261,15 +263,33 @@ function ToggleSiteSuperviseur({ sites }: { sites: { id: number; nom_site: strin
 
 export function Topbar({ sitesSuperviseur = [] }: { sitesSuperviseur?: { id: number; nom_site: string }[] }) {
   const { role, username } = useUserScope();
+  const { open: openSidebar } = useAdminSidebar();
   const nomAffiche = username.charAt(0).toUpperCase() + username.slice(1);
   const peutRechercher = ROLES_RECHERCHE_ELEVES.includes(role);
 
   return (
     <header className="h-16 border-b border-gray-100 bg-white flex items-center justify-between px-4 sm:px-6 gap-2 sm:gap-4">
+      {/* Côté Gauche - Mobile : Bouton Hamburger + Logo GSR (< lg) */}
+      <div className="flex items-center gap-2.5 sm:gap-3 lg:hidden shrink-0">
+        <button
+          type="button"
+          onClick={openSidebar}
+          aria-label="Ouvrir le menu de navigation"
+          className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors cursor-pointer"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <Link href="/admin/tableau-de-bord" className="flex items-center gap-2">
+          <Image src="/logo.png" alt="GSR Logo" width={28} height={28} className="object-contain" />
+          <span className="font-bold text-gray-900 text-sm hidden xs:inline sm:inline">Admin GSR</span>
+        </Link>
+      </div>
+
+      {/* Côté Gauche - Desktop : Recherche d'élèves (≥ lg) */}
       {peutRechercher ? (
         <RechercheElevesDesktop />
       ) : (
-        <div className="hidden md:block relative flex-1 min-w-0 max-w-sm">
+        <div className="hidden lg:block relative flex-1 min-w-0 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-300" />
           <input
             disabled
@@ -280,50 +300,53 @@ export function Topbar({ sitesSuperviseur = [] }: { sitesSuperviseur?: { id: num
         </div>
       )}
 
-      {role === "superviseur" && <ToggleSiteSuperviseur sites={sitesSuperviseur} />}
+      {/* Côté Droit : aligné à droite, groupé avec les icônes d'actions et le profil 'Mon compte' */}
+      <div className="flex items-center gap-2 sm:gap-3 ml-auto shrink-0">
+        {role === "superviseur" && <ToggleSiteSuperviseur sites={sitesSuperviseur} />}
 
-      <div className="flex items-center gap-1">
-        {/* Recherche Mobile (icône loupe + volet déroulant) */}
-        {peutRechercher && (
-          <div className="md:hidden">
-            <RechercheElevesMobile />
-          </div>
-        )}
+        <div className="flex items-center gap-0.5 sm:gap-1">
+          {/* Recherche Mobile (< lg) */}
+          {peutRechercher && (
+            <div className="lg:hidden">
+              <RechercheElevesMobile />
+            </div>
+          )}
 
-        <NotificationBadge />
-        {role === "coordonnateur" ? (
+          <NotificationBadge />
+          {role === "coordonnateur" ? (
+            <Link
+              href="/admin/parametres/utilisateurs"
+              title="Paramètres"
+              className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+            >
+              <Settings className="w-4 h-4" />
+            </Link>
+          ) : (
+            <IconPlaceholder icon={Settings} />
+          )}
           <Link
-            href="/admin/parametres/utilisateurs"
-            title="Paramètres"
+            href="/admin/aide"
+            title="Aide"
             className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
           >
-            <Settings className="w-4 h-4" />
+            <HelpCircle className="w-4 h-4" />
           </Link>
-        ) : (
-          <IconPlaceholder icon={Settings} />
-        )}
+        </div>
+
         <Link
-          href="/admin/aide"
-          title="Aide"
-          className="w-9 h-9 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:text-gray-700 transition-colors"
+          href="/admin/mon-compte"
+          title="Mon compte"
+          className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-gray-100 hover:opacity-80 transition-opacity shrink-0"
         >
-          <HelpCircle className="w-4 h-4" />
+          <div className="w-9 h-9 rounded-full bg-primary-gradient flex items-center justify-center text-white text-sm font-semibold shrink-0">
+            {username.charAt(0).toUpperCase()}
+          </div>
+          <div className="hidden sm:block leading-tight">
+            <p className="text-sm font-semibold text-gray-800">{nomAffiche}</p>
+            <p className="text-xs text-gray-500">{ROLE_LABELS[role]}</p>
+          </div>
         </Link>
       </div>
-
-      <Link
-        href="/admin/mon-compte"
-        title="Mon compte"
-        className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-3 border-l border-gray-100 hover:opacity-80 transition-opacity shrink-0"
-      >
-        <div className="w-9 h-9 rounded-full bg-primary-gradient flex items-center justify-center text-white text-sm font-semibold shrink-0">
-          {username.charAt(0).toUpperCase()}
-        </div>
-        <div className="hidden sm:block leading-tight">
-          <p className="text-sm font-semibold text-gray-800">{nomAffiche}</p>
-          <p className="text-xs text-gray-500">{ROLE_LABELS[role]}</p>
-        </div>
-      </Link>
     </header>
   );
 }

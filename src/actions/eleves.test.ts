@@ -10,7 +10,9 @@ vi.mock("@/lib/auth-scope", async () => {
 });
 
 import { getUserScope } from "@/lib/auth-scope";
-import { suspendreEleve, inscrireEleve, importerEleves } from "./eleves";
+import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/admin";
+import { suspendreEleve, inscrireEleve, importerEleves, supprimerEleves } from "./eleves";
 
 function makeScope(overrides: Partial<UserScope>): UserScope {
   return {
@@ -127,5 +129,181 @@ describe("inscrireEleve — format des numéros de téléphone", () => {
     });
 
     expect(result.error).toBe("Numéro invalide — doit commencer par l'indicatif (+...) suivi des chiffres");
+  });
+});
+
+describe("supprimerEleves — garde de rôle (réservé coordonnateur)", () => {
+  it.each(["comptable", "superviseur", "chef_site", "secretaire"] as const)(
+    "rejette le rôle %s",
+    async (role) => {
+      vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role, isGlobal: role === "comptable" }));
+
+      await expect(supprimerEleves([1], "mon-mot-de-passe")).rejects.toThrow("Non autorisé");
+    }
+  );
+});
+
+describe("supprimerEleves — validation des paramètres & authentification", () => {
+  it("rejette si aucun élève sélectionné", async () => {
+    const result = await supprimerEleves([], "password");
+    expect(result.error).toBe("Aucun élève sélectionné");
+  });
+
+  it("rejette si le mot de passe est vide", async () => {
+    const result = await supprimerEleves([1], "");
+    expect(result.error).toBe("Mot de passe requis");
+  });
+
+  it("rejette si le mot de passe est incorrect", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "coordonnateur" }));
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { email: "coord@gsr.bj" } } }),
+        signInWithPassword: vi.fn().mockResolvedValue({ error: { message: "Invalid credentials" } }),
+      },
+    } as any);
+
+    const result = await supprimerEleves([1], "mauvais-password");
+    expect(result.error).toBe("Mot de passe incorrect");
+  });
+});
+
+describe("supprimerEleves — blocage strict si paiements existants", () => {
+  it("bloque la suppression si au moins un élève a déjà des paiements", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "coordonnateur" }));
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { email: "coord@gsr.bj" } } }),
+        signInWithPassword: vi.fn().mockResolvedValue({ error: null }),
+      },
+    } as any);
+
+    const mockAdmin = {
+      from: vi.fn((table: string) => {
+        if (table === "eleves") {
+          return {
+            select: vi.fn(() => ({
+              in: vi.fn(() =>
+                Promise.resolve({
+                  data: [
+                    {
+                      id: 10,
+                      matricule: "Y10240001",
+                      nom: "KOFFI",
+                      prenoms: "Jean",
+                      classes: { site_id: 1 },
+                    },
+                  ],
+                  error: null,
+                })
+              ),
+            })),
+          };
+        }
+        if (table === "paiements") {
+          return {
+            select: vi.fn(() => ({
+              in: vi.fn(() =>
+                Promise.resolve({
+                  data: [
+                    {
+                      eleve_id: 10,
+                      montant_paye: 25000,
+                      mois_souscription: "Octobre",
+                    },
+                  ],
+                  error: null,
+                })
+              ),
+            })),
+          };
+        }
+        return {};
+      }),
+    };
+
+    vi.mocked(createServiceRoleClient).mockReturnValueOnce(mockAdmin as any);
+
+    const result = await supprimerEleves([10], "bon-password");
+    expect(result.error).toContain("Suppression bloquée");
+    expect(result.error).toContain("KOFFI Jean");
+  });
+});
+
+describe("supprimerEleves — succès et purge complète", () => {
+  it("purge comptes_parents, log_whatsapp, paiements_supprimes et supprime l'élève si 0 paiement", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "coordonnateur", username: "coord" }));
+    vi.mocked(createClient).mockResolvedValueOnce({
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { email: "coord@gsr.bj" } } }),
+        signInWithPassword: vi.fn().mockResolvedValue({ error: null }),
+      },
+    } as any);
+
+    const deletedTables: string[] = [];
+
+    const mockAdmin = {
+      from: vi.fn((table: string) => {
+        if (table === "eleves") {
+          return {
+            select: vi.fn(() => ({
+              in: vi.fn(() =>
+                Promise.resolve({
+                  data: [
+                    {
+                      id: 10,
+                      matricule: "Y10240001",
+                      nom: "KOFFI",
+                      prenoms: "Jean",
+                      classes: { site_id: 1 },
+                    },
+                  ],
+                  error: null,
+                })
+              ),
+            })),
+            delete: vi.fn(() => ({
+              in: vi.fn(() => {
+                deletedTables.push("eleves");
+                return Promise.resolve({ error: null });
+              }),
+            })),
+          };
+        }
+        if (table === "paiements") {
+          return {
+            select: vi.fn(() => ({
+              in: vi.fn(() => Promise.resolve({ data: [], error: null })),
+            })),
+          };
+        }
+        if (["comptes_parents", "log_whatsapp", "paiements_supprimes"].includes(table)) {
+          return {
+            delete: vi.fn(() => ({
+              in: vi.fn(() => {
+                deletedTables.push(table);
+                return Promise.resolve({ error: null });
+              }),
+            })),
+          };
+        }
+        if (table === "notifications") {
+          return {
+            insert: vi.fn(() => Promise.resolve({ error: null })),
+          };
+        }
+        return {};
+      }),
+    };
+
+    vi.mocked(createServiceRoleClient).mockReturnValueOnce(mockAdmin as any);
+
+    const result = await supprimerEleves([10], "bon-password");
+    expect(result.error).toBeUndefined();
+    expect(result.count).toBe(1);
+    expect(deletedTables).toContain("comptes_parents");
+    expect(deletedTables).toContain("log_whatsapp");
+    expect(deletedTables).toContain("paiements_supprimes");
+    expect(deletedTables).toContain("eleves");
   });
 });

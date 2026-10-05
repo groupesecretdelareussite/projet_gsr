@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Pencil, Wallet, NotebookText, ClipboardCheck, UserX, KeyRound, Trophy, CheckCircle2, AlertCircle, Clock, Info } from "lucide-react";
+import { Pencil, Trash2, Wallet, NotebookText, ClipboardCheck, UserX, KeyRound, Trophy, CheckCircle2, AlertCircle, Clock, Info } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -12,6 +12,7 @@ import { SuspendreDialog } from "@/components/admin/eleves/SuspendreDialog";
 import { ReinscrireDialog } from "@/components/admin/eleves/ReinscrireDialog";
 import { ReinitialiserMotDePasseParentDialog } from "@/components/admin/eleves/ReinitialiserMotDePasseParentDialog";
 import { ExonerationDialog } from "@/components/admin/eleves/ExonerationDialog";
+import { SupprimerElevesDialog } from "@/components/admin/eleves/SupprimerElevesDialog";
 import { calculerMoyenneMatiere, calculerMoyenneGenerale, type NoteMatiere } from "@/lib/moyennes";
 import { estVenuDansLeMois } from "@/lib/reinscription";
 import { formaterNumeroAffichage } from "@/lib/telephone";
@@ -354,6 +355,26 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
                 Modifier
               </Button>
             </Link>
+            {scope.role === "coordonnateur" && (
+              <SupprimerElevesDialog
+                eleves={[
+                  {
+                    id: eleve.id,
+                    nom: eleve.nom,
+                    prenoms: eleve.prenoms,
+                    matricule: eleve.matricule,
+                    classe: classeInfo?.nom_classe,
+                  },
+                ]}
+                redirectTo="/admin/eleves/liste"
+                trigger={
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Supprimer
+                  </Button>
+                }
+              />
+            )}
           </div>
         }
       />

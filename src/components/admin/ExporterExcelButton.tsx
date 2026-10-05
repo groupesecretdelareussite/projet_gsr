@@ -13,6 +13,7 @@ interface ExporterExcelButtonProps {
   nomFeuille?: string;
   /** Personnalise le texte du bouton — utile quand plusieurs exports cohabitent (ex. "Présents"/"Absents"). */
   label?: string;
+  className?: string;
 }
 
 export function ExporterExcelButton({
@@ -22,6 +23,7 @@ export function ExporterExcelButton({
   nomFichier,
   nomFeuille,
   label = "Exporter",
+  className,
 }: ExporterExcelButtonProps) {
   const [enCours, setEnCours] = useState(false);
 
@@ -44,7 +46,7 @@ export function ExporterExcelButton({
   };
 
   return (
-    <Button variant="outline" size="sm" onClick={handleExport} disabled={enCours}>
+    <Button variant="outline" size="sm" onClick={handleExport} disabled={enCours} className={className}>
       {enCours ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSpreadsheet className="w-3.5 h-3.5" />}
       {enCours ? "Export en cours..." : label}
     </Button>

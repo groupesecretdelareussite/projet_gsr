@@ -597,3 +597,132 @@ export async function recupererTousLesElevesPourExport(filtres: {
   }));
 }
 
+export interface SupprimerElevesResultat {
+  error?: string;
+  count?: number;
+}
+
+/**
+ * Suppression définitive d'un ou plusieurs élèves.
+ * Réservé exclusivement au coordonnateur.
+ * Exige la saisie du mot de passe de l'administrateur connecté.
+ * Bloque strictement l'opération si au moins un élève possède des versements enregistrés dans `paiements`.
+ * Purge les tables liées par matricule (comptes_parents, log_whatsapp, paiements_supprimes)
+ * puis supprime dans `eleves` (Postgres cascade automatiquement sur notes, présences, moyennes, etc.).
+ */
+export async function supprimerEleves(
+  eleveIds: number[],
+  password: string
+): Promise<SupprimerElevesResultat> {
+  if (!eleveIds || eleveIds.length === 0) {
+    return { error: "Aucun élève sélectionné" };
+  }
+  if (!password || !password.trim()) {
+    return { error: "Mot de passe requis" };
+  }
+
+  const supabase = await createClient();
+  const scope = await getUserScope(supabase);
+
+  if (scope.role !== "coordonnateur") {
+    throw new Error("Non autorisé : action réservée exclusivement au coordonnateur");
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) return { error: "Non authentifié" };
+
+  const { error: authError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: password.trim(),
+  });
+  if (authError) return { error: "Mot de passe incorrect" };
+
+  const supabaseAdmin = createServiceRoleClient();
+
+  // 1. Récupération des élèves ciblés
+  const { data: eleves, error: elevesError } = await supabaseAdmin
+    .from("eleves")
+    .select("id, matricule, nom, prenoms, classe_id, classes(site_id)")
+    .in("id", eleveIds);
+
+  if (elevesError || !eleves || eleves.length === 0) {
+    return { error: "Élève(s) introuvable(s)" };
+  }
+
+  // 2. Vérification stricte des paiements : 0 paiement autorisé
+  const { data: paiementsExistants, error: paiementsError } = await supabaseAdmin
+    .from("paiements")
+    .select("eleve_id, montant_paye, mois_souscription")
+    .in("eleve_id", eleveIds);
+
+  if (paiementsError) return { error: paiementsError.message };
+
+  if (paiementsExistants && paiementsExistants.length > 0) {
+    const elevesAvecPaiementsIds = new Set(paiementsExistants.map((p) => p.eleve_id));
+    const elevesBloquants = eleves
+      .filter((e) => elevesAvecPaiementsIds.has(e.id))
+      .map((e) => `${e.nom} ${e.prenoms} (${e.matricule})`);
+
+    const messageDetail =
+      elevesBloquants.length === 1
+        ? `L'élève ${elevesBloquants[0]} a des versements enregistrés.`
+        : `${elevesBloquants.length} élève(s) ont des versements enregistrés (${elevesBloquants.slice(0, 3).join(", ")}${elevesBloquants.length > 3 ? "..." : ""}).`;
+
+    return {
+      error: `Suppression bloquée : ${messageDetail} Supprimez d'abord ses paiements ou suspendez l'élève.`,
+    };
+  }
+
+  const matricules = eleves.map((e) => e.matricule).filter(Boolean);
+
+  // 3. Purge des tables liées par matricule
+  if (matricules.length > 0) {
+    await supabaseAdmin.from("comptes_parents").delete().in("matricule", matricules);
+    await supabaseAdmin.from("log_whatsapp").delete().in("matricule", matricules);
+    await supabaseAdmin.from("paiements_supprimes").delete().in("matricule", matricules);
+  }
+
+  // 4. Suppression dans `eleves` (déclenche la cascade Postgres sur notes, presences, moyennes, exonerations, etc.)
+  const idsASupprimer = eleves.map((e) => e.id);
+  const { error: deleteError } = await supabaseAdmin.from("eleves").delete().in("id", idsASupprimer);
+
+  if (deleteError) return { error: deleteError.message };
+
+  // 5. Audit & Notifications
+  const sitesConcernes = Array.from(
+    new Set(
+      eleves
+        .map((e) => (e as unknown as { classes?: { site_id?: number } })?.classes?.site_id)
+        .filter((s): s is number => typeof s === "number")
+    )
+  );
+
+  const nomsAffiches =
+    eleves.length === 1
+      ? `${eleves[0].nom} ${eleves[0].prenoms} (${eleves[0].matricule})`
+      : `${eleves.length} élève(s)`;
+
+  if (sitesConcernes.length > 0) {
+    for (const siteId of sitesConcernes) {
+      await supabaseAdmin.from("notifications").insert({
+        site_id: siteId,
+        contenu: `Suppression définitive : ${nomsAffiches} supprimé(s) par le coordonnateur ${scope.username}.`,
+        roles_cibles: ["coordonnateur", "comptable"],
+      });
+    }
+  }
+
+  // 6. Revalidation des pages
+  revalidatePath("/admin/eleves/liste");
+  revalidatePath("/admin/eleves/suspendus");
+  revalidatePath("/admin/tableau-de-bord");
+  revalidatePath("/admin/statistiques");
+  for (const id of idsASupprimer) {
+    revalidatePath(`/admin/eleves/${id}`);
+  }
+
+  return { count: idsASupprimer.length };
+}
+

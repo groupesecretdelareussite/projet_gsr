@@ -1,32 +1,14 @@
 import Link from "next/link";
-import { Users, UserPlus, UserX as UserXIcon, Pencil } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
-import { ActionsBar } from "@/components/admin/ActionsBar";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
 import { Button } from "@/components/ui/button";
-import { ACTIONS_HOVER_REVEAL, cn } from "@/lib/utils";
-import { SuspendreDialog } from "@/components/admin/eleves/SuspendreDialog";
-import { ReinitialiserMotDePasseParentDialog } from "@/components/admin/eleves/ReinitialiserMotDePasseParentDialog";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
-import { formaterNumeroAffichage } from "@/lib/telephone";
-import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 import { PaginationNav } from "@/components/admin/PaginationNav";
 import { recupererTousLesElevesPourExport } from "@/actions/eleves";
-
-interface EleveRow {
-  id: number;
-  matricule: string;
-  nom: string;
-  prenoms: string;
-  contact_parent: string | null;
-  contact_parent_2: string | null;
-  option_m: string | null;
-  classes: { nom_classe: string; site_id: number; sites: { nom_site: string } | null } | null;
-}
+import { ElevesTableInteractive, type EleveRow } from "@/components/admin/eleves/ElevesTableInteractive";
 
 export default async function ListeElevesPage(
   props: {
@@ -38,6 +20,7 @@ export default async function ListeElevesPage(
   const scope = await getUserScope(supabase);
   const peutGerer = scope.role !== "chef_site" && scope.role !== "secretaire";
   const estChefSiteOuSecretaire = scope.role === "chef_site" || scope.role === "secretaire";
+  const estCoordonnateur = scope.role === "coordonnateur";
 
   const siteIdEffectif = estChefSiteOuSecretaire
     ? scope.siteId?.toString()
@@ -87,50 +70,6 @@ export default async function ListeElevesPage(
   const nomSiteTitre = siteIdEffectif ? nomSiteParId.get(Number(siteIdEffectif)) ?? "Site inconnu" : "Tous les sites";
   const dateExport = new Date().toLocaleDateString("fr-FR");
 
-  const columns: DataTableColumn<EleveRow>[] = [
-    { key: "matricule", label: "Matricule", render: (e) => <span className="font-mono text-xs">{e.matricule}</span> },
-    {
-      key: "nom",
-      label: "Nom",
-      render: (e) => (
-        <Link href={`/admin/eleves/${e.id}`} className="font-medium text-gray-900 hover:text-primary hover:underline">
-          {e.nom}
-        </Link>
-      ),
-    },
-    { key: "prenoms", label: "Prénoms", render: (e) => e.prenoms },
-    { key: "classe", label: "Classe", render: (e) => e.classes?.nom_classe ?? "—" },
-    { key: "site", label: "Site", render: (e) => e.classes?.sites?.nom_site ?? "—" },
-    ...(peutGerer
-      ? [
-          { key: "contact", label: "Contact parent", render: (e: EleveRow) => formaterNumeroAffichage(e.contact_parent) },
-          { key: "contact2", label: "Contact parent 2", render: (e: EleveRow) => formaterNumeroAffichage(e.contact_parent_2) },
-        ]
-      : []),
-    ...(peutGerer
-      ? [
-          {
-            key: "actions",
-            label: "Actions",
-            render: (e: EleveRow) => (
-              <div className={cn("flex items-center gap-1.5 whitespace-nowrap", ACTIONS_HOVER_REVEAL)}>
-                <Link href={`/admin/eleves/${e.id}/modifier`}>
-                  <Button variant="outline" size="sm">
-                    <Pencil className="w-3.5 h-3.5" />
-                    {/* <span className={HOVER_ONLY_LABEL}>Modifier</span> */}
-                  </Button>
-                </Link>
-                <SuspendreDialog eleveId={e.id} nomComplet={`${e.nom} ${e.prenoms}`} />
-                {scope.role === "coordonnateur" && (
-                  <ReinitialiserMotDePasseParentDialog matricule={e.matricule} nomComplet={`${e.nom} ${e.prenoms}`} />
-                )}
-              </div>
-            ),
-          },
-        ]
-      : []),
-  ];
-
   return (
     <div>
       <PageHeader
@@ -152,34 +91,12 @@ export default async function ListeElevesPage(
         }
       />
 
-      <ActionsBar>
-        <Link href="/admin/eleves/suspendus">
-          <Button variant="outline" size="sm">
-            <UserXIcon className="w-3.5 h-3.5" />
-            Élèves suspendus
-          </Button>
-        </Link>
-        {peutGerer && (
-          <ExporterExcelButton
-            titre={`Liste des élèves — ${nomSiteTitre} — ${dateExport}`}
-            onExport={recupererTousLesElevesPourExport.bind(null, {
-              siteId: siteIdEffectif,
-              classeId: classeIdValide,
-              college: searchParams.college,
-              nom: searchParams.nom,
-            })}
-            nomFichier={`Liste_eleves_${nomSiteTitre}_${dateExport}`.replace(/\s+/g, "_")}
-            nomFeuille="Élèves"
-          />
-        )}
-      </ActionsBar>
-
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
+      <form method="get" className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
         {!estChefSiteOuSecretaire && (
           <select
             name="site_id"
             defaultValue={siteIdEffectif ?? ""}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+            className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
           >
             <option value="">Tous les sites</option>
             {sites?.map((s) => (
@@ -192,7 +109,7 @@ export default async function ListeElevesPage(
         <select
           name="classe_id"
           defaultValue={classeIdValide ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         >
           <option value="">Toutes les classes</option>
           {classesFiltrees.map((c) => (
@@ -205,33 +122,47 @@ export default async function ListeElevesPage(
           name="college"
           defaultValue={searchParams.college ?? ""}
           placeholder="Collège"
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         />
         <input
           name="nom"
           defaultValue={searchParams.nom ?? ""}
           placeholder="Nom"
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         />
         <AutoSubmitOnChange />
       </form>
 
-      <DataTable
-        columns={columns}
-        rows={elevesFiltres}
-        rowKey={(e) => e.id}
-        emptyState={
-          <EmptyState icon={Users} title="Aucun élève" description="Aucun élève ne correspond aux filtres actuels." />
+      <ElevesTableInteractive
+        eleves={elevesFiltres}
+        peutGerer={peutGerer}
+        estCoordonnateur={estCoordonnateur}
+        exportConfig={
+          peutGerer
+            ? {
+                titre: `Liste des élèves — ${nomSiteTitre} — ${dateExport}`,
+                onExport: recupererTousLesElevesPourExport.bind(null, {
+                  siteId: siteIdEffectif,
+                  classeId: classeIdValide,
+                  college: searchParams.college,
+                  nom: searchParams.nom,
+                }),
+                nomFichier: `Liste_eleves_${nomSiteTitre}_${dateExport}`.replace(/\s+/g, "_"),
+                nomFeuille: "Élèves",
+              }
+            : undefined
         }
       />
 
-      <PaginationNav
-        pageActuelle={pageNumber}
-        totalPages={totalPages}
-        totalItems={totalEleves}
-        taillePage={PAGE_SIZE}
-        itemLabel="élèves"
-      />
+      <div className="mt-4">
+        <PaginationNav
+          pageActuelle={pageNumber}
+          totalPages={totalPages}
+          totalItems={totalEleves}
+          taillePage={PAGE_SIZE}
+          itemLabel="élèves"
+        />
+      </div>
     </div>
   );
 }
