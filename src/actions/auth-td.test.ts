@@ -17,7 +17,7 @@ vi.mock("bcryptjs", () => ({
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getTdProfesseurSession } from "@/lib/session-td";
 import bcrypt from "bcryptjs";
-import { changerMonMotDePasseProf } from "./auth-td";
+import { changerMonMotDePasseProf, connexionProfesseurTD } from "./auth-td";
 
 describe("changerMonMotDePasseProf — changement de mot de passe en libre-service", () => {
   beforeEach(() => {
@@ -125,3 +125,52 @@ describe("changerMonMotDePasseProf — changement de mot de passe en libre-servi
     expect(mockUpdateEq).toHaveBeenCalledWith("id", 42);
   });
 });
+
+describe("connexionProfesseurTD — assainissement des identifiants (espaces & casse)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("rejette immédiatement si l'email ne contient que des espaces", async () => {
+    const res = await connexionProfesseurTD("   ", "motdepasse123");
+    expect(res.error).toBe("Identifiants invalides");
+  });
+
+  it("nettoie les espaces au début, à la fin et normalise en minuscules", async () => {
+    const mockSave = vi.fn().mockResolvedValue(undefined);
+    vi.mocked(getTdProfesseurSession).mockResolvedValueOnce({
+      save: mockSave,
+    } as never);
+
+    const mockEq = vi.fn().mockReturnValue({
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          id: 10,
+          nom: "Houegbe",
+          prenom: "Axel",
+          mot_de_passe: "hashed_pwd",
+          actif: true,
+          valide: true,
+        },
+        error: null,
+      }),
+    });
+
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
+
+    vi.mocked(createServiceRoleClient).mockReturnValue({
+      schema: vi.fn().mockReturnValue({ from: mockFrom }),
+    } as never);
+
+    vi.mocked(bcrypt.compare).mockResolvedValueOnce(true as never);
+
+    const res = await connexionProfesseurTD("   Prof.Axel@GSR.BJ   ", "motdepasse123");
+
+    expect(res.error).toBeUndefined();
+    // Vérifie que la requête SQL a bien reçu l'email nettoyé (sans espaces et en minuscules)
+    expect(mockEq).toHaveBeenCalledWith("email", "prof.axel@gsr.bj");
+    expect(mockSave).toHaveBeenCalled();
+  });
+});
+

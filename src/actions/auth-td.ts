@@ -12,10 +12,15 @@ import { tropDeTentatives, enregistrerTentative, extraireIpClient } from "@/lib/
  * qu'ailleurs dans l'admin (§5.3).
  */
 export async function connexionProfesseurTD(email: string, motDePasse: string): Promise<{ error?: string }> {
+  const cleanEmail = email?.trim().toLowerCase();
+  if (!cleanEmail) {
+    return { error: "Identifiants invalides" };
+  }
+
   const supabaseAdmin = createServiceRoleClient();
   const ip = await extraireIpClient();
 
-  if (await tropDeTentatives(supabaseAdmin, email, "td", ip)) {
+  if (await tropDeTentatives(supabaseAdmin, cleanEmail, "td", ip)) {
     return { error: "Trop de tentatives, réessayez dans 15 minutes." };
   }
 
@@ -23,16 +28,16 @@ export async function connexionProfesseurTD(email: string, motDePasse: string): 
     .schema("td")
     .from("professeurs")
     .select("id, nom, prenom, mot_de_passe, actif, valide")
-    .eq("email", email)
+    .eq("email", cleanEmail)
     .maybeSingle();
 
   if (!professeur || !professeur.actif || (professeur as { valide?: boolean }).valide === false) {
-    await enregistrerTentative(supabaseAdmin, email, "td", false, ip);
+    await enregistrerTentative(supabaseAdmin, cleanEmail, "td", false, ip);
     return { error: "Identifiants invalides" };
   }
 
   const valide = await bcrypt.compare(motDePasse, professeur.mot_de_passe);
-  await enregistrerTentative(supabaseAdmin, email, "td", valide, ip);
+  await enregistrerTentative(supabaseAdmin, cleanEmail, "td", valide, ip);
 
   if (!valide) {
     return { error: "Identifiants invalides" };

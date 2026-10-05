@@ -12,7 +12,7 @@ export default function MotDePasseOubliePage() {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const email = String(new FormData(e.currentTarget).get("email") ?? "");
+    const email = String(new FormData(e.currentTarget).get("email") ?? "").trim();
 
     startTransition(async () => {
       await demanderReinitialisationMotDePasse(email);
@@ -59,6 +59,9 @@ export default function MotDePasseOubliePage() {
                     name="email"
                     type="email"
                     autoComplete="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
                     required
                     placeholder="vous@groupe-secretdelareussite.com"
                     className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition"

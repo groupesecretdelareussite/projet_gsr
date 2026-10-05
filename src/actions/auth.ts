@@ -28,21 +28,26 @@ function getAppBaseUrl(): string {
  * lecture non authentifiée sur `users`), puis on authentifie normalement.
  */
 export async function login(username: string, password: string): Promise<{ error?: string }> {
+  const cleanUsername = username?.trim().toLowerCase();
+  if (!cleanUsername) {
+    return { error: "Identifiants invalides" };
+  }
+
   const supabaseAdmin = createServiceRoleClient();
   const ip = await extraireIpClient();
 
-  if (await tropDeTentatives(supabaseAdmin, username, "admin", ip)) {
+  if (await tropDeTentatives(supabaseAdmin, cleanUsername, "admin", ip)) {
     return { error: "Trop de tentatives, réessayez dans 15 minutes." };
   }
 
   const { data: profile } = await supabaseAdmin
     .from("users")
     .select("email, actif")
-    .eq("username", username)
+    .eq("username", cleanUsername)
     .single();
 
   if (!profile || !profile.actif) {
-    await enregistrerTentative(supabaseAdmin, username, "admin", false, ip);
+    await enregistrerTentative(supabaseAdmin, cleanUsername, "admin", false, ip);
     return { error: "Identifiants invalides" };
   }
 
@@ -52,7 +57,7 @@ export async function login(username: string, password: string): Promise<{ error
     password,
   });
 
-  await enregistrerTentative(supabaseAdmin, username, "admin", !error, ip);
+  await enregistrerTentative(supabaseAdmin, cleanUsername, "admin", !error, ip);
 
   if (error) {
     return { error: "Identifiants invalides" };
@@ -118,10 +123,13 @@ export async function changerMonMotDePasse(ancienMdp: string, nouveauMdp: string
  * l'authentification) : toujours un succès générique côté appelant.
  */
 export async function demanderReinitialisationMotDePasse(email: string): Promise<void> {
+  const cleanEmail = email?.trim().toLowerCase();
+  if (!cleanEmail) return;
+
   const supabase = await createClient();
   const baseUrl = getAppBaseUrl();
 
-  await supabase.auth.resetPasswordForEmail(email, {
+  await supabase.auth.resetPasswordForEmail(cleanEmail, {
     redirectTo: `${baseUrl}/admin/auth/confirm`,
   });
 }
