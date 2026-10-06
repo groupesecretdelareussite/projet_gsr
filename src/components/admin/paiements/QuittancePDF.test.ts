@@ -74,4 +74,46 @@ describe("QuittancePDF", () => {
 
     expect(bytesCount).toBeGreaterThan(1000);
   });
+
+  it("génère avec succès une quittance multi-mois avec mois offerts", async () => {
+    const dataMultiMois: QuittanceData = {
+      eleveId: 101,
+      numeroQuittance: "Q-M3-2025-10-0042",
+      nomComplet: "HOUEGBE Axel",
+      matricule: "GSR-2025-001",
+      college: "CEG Le Nokoué",
+      nomClasse: "Terminale D",
+      nomSite: "Jéricho",
+      mois: "Octobre - Decembre",
+      anneeScolaire: "2025-2026",
+      montantAttendu: 15000,
+      montantTotal: 15000,
+      estMultiMois: true,
+      moisPayes: ["Octobre", "Novembre", "Decembre"],
+      moisOfferts: ["Janvier"],
+      versements: [
+        { id: 42, datePaiement: "2025-10-05", montantPaye: 5000, modePaiement: "Présentiel", moisSouscription: "Octobre" },
+        { id: 43, datePaiement: "2025-10-05", montantPaye: 5000, modePaiement: "Présentiel", moisSouscription: "Novembre" },
+        { id: 44, datePaiement: "2025-10-05", montantPaye: 5000, modePaiement: "Présentiel", moisSouscription: "Decembre" },
+        { id: 0, datePaiement: "2025-10-05", montantPaye: 0, modePaiement: "Promotion fidélité", moisSouscription: "Janvier", estOffert: true },
+      ],
+    };
+
+    const docElement = React.createElement(QuittancePDF, {
+      data: dataMultiMois,
+    }) as unknown as Parameters<typeof renderToStream>[0];
+
+    const stream = await renderToStream(docElement);
+    let bytesCount = 0;
+    stream.on("data", (chunk: Uint8Array) => {
+      bytesCount += chunk.length;
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      stream.on("end", () => resolve());
+      stream.on("error", (err: Error) => reject(err));
+    });
+
+    expect(bytesCount).toBeGreaterThan(1000);
+  });
 });

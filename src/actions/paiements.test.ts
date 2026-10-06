@@ -10,7 +10,12 @@ vi.mock("@/lib/auth-scope", async () => {
 });
 
 import { getUserScope } from "@/lib/auth-scope";
-import { enregistrerPaiement, supprimerPaiement, consulterResteAPayer } from "./paiements";
+import {
+  enregistrerPaiement,
+  enregistrerPaiementMultiMois,
+  supprimerPaiement,
+  consulterResteAPayer,
+} from "./paiements";
 
 function makeScope(overrides: Partial<UserScope>): UserScope {
   return {
@@ -59,5 +64,20 @@ describe("supprimerPaiement — garde de rôle (interdit #4/#17)", () => {
     vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role, isGlobal: false }));
 
     await expect(supprimerPaiement(1, "motif", "password")).rejects.toThrow("Non autorisé");
+  });
+});
+
+describe("enregistrerPaiementMultiMois — garde de rôle", () => {
+  it.each(["chef_site", "secretaire"] as const)("rejette le rôle %s", async (role) => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role, isGlobal: false }));
+
+    await expect(
+      enregistrerPaiementMultiMois({
+        eleveId: 1,
+        moisPayes: ["Octobre", "Novembre", "Decembre"],
+        datePaiement: "2025-10-10",
+        modePaiement: "Presentiel",
+      })
+    ).rejects.toThrow("Non autorisé");
   });
 });

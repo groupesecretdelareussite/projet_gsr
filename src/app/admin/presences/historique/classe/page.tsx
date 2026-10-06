@@ -98,9 +98,13 @@ export default async function HistoriqueClassePage(
       <PresencesNav active="historique" />
       <HistoriqueModeTabs active="classe" />
 
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-2xl">
+      <form method="get" className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3 max-w-2xl">
         {!estChefSiteOuSecretaire && (
-          <select name="site_id" defaultValue={siteIdEffectif ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+          <select
+            name="site_id"
+            defaultValue={siteIdEffectif ?? ""}
+            className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
+          >
             <option value="">Tous les sites</option>
             {sites?.map((s) => (
               <option key={s.id} value={s.id}>
@@ -109,7 +113,11 @@ export default async function HistoriqueClassePage(
             ))}
           </select>
         )}
-        <select name="classe_id" defaultValue={classeId ? String(classeId) : ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+        <select
+          name="classe_id"
+          defaultValue={classeId ? String(classeId) : ""}
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
+        >
           <option value="">Choisir une classe</option>
           {classesFiltrees.map((c) => (
             <option key={c.id} value={c.id}>
@@ -117,7 +125,12 @@ export default async function HistoriqueClassePage(
             </option>
           ))}
         </select>
-        <input type="date" name="date" defaultValue={date ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm" />
+        <input
+          type="date"
+          name="date"
+          defaultValue={date ?? ""}
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
+        />
         <AutoSubmitOnChange />
       </form>
 

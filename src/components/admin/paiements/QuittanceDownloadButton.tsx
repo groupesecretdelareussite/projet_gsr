@@ -5,6 +5,7 @@ import { FileDown, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type { QuittanceData } from "@/components/admin/paiements/QuittancePDF";
+import { genererNomFichierQuittance } from "@/lib/paiements";
 
 /** Télécharge de manière universelle et fiable un document PDF de quittance via l'API serveur. */
 async function telechargerDocumentQuittance(data: QuittanceData) {
@@ -12,7 +13,11 @@ async function telechargerDocumentQuittance(data: QuittanceData) {
     throw new Error("Identifiant de l'élève manquant pour la quittance.");
   }
 
-  const url = `/api/paiements/quittance-pdf?eleveId=${data.eleveId}&mois=${encodeURIComponent(data.mois)}`;
+  const url =
+    data.estMultiMois && data.moisPayes && data.moisPayes.length > 0
+      ? `/api/paiements/quittance-pdf?eleveId=${data.eleveId}&moisPayes=${encodeURIComponent(data.moisPayes.join(","))}`
+      : `/api/paiements/quittance-pdf?eleveId=${data.eleveId}&mois=${encodeURIComponent(data.mois)}`;
+
   const res = await fetch(url);
 
   if (!res.ok) {
@@ -24,7 +29,7 @@ async function telechargerDocumentQuittance(data: QuittanceData) {
   const blobUrl = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = blobUrl;
-  a.download = `Quittance_${data.matricule}_${data.mois}.pdf`;
+  a.download = genererNomFichierQuittance(data.matricule, data.moisPayes ?? data.mois);
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);

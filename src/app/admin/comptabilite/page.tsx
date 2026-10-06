@@ -194,15 +194,23 @@ export default async function ComptabilitePage(
         }
       />
 
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-xl">
-        <select name="annee_id" defaultValue={anneeSelectionnee.id} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+      <form method="get" className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3 max-w-xl">
+        <select
+          name="annee_id"
+          defaultValue={anneeSelectionnee.id}
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
+        >
           {anneesList.map((a) => (
             <option key={a.id} value={a.id}>
               {a.libelle}
             </option>
           ))}
         </select>
-        <select name="mois" defaultValue={searchParams.mois ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+        <select
+          name="mois"
+          defaultValue={searchParams.mois ?? ""}
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
+        >
           <option value="">Tous les mois</option>
           {MOIS_SCOLAIRES.map((m) => (
             <option key={m} value={m}>

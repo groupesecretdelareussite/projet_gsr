@@ -208,12 +208,12 @@ export default async function PaiementsAJourPage(props: {
       />
       <PaiementsNav active="a-jour" role={scope.role} />
 
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 max-w-xl">
+      <form method="get" className="grid grid-cols-2 sm:grid-cols-2 gap-2 mb-3 max-w-xl">
         {!estChefSiteOuSecretaire && (
           <select
             name="site_id"
             defaultValue={siteIdEffectif ?? ""}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+            className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
           >
             <option value="">Tous les sites</option>
             {sites?.map((s) => (
@@ -226,7 +226,7 @@ export default async function PaiementsAJourPage(props: {
         <select
           name="classe_id"
           defaultValue={classeIdValide ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         >
           <option value="">Toutes les classes</option>
           {classesFiltrees.map((c) => (

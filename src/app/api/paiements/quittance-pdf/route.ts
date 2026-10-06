@@ -4,9 +4,14 @@ import React from "react";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope, siteInScope } from "@/lib/auth-scope";
-import { resteAPayer, genererNumeroQuittance } from "@/lib/paiements";
+import {
+  resteAPayer,
+  genererNumeroQuittance,
+  genererNumeroQuittanceMultiMois,
+  genererNomFichierQuittance,
+} from "@/lib/paiements";
 import { MOIS_SCOLAIRES, type MoisScolaire } from "@/lib/constants";
-import { QuittancePDF, type QuittanceData } from "@/components/admin/paiements/QuittancePDF";
+import { QuittancePDF, type QuittanceData, type VersementQuittance } from "@/components/admin/paiements/QuittancePDF";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +46,7 @@ export async function GET(request: NextRequest) {
   // 2. Validation stricte des paramètres de requête
   const searchParams = request.nextUrl.searchParams;
   const rawEleveId = searchParams.get("eleveId");
+  const rawMoisPayes = searchParams.get("moisPayes");
   const rawMois = searchParams.get("mois");
 
   const eleveId = Number(rawEleveId);
@@ -48,16 +54,8 @@ export async function GET(request: NextRequest) {
     return new NextResponse("Paramètre eleveId manquant ou invalide.", { status: 400 });
   }
 
-  if (!rawMois) {
-    return new NextResponse("Paramètre mois manquant.", { status: 400 });
-  }
-
-  const mois = normaliserMois(rawMois);
-  if (!mois) {
-    return new NextResponse(
-      `Mois invalide (${rawMois}). Mois attendus : ${MOIS_SCOLAIRES.join(", ")}.`,
-      { status: 400 }
-    );
+  if (!rawMoisPayes && !rawMois) {
+    return new NextResponse("Paramètre mois ou moisPayes manquant.", { status: 400 });
   }
 
   const supabaseAdmin = createServiceRoleClient();
@@ -99,6 +97,8 @@ export async function GET(request: NextRequest) {
     return new NextResponse("Aucune année scolaire en cours active.", { status: 400 });
   }
 
+  const anneeLibelle = anneeEnCours.libelle ?? "2025-2026";
+
   // 5. Récupération des frais TD de la classe
   const { data: fraisTd } = await supabaseAdmin
     .from("frais_td")
@@ -114,7 +114,147 @@ export async function GET(request: NextRequest) {
 
   const montantAttendu = Number(fraisTd.montant);
 
-  // 6. Récupération des versements du mois
+  // -------------------------------------------------------------
+  // CAS A : Quittance multi-mois consolidée
+  // -------------------------------------------------------------
+  if (rawMoisPayes) {
+    const moisList = rawMoisPayes
+      .split(",")
+      .map((m) => normaliserMois(m.trim()))
+      .filter((m): m is MoisScolaire => m !== null);
+
+    if (moisList.length === 0) {
+      return new NextResponse("Aucun mois valide spécifié dans moisPayes.", { status: 400 });
+    }
+
+    const moisTries = [...moisList].sort(
+      (a, b) => MOIS_SCOLAIRES.indexOf(a) - MOIS_SCOLAIRES.indexOf(b)
+    );
+
+    // Récupération des paiements enregistrés pour ces mois
+    const { data: paiementsData } = await supabaseAdmin
+      .from("paiements")
+      .select("id, montant_paye, date_paiement, mode_paiement, mois_souscription")
+      .eq("eleve_id", eleveId)
+      .in("mois_souscription", moisTries)
+      .eq("annee_scolaire_id", anneeEnCours.id)
+      .order("date_paiement", { ascending: true })
+      .order("id", { ascending: true });
+
+    const paiements = paiementsData ?? [];
+
+    // Vérifier que chaque mois demandé est intégralement soldé
+    for (const m of moisTries) {
+      const paiementsDuMois = paiements.filter((p) => p.mois_souscription === m);
+      const reste = resteAPayer(
+        montantAttendu,
+        paiementsDuMois.map((p) => ({ montant_paye: Number(p.montant_paye) }))
+      );
+      if (reste > 0) {
+        return new NextResponse(
+          `Impossible de délivrer la quittance : le mois de ${m} n'est pas intégralement soldé (reste dû : ${reste} F).`,
+          { status: 400 }
+        );
+      }
+    }
+
+    // Détection d'éventuels mois offerts consécutifs pour cet élève
+    const dernierMoisIndex = MOIS_SCOLAIRES.indexOf(moisTries[moisTries.length - 1]);
+    const nbMoisPayes = moisTries.length;
+    const nbMoisOffertsTheorique = nbMoisPayes >= 6 ? 2 : nbMoisPayes >= 3 ? 1 : 0;
+
+    const moisOfferts: string[] = [];
+    if (nbMoisOffertsTheorique > 0) {
+      const { data: exoData } = await supabaseAdmin
+        .from("mois_exoneres")
+        .select("mois_souscription")
+        .eq("eleve_id", eleveId)
+        .eq("annee_scolaire_id", anneeEnCours.id);
+
+      const moisExoSet = new Set((exoData ?? []).map((e) => e.mois_souscription));
+
+      for (let step = 1; step <= nbMoisOffertsTheorique; step++) {
+        const nextIdx = dernierMoisIndex + step;
+        if (nextIdx < MOIS_SCOLAIRES.length) {
+          const candidat = MOIS_SCOLAIRES[nextIdx];
+          if (moisExoSet.has(candidat)) {
+            moisOfferts.push(candidat);
+          }
+        }
+      }
+    }
+
+    const firstId = paiements[0]?.id ?? 1;
+    const numeroQuittance = genererNumeroQuittanceMultiMois(anneeLibelle, moisTries, firstId);
+    const nomFichier = genererNomFichierQuittance(eleve.matricule, moisTries);
+
+    const versements: VersementQuittance[] = paiements.map((p) => ({
+      id: p.id,
+      datePaiement: p.date_paiement,
+      montantPaye: Number(p.montant_paye),
+      modePaiement: p.mode_paiement,
+      moisSouscription: p.mois_souscription,
+    }));
+
+    // Ajouter les lignes explicatives des mois offerts
+    for (const mo of moisOfferts) {
+      versements.push({
+        id: 0,
+        datePaiement: paiements[0]?.date_paiement ?? new Date().toISOString().slice(0, 10),
+        montantPaye: 0,
+        modePaiement: "Promotion fidélité",
+        moisSouscription: mo,
+        estOffert: true,
+      });
+    }
+
+    const montantTotal = paiements.reduce((sum, p) => sum + Number(p.montant_paye), 0);
+
+    const quittanceData: QuittanceData = {
+      eleveId,
+      numeroQuittance,
+      nomComplet: `${eleve.nom} ${eleve.prenoms}`,
+      matricule: eleve.matricule,
+      college: eleve.college ?? "",
+      nomClasse: classesData?.nom_classe ?? "—",
+      nomSite: classesData?.sites?.nom_site ?? "—",
+      mois: `${moisTries[0]} - ${moisTries[moisTries.length - 1]}`,
+      anneeScolaire: anneeLibelle,
+      montantAttendu,
+      montantTotal,
+      estMultiMois: true,
+      moisPayes: moisTries,
+      moisOfferts,
+      versements,
+    };
+
+    const docElement = React.createElement(QuittancePDF, {
+      data: quittanceData,
+    }) as unknown as Parameters<typeof renderToStream>[0];
+
+    const stream = await renderToStream(docElement);
+
+    return new Response(stream as unknown as ReadableStream, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${nomFichier}"`,
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
+      },
+    });
+  }
+
+  // -------------------------------------------------------------
+  // CAS B : Quittance unitaire mono-mois (existant préservé)
+  // -------------------------------------------------------------
+  const mois = normaliserMois(rawMois!);
+  if (!mois) {
+    return new NextResponse(
+      `Mois invalide (${rawMois}). Mois attendus : ${MOIS_SCOLAIRES.join(", ")}.`,
+      { status: 400 }
+    );
+  }
+
+  // Récupération des versements du mois
   const { data: paiementsData } = await supabaseAdmin
     .from("paiements")
     .select("id, montant_paye, date_paiement, mode_paiement")
@@ -130,7 +270,7 @@ export async function GET(request: NextRequest) {
     paiements.map((p) => ({ montant_paye: Number(p.montant_paye) }))
   );
 
-  // 7. Règle absolue du mois soldé (§8.7/§12.5) : Aucun reçu pour un mois non soldé
+  // Règle absolue du mois soldé (§8.7/§12.5) : Aucun reçu pour un mois non soldé
   if (reste > 0) {
     return new NextResponse(
       `Impossible de délivrer la quittance : le mois de ${mois} n'est pas intégralement soldé (reste dû : ${reste} F).`,
@@ -138,8 +278,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // 8. Préparation des données du PDF
-  const anneeLibelle = anneeEnCours.libelle ?? "2025-2026";
+  // Préparation des données du PDF mono-mois
   const lastId = paiements[paiements.length - 1]?.id ?? 1;
   const numeroQuittance = genererNumeroQuittance(anneeLibelle, mois, lastId);
 
@@ -159,16 +298,16 @@ export async function GET(request: NextRequest) {
       datePaiement: p.date_paiement,
       montantPaye: Number(p.montant_paye),
       modePaiement: p.mode_paiement,
+      moisSouscription: mois,
     })),
   };
 
-  // 9. Rendu du flux PDF côté serveur (Node.js)
   const docElement = React.createElement(QuittancePDF, {
     data: quittanceData,
   }) as unknown as Parameters<typeof renderToStream>[0];
 
   const stream = await renderToStream(docElement);
-  const nomFichier = `Quittance_${eleve.matricule}_${mois}.pdf`;
+  const nomFichier = genererNomFichierQuittance(eleve.matricule, mois);
 
   return new Response(stream as unknown as ReadableStream, {
     headers: {

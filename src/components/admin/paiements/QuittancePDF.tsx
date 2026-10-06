@@ -7,6 +7,8 @@ export interface VersementQuittance {
   datePaiement: string;
   montantPaye: number;
   modePaiement: string;
+  moisSouscription?: string;
+  estOffert?: boolean;
 }
 
 export interface QuittanceData {
@@ -23,10 +25,17 @@ export interface QuittanceData {
   datePaiement?: string;
   modePaiement?: string;
   versements?: VersementQuittance[];
+  estMultiMois?: boolean;
+  moisPayes?: string[];
+  moisOfferts?: string[];
+  montantTotal?: number;
 }
 
 const LOGO_PATH = path.join(process.cwd(), "public/logo.png");
 const HAS_LOGO = typeof window === "undefined" ? fs.existsSync(LOGO_PATH) : false;
+
+const CACHET_PATH = path.join(process.cwd(), "public/cachet-coordonnateur.png");
+const HAS_CACHET = typeof window === "undefined" ? fs.existsSync(CACHET_PATH) : false;
 
 const styles = StyleSheet.create({
   page: {
@@ -180,6 +189,32 @@ const styles = StyleSheet.create({
   colDate: { width: "35%", textAlign: "center" },
   colMontant: { width: "30%", textAlign: "right", fontFamily: "Helvetica-Bold" },
   colMode: { width: "25%", textAlign: "center" },
+  colNumMulti: { width: "7%", textAlign: "center" },
+  colMoisMulti: { width: "23%", textAlign: "left" },
+  colDateMulti: { width: "25%", textAlign: "center" },
+  colMontantMulti: { width: "23%", textAlign: "right", fontFamily: "Helvetica-Bold" },
+  colModeMulti: { width: "22%", textAlign: "center" },
+  tableRowOffert: {
+    backgroundColor: "#f0fdf4",
+  },
+  textOffert: {
+    color: "#059669",
+    fontFamily: "Helvetica-Bold",
+  },
+  promoBadge: {
+    marginTop: 4,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    backgroundColor: "#ecfdf5",
+    borderWidth: 0.8,
+    borderColor: "#10b981",
+    borderRadius: 4,
+  },
+  promoBadgeText: {
+    fontSize: 7.5,
+    color: "#065f46",
+    fontFamily: "Helvetica-Bold",
+  },
   footerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -203,16 +238,28 @@ const styles = StyleSheet.create({
     fontSize: 8.5,
     fontFamily: "Helvetica-Bold",
     color: "#374151",
+    marginBottom: 2,
+  },
+  cachetImage: {
+    width: 68,
+    height: 68,
+    objectFit: "contain",
+  },
+  signatureSpacer: {
+    height: 24,
   },
   signatureRole: {
     fontSize: 8,
     color: "#6b7280",
-    marginTop: 24,
+    marginTop: 2,
   },
 });
 
 /** §8.7/§12.5 GSR_ARCHITECTURE.md — Quittance PDF enrichie au format paysage avec récapitulatif des versements. */
 export function QuittancePDF({ data }: { data: QuittanceData }) {
+  const isMulti = Boolean(data.estMultiMois);
+  const totalPaye = data.montantTotal ?? data.montantAttendu;
+
   const versements =
     data.versements && data.versements.length > 0
       ? data.versements
@@ -220,13 +267,22 @@ export function QuittancePDF({ data }: { data: QuittanceData }) {
           {
             id: 1,
             datePaiement: data.datePaiement ?? new Date().toISOString().slice(0, 10),
-            montantPaye: data.montantAttendu,
+            montantPaye: totalPaye,
             modePaiement: data.modePaiement ?? "Présentiel",
+            moisSouscription: data.mois,
           },
         ];
 
   const dateGeneration = new Date().toLocaleDateString("fr-FR");
   const heureGeneration = new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+  const periodeLibelle = isMulti
+    ? data.moisPayes && data.moisPayes.length > 1
+      ? `${data.moisPayes[0].toUpperCase()} — ${data.moisPayes[data.moisPayes.length - 1].toUpperCase()} (${data.moisPayes.length} MOIS)`
+      : data.mois.toUpperCase()
+    : data.mois.toUpperCase();
+
+  const aMoisOfferts = isMulti && Boolean(data.moisOfferts && data.moisOfferts.length > 0);
 
   return (
     <Document>
@@ -290,39 +346,89 @@ export function QuittancePDF({ data }: { data: QuittanceData }) {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Détails du Paiement</Text>
             <View style={styles.cardRow}>
-              <Text style={styles.cardLabel}>Mois souscrit :</Text>
-              <Text style={styles.cardValue}>{data.mois.toUpperCase()}</Text>
+              <Text style={styles.cardLabel}>{isMulti ? "Période souscrite :" : "Mois souscrit :"}</Text>
+              <Text style={styles.cardValue}>{periodeLibelle}</Text>
             </View>
             <View style={styles.cardRow}>
               <Text style={styles.cardLabel}>Année scolaire :</Text>
               <Text style={styles.cardValue}>{data.anneeScolaire || "2025-2026"}</Text>
             </View>
             <View style={styles.cardRow}>
-              <Text style={styles.cardLabel}>Total payé :</Text>
-              <Text style={styles.montantTotal}>{data.montantAttendu.toLocaleString("fr-FR")} FCFA</Text>
+              <Text style={styles.cardLabel}>{isMulti ? "Total payé comptant :" : "Total payé :"}</Text>
+              <Text style={styles.montantTotal}>{totalPaye.toLocaleString("fr-FR")} FCFA</Text>
             </View>
             <View style={styles.cardRow}>
               <Text style={styles.cardLabel}>Statut :</Text>
               <Text style={{ ...styles.cardValue, color: "#12AA00", fontFamily: "Helvetica-Bold" }}>
-                Mois intégralement soldé
+                {isMulti
+                  ? `${data.moisPayes?.length ?? 3} mois intégralement soldés`
+                  : "Mois intégralement soldé"}
               </Text>
             </View>
+            {aMoisOfferts && (
+              <View style={styles.promoBadge}>
+                <Text style={styles.promoBadgeText}>
+                  Offre fidélité : {data.moisOfferts!.join(" et ").toUpperCase()} OFFERT{data.moisOfferts!.length > 1 ? "S" : ""} (0 FCFA)
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
-        {/* TABLEAU DES VERSEMENTS */}
-        <Text style={styles.tableTitle}>Détail des versements du mois de {data.mois.toUpperCase()}</Text>
-        <View style={styles.tableHeader}>
-          <Text style={styles.colNum}>N°</Text>
-          <Text style={styles.colDate}>Date de paiement</Text>
-          <Text style={styles.colMontant}>Montant versé</Text>
-          <Text style={styles.colMode}>Mode de paiement</Text>
-        </View>
+        {/* TABLEAU DES VERSEMENTS / MOIS */}
+        <Text style={styles.tableTitle}>
+          {isMulti
+            ? `Détail des mois réglés et avantages accordés (${data.anneeScolaire || "2025-2026"})`
+            : `Détail des versements du mois de ${data.mois.toUpperCase()}`}
+        </Text>
+        {isMulti ? (
+          <View style={styles.tableHeader}>
+            <Text style={styles.colNumMulti}>N°</Text>
+            <Text style={styles.colMoisMulti}>Mois souscrit</Text>
+            <Text style={styles.colDateMulti}>Date de paiement</Text>
+            <Text style={styles.colMontantMulti}>Montant</Text>
+            <Text style={styles.colModeMulti}>Statut / Mode</Text>
+          </View>
+        ) : (
+          <View style={styles.tableHeader}>
+            <Text style={styles.colNum}>N°</Text>
+            <Text style={styles.colDate}>Date de paiement</Text>
+            <Text style={styles.colMontant}>Montant versé</Text>
+            <Text style={styles.colMode}>Mode de paiement</Text>
+          </View>
+        )}
 
         {versements.map((v, index) => {
           const dateStr = v.datePaiement
             ? new Date(v.datePaiement).toLocaleDateString("fr-FR")
             : "—";
+          const estOffert = v.estOffert || v.montantPaye === 0;
+
+          if (isMulti) {
+            return (
+              <View
+                key={v.id ?? index}
+                style={[
+                  styles.tableRow,
+                  index % 2 === 1 ? styles.tableRowEven : {},
+                  estOffert ? styles.tableRowOffert : {},
+                ]}
+              >
+                <Text style={styles.colNumMulti}>{index + 1}</Text>
+                <Text style={[styles.colMoisMulti, estOffert ? styles.textOffert : {}]}>
+                  {v.moisSouscription ?? `Mois ${index + 1}`}
+                </Text>
+                <Text style={styles.colDateMulti}>{dateStr}</Text>
+                <Text style={[styles.colMontantMulti, estOffert ? styles.textOffert : {}]}>
+                  {estOffert ? "0 F (Offert)" : `${Number(v.montantPaye).toLocaleString("fr-FR")} F`}
+                </Text>
+                <Text style={[styles.colModeMulti, estOffert ? styles.textOffert : {}]}>
+                  {estOffert ? "Promo fidélité (Exonéré)" : v.modePaiement}
+                </Text>
+              </View>
+            );
+          }
+
           return (
             <View key={v.id ?? index} style={[styles.tableRow, index % 2 === 1 ? styles.tableRowEven : {}]}>
               <Text style={styles.colNum}>{index + 1}</Text>
@@ -336,12 +442,26 @@ export function QuittancePDF({ data }: { data: QuittanceData }) {
         {/* BAS DE PAGE : NOTE & SIGNATURE */}
         <View style={styles.footerContainer}>
           <Text style={styles.footerNote}>
-            Cette quittance atteste du paiement complet des frais de TD pour le mois de {data.mois}{" "}
-            {data.anneeScolaire ?? ""}.{"\n"}
-            Document officiel généré le {dateGeneration} à {heureGeneration}.
+            {isMulti
+              ? `Cette quittance atteste du règlement comptant intégral des frais de TD pour la période ${data.mois} (${data.anneeScolaire ?? ""}).${
+                  aMoisOfferts
+                    ? ` Bénéfice de l'offre promotionnelle : ${data.moisOfferts!.join(" et ")} offert${
+                        data.moisOfferts!.length > 1 ? "s" : ""
+                      } et exonéré${data.moisOfferts!.length > 1 ? "s" : ""}.`
+                    : ""
+                }\nDocument officiel généré le ${dateGeneration} à ${heureGeneration}.`
+              : `Cette quittance atteste du paiement complet des frais de TD pour le mois de ${data.mois} ${
+                  data.anneeScolaire ?? ""
+                }.\nDocument officiel généré le ${dateGeneration} à ${heureGeneration}.`}
           </Text>
           <View style={styles.signatureBlock}>
             <Text style={styles.signatureTitle}>Signature et Cachet</Text>
+            {HAS_CACHET ? (
+              /* eslint-disable-next-line jsx-a11y/alt-text */
+              <Image src={CACHET_PATH} style={styles.cachetImage} />
+            ) : (
+              <View style={styles.signatureSpacer} />
+            )}
             <Text style={styles.signatureRole}>Le Coordonnateur</Text>
           </View>
         </View>

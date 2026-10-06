@@ -347,11 +347,11 @@ export default async function RecompensesPage(
       <RecompensesNav active="mensuel" />
 
       {/* Formulaire de filtres responsive */}
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+      <form method="get" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-3">
         <select
           name="annee_id"
           defaultValue={anneeSelectionnee?.id ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         >
           {anneesList.map((a) => (
             <option key={a.id} value={a.id}>
@@ -363,7 +363,7 @@ export default async function RecompensesPage(
         <select
           name="mois"
           defaultValue={moisSelectionne}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white font-medium"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate font-medium"
         >
           {MOIS_SCOLAIRES.map((m) => (
             <option key={m} value={m}>
@@ -375,7 +375,7 @@ export default async function RecompensesPage(
         <select
           name="site_id"
           defaultValue={siteIdEffectif ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         >
           <option value="">Tous les sites</option>
           {sites?.map((s) => (
@@ -388,7 +388,7 @@ export default async function RecompensesPage(
         <select
           name="classe_id"
           defaultValue={classeIdValide ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         >
           <option value="">Toutes les classes</option>
           {classesFiltrees.map((c) => (
@@ -401,7 +401,7 @@ export default async function RecompensesPage(
         <select
           name="statut"
           defaultValue={searchParams.statut ?? "tous"}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         >
           <option value="tous">Tous les statuts</option>
           <option value="a_payer">À payer</option>

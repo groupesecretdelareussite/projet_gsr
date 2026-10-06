@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { moisCourant, moisVisiblesRetard, moisPrecedent, resteAPayer, moisAVerifierSuspensionAuto, genererNumeroQuittance } from "./paiements";
+import {
+  moisCourant,
+  moisVisiblesRetard,
+  moisPrecedent,
+  resteAPayer,
+  moisAVerifierSuspensionAuto,
+  genererNumeroQuittance,
+  genererNumeroQuittanceMultiMois,
+  genererNomFichierQuittance,
+} from "./paiements";
 import { MOIS_SCOLAIRES } from "./constants";
 
 describe("moisCourant", () => {
@@ -112,5 +121,57 @@ describe("genererNumeroQuittance", () => {
     expect(genererNumeroQuittance("2025-2026", "Octobre", 42)).toBe("Q-2025-10-0042");
     expect(genererNumeroQuittance("2025-2026", "Janvier", 7)).toBe("Q-2026-01-0007");
     expect(genererNumeroQuittance(2026, "Mars", 125)).toBe("Q-2026-03-0125");
+  });
+});
+
+describe("genererNumeroQuittanceMultiMois", () => {
+  it("génère un numéro avec le format Q-MN-YYYY-MM-XXXX pour 3 mois", () => {
+    expect(
+      genererNumeroQuittanceMultiMois("2025-2026", ["Octobre", "Novembre", "Decembre"], 42)
+    ).toBe("Q-M3-2025-10-0042");
+  });
+
+  it("génère un numéro avec le format Q-MN-YYYY-MM-XXXX pour 6 mois", () => {
+    expect(
+      genererNumeroQuittanceMultiMois(
+        "2025-2026",
+        ["Octobre", "Novembre", "Decembre", "Janvier", "Fevrier", "Mars"],
+        42
+      )
+    ).toBe("Q-M6-2025-10-0042");
+  });
+
+  it("génère un numéro avec le format Q-MN-YYYY-MM-XXXX pour 2 mois débutant en Janvier", () => {
+    expect(
+      genererNumeroQuittanceMultiMois("2025-2026", ["Janvier", "Fevrier"], 7)
+    ).toBe("Q-M2-2026-01-0007");
+  });
+});
+
+describe("genererNomFichierQuittance", () => {
+  it("génère le nom de fichier pour un mois unitaire", () => {
+    expect(genererNomFichierQuittance("L-2026-0001", "Octobre")).toBe(
+      "Quittance_L-2026-0001_Octobre.pdf"
+    );
+    expect(genererNomFichierQuittance("L-2026-0001", ["Octobre"])).toBe(
+      "Quittance_L-2026-0001_Octobre.pdf"
+    );
+  });
+
+  it("génère le nom de fichier pour une période multi-mois", () => {
+    expect(
+      genererNomFichierQuittance("L-2026-0001", ["Octobre", "Novembre", "Decembre"])
+    ).toBe("Quittance_L-2026-0001_Octobre-Decembre.pdf");
+
+    expect(
+      genererNomFichierQuittance("L-2026-0001", [
+        "Octobre",
+        "Novembre",
+        "Decembre",
+        "Janvier",
+        "Fevrier",
+        "Mars",
+      ])
+    ).toBe("Quittance_L-2026-0001_Octobre-Mars.pdf");
   });
 });

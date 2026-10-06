@@ -111,6 +111,7 @@ export function EnregistrerPaiementForm() {
     setRecherche("");
     setResultats([]);
     setMessageMultiSucces(null);
+    setQuittance(null);
   }
 
   function toggleMoisMulti(m: MoisScolaire) {
@@ -210,6 +211,7 @@ export function EnregistrerPaiementForm() {
     if (!eleve || moisMulti.length === 0) return;
 
     startTransition(async () => {
+      const eleveSauvegarde = eleve;
       const res = await enregistrerPaiementMultiMois({
         eleveId: eleve.id,
         moisPayes: moisMulti,
@@ -224,6 +226,34 @@ export function EnregistrerPaiementForm() {
 
       toast.success(res.message ?? "Paiement multi-mois enregistré avec succès.");
       setMessageMultiSucces(res.message ?? "Paiement enregistré.");
+
+      if (res.numeroQuittance && res.moisPayes && res.montantTotalPaye !== undefined) {
+        const nomClasse = res.nomClasse ?? eleveSauvegarde.classes?.nom_classe ?? "—";
+        const nomSite = res.nomSite ?? eleveSauvegarde.classes?.sites?.nom_site ?? "—";
+        const nomComplet = res.nomComplet ?? `${eleveSauvegarde.nom} ${eleveSauvegarde.prenoms}`;
+        const matricule = res.matricule ?? eleveSauvegarde.matricule;
+
+        setQuittance({
+          eleveId: eleveSauvegarde.id,
+          numeroQuittance: res.numeroQuittance,
+          nomComplet,
+          matricule,
+          college: res.college ?? "",
+          nomClasse,
+          nomSite,
+          mois: `${res.moisPayes[0]} - ${res.moisPayes[res.moisPayes.length - 1]}`,
+          anneeScolaire: res.anneeLibelle ?? "2025-2026",
+          montantAttendu: res.montantAttenduParMois ?? 0,
+          montantTotal: res.montantTotalPaye,
+          datePaiement: date,
+          modePaiement: MODE_PAIEMENT_LABELS[mode],
+          estMultiMois: true,
+          moisPayes: res.moisPayes,
+          moisOfferts: res.moisOfferts ?? [],
+          versements: res.versements ?? [],
+        });
+      }
+
       setEleve(null);
       setInfoReste(null);
       router.refresh();
@@ -236,7 +266,11 @@ export function EnregistrerPaiementForm() {
       <div className="flex rounded-xl bg-gray-100 p-1">
         <button
           type="button"
-          onClick={() => setFormType("unitaire")}
+          onClick={() => {
+            setFormType("unitaire");
+            setQuittance(null);
+            setMessageMultiSucces(null);
+          }}
           className={cn(
             "flex-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition",
             formType === "unitaire"
@@ -248,7 +282,11 @@ export function EnregistrerPaiementForm() {
         </button>
         <button
           type="button"
-          onClick={() => setFormType("multi_mois")}
+          onClick={() => {
+            setFormType("multi_mois");
+            setQuittance(null);
+            setMessageMultiSucces(null);
+          }}
           className={cn(
             "flex-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition flex items-center justify-center gap-1.5",
             formType === "multi_mois"
@@ -256,7 +294,6 @@ export function EnregistrerPaiementForm() {
               : "text-gray-500 hover:text-gray-900"
           )}
         >
-          
           <span>Paiement multi-mois</span>
         </button>
       </div>
@@ -514,7 +551,21 @@ export function EnregistrerPaiementForm() {
             {isPending ? "Traitement..." : `Encaisser comptant (${totalMultiAPayer.toLocaleString("fr-FR")} F)`}
           </Button>
 
-          {messageMultiSucces && (
+          {quittance ? (
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-xl">
+              <div>
+                <p className="text-sm font-semibold text-green-900">
+                  Période {quittance.mois} soldée pour {quittance.nomComplet}
+                </p>
+                {quittance.moisOfferts && quittance.moisOfferts.length > 0 && (
+                  <p className="text-xs text-emerald-700 font-medium">
+                    Offre fidélité appliquée : {quittance.moisOfferts.join(" et ")} offert{quittance.moisOfferts.length > 1 ? "s" : ""}
+                  </p>
+                )}
+              </div>
+              <QuittanceDownloadButton data={quittance} />
+            </div>
+          ) : messageMultiSucces ? (
             <div className="p-3.5 bg-green-50 border border-green-200 rounded-lg text-xs text-green-900 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <span>{messageMultiSucces}</span>
               <Link
@@ -524,7 +575,7 @@ export function EnregistrerPaiementForm() {
                 Télécharger les quittances (onglet À jour) →
               </Link>
             </div>
-          )}
+          ) : null}
         </form>
       )}
     </div>

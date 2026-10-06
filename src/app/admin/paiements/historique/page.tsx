@@ -163,11 +163,11 @@ export default async function HistoriquePaiementsPage(
       />
       <PaiementsNav active="historique" role={scope.role} />
 
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-4">
+      <form method="get" className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
         <select
           name="annee_scolaire_id"
           defaultValue={anneeFiltre ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         >
           {annees?.map((a) => (
             <option key={a.id} value={a.id}>
@@ -179,7 +179,7 @@ export default async function HistoriquePaiementsPage(
           <select
             name="site_id"
             defaultValue={siteIdEffectif ?? ""}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+            className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
           >
             <option value="">Tous les sites</option>
             {sites?.map((s) => (
@@ -192,7 +192,7 @@ export default async function HistoriquePaiementsPage(
         <select
           name="classe_id"
           defaultValue={classeIdValide ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         >
           <option value="">Toutes les classes</option>
           {classesFiltrees.map((c) => (
@@ -204,7 +204,7 @@ export default async function HistoriquePaiementsPage(
         <select
           name="mois"
           defaultValue={searchParams.mois ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         >
           <option value="">Tous les mois</option>
           {MOIS_SCOLAIRES.map((m) => (

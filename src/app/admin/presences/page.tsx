@@ -75,12 +75,12 @@ export default async function PresencesPage(
       />
       <PresencesNav active="appel" />
 
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 max-w-xl">
+      <form method="get" className="grid grid-cols-2 sm:grid-cols-2 gap-2 mb-3 max-w-xl">
         {!estChefSiteOuSecretaire && (
           <select
             name="site_id"
             defaultValue={siteIdEffectif ?? ""}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+            className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
           >
             <option value="">Tous les sites</option>
             {sites?.map((s) => (
@@ -93,7 +93,7 @@ export default async function PresencesPage(
         <select
           name="classe_id"
           defaultValue={classeId ? String(classeId) : ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         >
           <option value="">Choisir une classe</option>
           {classesFiltrees.map((c) => (

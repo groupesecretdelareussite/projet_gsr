@@ -90,3 +90,62 @@ export function genererNumeroQuittance(annee: string | number, mois: string, id:
   const idStr = String(id).padStart(4, "0");
   return `Q-${yyyy}-${mm}-${idStr}`;
 }
+
+/**
+ * Génère un numéro officiel de quittance multi-mois au format Q-MN-YYYY-MM-XXXX
+ * - N : nombre de mois payés (ex. M3 pour 3 mois, M6 pour 6 mois)
+ * - YYYY : millésime de départ correspondant au premier mois payé
+ * - MM : code à 2 chiffres du premier mois payé (ex. 10 pour Octobre)
+ * - XXXX : identifiant unique du versement sur 4 chiffres
+ */
+export function genererNumeroQuittanceMultiMois(
+  annee: string | number,
+  moisPayes: string[],
+  id: number
+): string {
+  const nb = moisPayes.length;
+  const premierMois = moisPayes[0] ?? "Octobre";
+  const moisMap: Record<string, string> = {
+    Octobre: "10",
+    Novembre: "11",
+    Décembre: "12",
+    Decembre: "12",
+    Janvier: "01",
+    Février: "02",
+    Fevrier: "02",
+    Mars: "03",
+    Avril: "04",
+    Mai: "05",
+  };
+  const mm = moisMap[premierMois] ?? "00";
+  let yyyy = String(annee);
+  if (yyyy.includes("-")) {
+    const parts = yyyy.split("-");
+    if (["10", "11", "12"].includes(mm)) {
+      yyyy = parts[0]?.trim() ?? yyyy;
+    } else {
+      yyyy = parts[1]?.trim() ?? parts[0]?.trim() ?? yyyy;
+    }
+  }
+  const idStr = String(id).padStart(4, "0");
+  return `Q-M${nb}-${yyyy}-${mm}-${idStr}`;
+}
+
+/**
+ * Génère le nom de fichier officiel pour le téléchargement d'une quittance PDF.
+ * - Mono-mois : Quittance_[Matricule]_[Mois].pdf
+ * - Multi-mois : Quittance_[Matricule]_[PremierMois]-[DernierMois].pdf
+ */
+export function genererNomFichierQuittance(
+  matricule: string,
+  mois: string | string[]
+): string {
+  if (Array.isArray(mois)) {
+    if (mois.length === 0) return `Quittance_${matricule}.pdf`;
+    if (mois.length === 1) return `Quittance_${matricule}_${mois[0]}.pdf`;
+    const premier = mois[0];
+    const dernier = mois[mois.length - 1];
+    return `Quittance_${matricule}_${premier}-${dernier}.pdf`;
+  }
+  return `Quittance_${matricule}_${mois}.pdf`;
+}

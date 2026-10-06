@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope, siteInScope, type UserScope } from "@/lib/auth-scope";
-import { resteAPayer } from "@/lib/paiements";
+import { resteAPayer, genererNumeroQuittanceMultiMois } from "@/lib/paiements";
 import { MOIS_SCOLAIRES, type MoisScolaire, type ModePaiement, type UserRole } from "@/lib/constants";
 
 const ROLES_PAIEMENTS = ["coordonnateur", "comptable", "superviseur"] as const;
@@ -75,10 +75,25 @@ export interface EnregistrerPaiementMultiMoisResult {
   error?: string;
   moisPayes?: MoisScolaire[];
   montantTotalPaye?: number;
+  montantAttenduParMois?: number;
   moisOfferts?: MoisScolaire[];
   message?: string;
   college?: string;
   anneeLibelle?: string;
+  firstPaiementId?: number;
+  numeroQuittance?: string;
+  nomComplet?: string;
+  matricule?: string;
+  nomClasse?: string;
+  nomSite?: string;
+  versements?: Array<{
+    id: number;
+    datePaiement: string;
+    montantPaye: number;
+    modePaiement: string;
+    moisSouscription: string;
+    estOffert?: boolean;
+  }>;
 }
 
 /** Consultation du reste à payer et des versements existants pour un élève et un mois. */
@@ -341,13 +356,21 @@ export async function enregistrerPaiementMultiMois(
   // Vérifier l'élève
   const { data: eleve } = await supabaseAdmin
     .from("eleves")
-    .select("id, statut, classe_id, college, classes(site_id)")
+    .select("id, statut, classe_id, college, matricule, nom, prenoms, classes(nom_classe, site_id, sites(nom_site))")
     .eq("id", input.eleveId)
     .single();
 
   if (!eleve || eleve.statut !== "actif") return { error: "Élève introuvable ou suspendu" };
-  const siteId = (eleve as unknown as { classes: { site_id: number } }).classes.site_id;
-  if (!siteInScope(scope, siteId)) return { error: "Non autorisé sur ce site" };
+
+  type ClassesJoin = {
+    nom_classe: string;
+    site_id: number;
+    sites: { nom_site: string } | null;
+  } | null;
+
+  const classesData = eleve.classes as unknown as ClassesJoin;
+  const siteId = classesData?.site_id;
+  if (!siteId || !siteInScope(scope, siteId)) return { error: "Non autorisé sur ce site" };
 
   // Vérifier frais_td
   const { data: fraisTd } = await supabaseAdmin
@@ -429,7 +452,11 @@ export async function enregistrerPaiementMultiMois(
     };
   });
 
-  const { error: insertError } = await supabaseAdmin.from("paiements").insert(paiementsAInserer);
+  const { data: paiementsInseres, error: insertError } = await supabaseAdmin
+    .from("paiements")
+    .insert(paiementsAInserer)
+    .select("id, montant_paye, date_paiement, mode_paiement, mois_souscription");
+
   if (insertError) return { error: insertError.message };
 
   // Règle promotionnelle :
@@ -494,6 +521,34 @@ export async function enregistrerPaiementMultiMois(
 
   const montantTotalPaye = paiementsAInserer.reduce((sum, p) => sum + p.montant_paye, 0);
 
+  const firstPaiementId = (paiementsInseres ?? [])[0]?.id ?? 1;
+  const numeroQuittance = genererNumeroQuittanceMultiMois(
+    anneeEnCours.libelle,
+    moisTries,
+    firstPaiementId
+  );
+
+  const versements: NonNullable<EnregistrerPaiementMultiMoisResult["versements"]> = (
+    paiementsInseres ?? []
+  ).map((p) => ({
+    id: p.id,
+    datePaiement: p.date_paiement,
+    montantPaye: Number(p.montant_paye),
+    modePaiement: p.mode_paiement,
+    moisSouscription: p.mois_souscription,
+  }));
+
+  for (const mo of moisOfferts) {
+    versements.push({
+      id: 0,
+      datePaiement: input.datePaiement,
+      montantPaye: 0,
+      modePaiement: "Promotion fidélité",
+      moisSouscription: mo,
+      estOffert: true,
+    });
+  }
+
   revalidatePaiementsPaths();
 
   let message = `Paiement comptant de ${moisTries.length} mois enregistré avec succès.`;
@@ -504,10 +559,18 @@ export async function enregistrerPaiementMultiMois(
   return {
     moisPayes: moisTries,
     montantTotalPaye,
+    montantAttenduParMois: montantMensuel,
     moisOfferts,
     message,
     college: eleve.college,
     anneeLibelle: anneeEnCours.libelle,
+    firstPaiementId,
+    numeroQuittance,
+    nomComplet: `${eleve.nom} ${eleve.prenoms}`,
+    matricule: eleve.matricule,
+    nomClasse: classesData?.nom_classe ?? "—",
+    nomSite: classesData?.sites?.nom_site ?? "—",
+    versements,
   };
 }
 
