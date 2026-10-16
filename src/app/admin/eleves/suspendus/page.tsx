@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { UserX } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { ReinscrireDialog } from "@/components/admin/eleves/ReinscrireDialog";
 import { RAISON_LABELS, type MoisScolaire } from "@/lib/constants";
@@ -128,6 +129,63 @@ export default async function ElevesSuspendusPage() {
     };
   });
 
+  const mobileCard: MobileCardConfig<EleveSuspenduRow> = {
+    badge: (e) => (
+      <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">
+        {e.matricule}
+      </span>
+    ),
+    title: (e) => (
+      <Link
+        href={`/admin/eleves/${e.id}`}
+        onClick={(ev) => ev.stopPropagation()}
+        className="hover:text-primary hover:underline"
+      >
+        {e.nom} {e.prenoms}
+      </Link>
+    ),
+    topRight: (e) => {
+      const suspension = e.eleves_suspendus[0];
+      const raison = suspension?.raison as keyof typeof RAISON_LABELS | undefined;
+      const montant = suspension?.montant_du ?? 0;
+      return (
+        <div className="flex flex-col items-end gap-1">
+          {raison && <Badge variant="warning">{RAISON_LABELS[raison]}</Badge>}
+          {montant > 0 && e.estVenuDansLeMois !== false && (
+            <span className="text-red-600 font-semibold text-xs">{montant} F</span>
+          )}
+        </div>
+      );
+    },
+    subtitle: (e) => (
+      <>
+        <span className="font-medium text-gray-700">{e.classes?.nom_classe ?? "—"}</span>
+        <span>•</span>
+        <span>{e.classes?.sites?.nom_site ?? "—"}</span>
+      </>
+    ),
+    extraInfo: (e) => {
+      const suspension = e.eleves_suspendus[0];
+      if (!suspension?.motif) return null;
+      return <span>Motif : {suspension.motif}</span>;
+    },
+    actions: peutGerer
+      ? (e) => {
+          const suspension = e.eleves_suspendus[0];
+          return (
+            <ReinscrireDialog
+              eleveId={e.id}
+              nomComplet={`${e.nom} ${e.prenoms}`}
+              raison={suspension?.raison ?? ""}
+              montantDu={suspension?.montant_du ?? 0}
+              moisSouscription={suspension?.mois_souscription ?? null}
+              estVenuDansLeMois={e.estVenuDansLeMois}
+            />
+          );
+        }
+      : undefined,
+  };
+
   return (
     <div>
       <PageHeader
@@ -149,6 +207,7 @@ export default async function ElevesSuspendusPage() {
         rows={rows}
         rowKey={(e) => e.id}
         emptyState={<EmptyState icon={UserX} title="Aucun élève suspendu" />}
+        mobileCard={mobileCard}
       />
     </div>
   );

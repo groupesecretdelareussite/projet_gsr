@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { TelechargerQuittanceButton } from "@/components/admin/paiements/QuittanceDownloadButton";
 import type { QuittanceData } from "@/components/admin/paiements/QuittancePDF";
@@ -60,11 +61,41 @@ export function AJourTable({
     },
   ];
 
+  const mobileCard: MobileCardConfig<EleveAJourItem> = {
+    badge: (e) => (
+      <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">
+        {e.matricule}
+      </span>
+    ),
+    title: (e) => (
+      <Link
+        href={`/admin/eleves/${e.id}`}
+        onClick={(ev) => ev.stopPropagation()}
+        className="hover:text-primary hover:underline"
+      >
+        {e.nom} {e.prenoms}
+      </Link>
+    ),
+    topRight: (e) => (
+      <div onClick={(ev) => ev.stopPropagation()}>
+        <TelechargerQuittanceButton data={e.quittance} />
+      </div>
+    ),
+    subtitle: (e) => (
+      <>
+        <span className="font-medium text-gray-700">{e.nomClasse}</span>
+        <span>•</span>
+        <span>{e.nomSite}</span>
+      </>
+    ),
+  };
+
   return (
     <DataTable
       columns={columns}
       rows={rows}
       rowKey={(e) => e.id}
+      mobileCard={mobileCard}
       emptyState={
         <EmptyState
           icon={CheckCircle2}

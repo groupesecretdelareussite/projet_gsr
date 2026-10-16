@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Badge } from "@/components/ui/badge";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
@@ -170,7 +170,18 @@ export default async function HistoriqueClassePage(
             />
           </div>
 
-          <DataTable columns={columns} rows={eleves} rowKey={(e) => e.id} />
+          {(() => {
+            const mobileCard: MobileCardConfig<EleveStatut> = {
+              title: (e) => <span className="font-medium text-gray-900">{e.nom} {e.prenoms}</span>,
+              topRight: (e) => (
+                <Badge variant={e.present ? "success" : "danger"}>
+                  {e.present ? "Présent" : "Absent"}
+                </Badge>
+              ),
+            };
+
+            return <DataTable columns={columns} rows={eleves} rowKey={(e) => e.id} mobileCard={mobileCard} />;
+          })()}
         </>
       )}
     </div>

@@ -4,7 +4,7 @@ import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { NouvelUtilisateurDialog } from "@/components/admin/parametres/NouvelUtilisateurDialog";
 import { ModifierUtilisateurDialog } from "@/components/admin/parametres/ModifierUtilisateurDialog";
@@ -102,6 +102,47 @@ export default async function UtilisateursPage() {
     },
   ];
 
+  const mobileCard: MobileCardConfig<UtilisateurRow> = {
+    badge: (u) => <Badge variant="neutral">{ROLE_LABELS[u.role]}</Badge>,
+    title: (u) => <span>{u.username}</span>,
+    topRight: (u) => (
+      <Badge variant={u.actif ? "success" : "danger"}>
+        {u.actif ? "Actif" : "Désactivé"}
+      </Badge>
+    ),
+    subtitle: (u) => {
+      let siteTexte = "Tous les sites";
+      if (u.role === "chef_site" || u.role === "secretaire") siteTexte = u.site_id ? nomSiteParId.get(u.site_id) ?? "—" : "—";
+      if (u.role === "superviseur") {
+        const ids = siteIdsParUser.get(u.id) ?? [];
+        siteTexte = ids.length > 0 ? ids.map((id) => nomSiteParId.get(id)).join(", ") : "Aucun site assigné";
+      }
+      return (
+        <>
+          <span>{u.email}</span>
+          <span>•</span>
+          <span>{siteTexte}</span>
+        </>
+      );
+    },
+    actions: (u) => (
+      <div className="flex flex-wrap gap-1.5 justify-end">
+        <ModifierUtilisateurDialog
+          userId={u.id}
+          initialUsername={u.username}
+          initialRole={u.role}
+          initialSiteId={u.site_id}
+          initialSiteIds={siteIdsParUser.get(u.id) ?? []}
+          sites={sitesList}
+          estSoiMeme={u.id === scope.userId}
+        />
+        <ReinitialiserMotDePasseDialog userId={u.id} username={u.username} />
+        {u.id !== scope.userId && <DesactiverUtilisateurButton userId={u.id} username={u.username} actif={u.actif} />}
+        {u.id !== scope.userId && <SupprimerUtilisateurDialog userId={u.id} username={u.username} />}
+      </div>
+    ),
+  };
+
   return (
     <div>
       <PageHeader
@@ -113,6 +154,7 @@ export default async function UtilisateursPage() {
         columns={columns}
         rows={rows}
         rowKey={(u) => u.id}
+        mobileCard={mobileCard}
         emptyState={<EmptyState icon={Users} title="Aucun utilisateur" description="Créez le premier compte staff." />}
       />
     </div>

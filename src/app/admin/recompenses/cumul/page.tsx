@@ -4,7 +4,7 @@ import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { RecompensesNav } from "@/components/admin/recompenses/RecompensesNav";
 import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
@@ -366,18 +366,56 @@ export default async function RecompensesCumulPage(
             <KpiCard icon={Medal} label="Meilleur gain individuel" value={`${maxGagne.toLocaleString("fr-FR")} F`} />
           </div>
 
-          <DataTable
-            columns={columns}
-            rows={cumulEleves}
-            rowKey={(e) => e.eleveId}
-            emptyState={
-              <EmptyState
-                icon={Trophy}
-                title="Aucune récompense versée"
-                description="Aucun paiement de récompense n'a encore été enregistré pour cette année scolaire."
+          {(() => {
+            const mobileCard: MobileCardConfig<EleveCumulRow> = {
+              badge: (e) => (
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-xs bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full border border-amber-200/60">
+                    #{e.rang}
+                  </span>
+                  <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">
+                    {e.matricule}
+                  </span>
+                </div>
+              ),
+              title: (e) => <span>{e.nom} {e.prenoms}</span>,
+              topRight: (e) => (
+                <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-lg text-xs">
+                  <Award className="w-3 h-3" />
+                  {e.totalGagne.toLocaleString("fr-FR")} F
+                </span>
+              ),
+              subtitle: (e) => (
+                <>
+                  <span className="font-medium text-gray-700">{e.nomClasse}</span>
+                  <span>•</span>
+                  <span>{e.nomSite}</span>
+                </>
+              ),
+              extraInfo: (e) => (
+                <span>
+                  Devoirs: {e.totalDevoirs.toLocaleString("fr-FR")} F ({e.nbDevoirs}) • Interros: {e.totalInterros.toLocaleString("fr-FR")} F ({e.nbInterros})
+                  {e.dernierPaiement ? ` • Dernier: ${new Date(e.dernierPaiement).toLocaleDateString("fr-FR")}` : ""}
+                </span>
+              ),
+            };
+
+            return (
+              <DataTable
+                columns={columns}
+                rows={cumulEleves}
+                rowKey={(e) => e.eleveId}
+                mobileCard={mobileCard}
+                emptyState={
+                  <EmptyState
+                    icon={Trophy}
+                    title="Aucune récompense versée"
+                    description="Aucun paiement de récompense n'a encore été enregistré pour cette année scolaire."
+                  />
+                }
               />
-            }
-          />
+            );
+          })()}
         </>
       )}
     </div>

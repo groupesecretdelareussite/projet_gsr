@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { ClotureSemestreButton } from "@/components/admin/notes/ClotureSemestreButton";
 import { calculerMoyenneAnnuelle } from "@/lib/moyennes";
@@ -132,12 +132,48 @@ export default async function SuiviMoyennesPage(
     },
   ];
 
+  const mobileCard: MobileCardConfig<EleveRow> = {
+    title: (e) => <span>{e.nom} {e.prenoms}</span>,
+    topRight: (e) => {
+      const entry = moyennesParEleve.get(e.id);
+      const ma = calculerMoyenneAnnuelle(entry?.[1] ?? null, entry?.[2] ?? null);
+      return (
+        <div className="flex flex-col items-end">
+          <span className="text-[10px] text-gray-400 uppercase tracking-wide">Moy. Annuelle</span>
+          <span className="font-bold text-primary text-sm sm:text-base">
+            {ma !== null ? ma.toFixed(2) : "—"}
+          </span>
+        </div>
+      );
+    },
+    subtitle: (e) => (
+      <>
+        <span className="font-medium text-gray-700">{e.classes?.nom_classe ?? "—"}</span>
+        <span>•</span>
+        <span>{e.classes?.sites?.nom_site ?? "—"}</span>
+      </>
+    ),
+    extraInfo: (e) => {
+      const v1 = moyennesParEleve.get(e.id)?.[1];
+      const v2 = moyennesParEleve.get(e.id)?.[2];
+      return (
+        <span>
+          Semestre 1 : <strong className="text-gray-700 font-medium">{v1 != null ? v1.toFixed(2) : "—"}</strong> • Semestre 2 : <strong className="text-gray-700 font-medium">{v2 != null ? v2.toFixed(2) : "—"}</strong>
+        </span>
+      );
+    },
+  };
+
   return (
     <div>
       {header}
 
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 max-w-xl">
-        <select name="site_id" defaultValue={searchParams.site_id ?? ""} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+      <form method="get" className="grid grid-cols-2 sm:grid-cols-2 gap-2 mb-3 max-w-xl">
+        <select
+          name="site_id"
+          defaultValue={searchParams.site_id ?? ""}
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
+        >
           <option value="">Tous les sites</option>
           {sites?.map((s) => (
             <option key={s.id} value={s.id}>
@@ -152,6 +188,7 @@ export default async function SuiviMoyennesPage(
         columns={columns}
         rows={eleves}
         rowKey={(e) => e.id}
+        mobileCard={mobileCard}
         emptyState={<EmptyState icon={ClipboardList} title="Aucun élève" description="Aucun élève actif à afficher." />}
       />
     </div>

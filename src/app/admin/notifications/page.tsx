@@ -3,12 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { MarquerLuButton } from "@/components/admin/notifications/MarquerLuButton";
 import { ToutMarquerLuButton } from "@/components/admin/notifications/ToutMarquerLuButton";
-import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
+import { ACTIONS_HOVER_REVEAL, cn } from "@/lib/utils";
 
 interface NotificationRow {
   id: number;
@@ -89,8 +89,12 @@ export default async function NotificationsPage(props: { searchParams: Promise<{
         actions={idsNonLues.length > 0 ? <ToutMarquerLuButton ids={idsNonLues} /> : undefined}
       />
 
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 max-w-md">
-        <select name="statut" defaultValue={statut} className="px-3 py-2 border border-gray-200 rounded-lg text-sm">
+      <form method="get" className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3 max-w-md">
+        <select
+          name="statut"
+          defaultValue={statut}
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
+        >
           <option value="toutes">Toutes</option>
           <option value="non_lues">Non lues</option>
           <option value="lues">Lues</option>
@@ -98,12 +102,38 @@ export default async function NotificationsPage(props: { searchParams: Promise<{
         <AutoSubmitOnChange />
       </form>
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(n) => n.id}
-        emptyState={<EmptyState icon={Bell} title="Aucune notification" description="Rien à afficher pour ce filtre." />}
-      />
+      {(() => {
+        const mobileCard: MobileCardConfig<NotificationRow> = {
+          badge: (n) => (n.lu ? <Badge variant="neutral">Lue</Badge> : <Badge variant="warning">Non lue</Badge>),
+          title: (n) => (
+            <span className={cn("text-xs sm:text-sm", n.lu ? "text-gray-500 font-normal" : "text-gray-900 font-semibold")}>
+              {n.contenu}
+            </span>
+          ),
+          topRight: (n) => (!n.lu ? <MarquerLuButton id={n.id} /> : null),
+          subtitle: (n) => (
+            <>
+              <span>{dateComplete(n.date_creation)}</span>
+              {n.sites?.nom_site && (
+                <>
+                  <span>•</span>
+                  <span>{n.sites.nom_site}</span>
+                </>
+              )}
+            </>
+          ),
+        };
+
+        return (
+          <DataTable
+            columns={columns}
+            rows={rows}
+            rowKey={(n) => n.id}
+            mobileCard={mobileCard}
+            emptyState={<EmptyState icon={Bell} title="Aucune notification" description="Rien à afficher pour ce filtre." />}
+          />
+        );
+      })()}
     </div>
   );
 }

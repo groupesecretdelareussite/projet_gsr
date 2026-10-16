@@ -6,7 +6,7 @@ import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SupprimerActualiteButton } from "@/components/admin/actualites/SupprimerActualiteButton";
@@ -103,6 +103,46 @@ export default async function ActualitesAdminPage() {
     },
   ];
 
+  const mobileCard: MobileCardConfig<ActualiteRow> = {
+    badge: (a) => {
+      const couverture = [...a.actualites_images].sort((x, y) => x.ordre - y.ordre)[0];
+      return (
+        <div className="relative w-12 h-10 rounded-md overflow-hidden bg-gray-100 shrink-0 border border-gray-200/60">
+          {couverture && <Image src={`${STORAGE_URL}/${couverture.storage_path}`} alt="" fill className="object-cover" />}
+        </div>
+      );
+    },
+    title: (a) => <span className="text-gray-900 font-semibold">{a.titre}</span>,
+    topRight: (a) => (
+      <div className="flex flex-col items-end gap-1">
+        <Badge variant={a.statut === "publie" ? "success" : "neutral"} className="text-[10px] px-1.5 py-0">
+          {a.statut === "publie" ? "Publié" : "Brouillon"}
+        </Badge>
+        {estALaUne(a.a_la_une_jusqu_au) && (
+          <Badge variant="warning" className="text-[9px] px-1 py-0">À la une</Badge>
+        )}
+      </div>
+    ),
+    subtitle: (a) => (
+      <>
+        <span className="font-medium text-gray-700">{a.categorie}</span>
+        <span>•</span>
+        <span>{new Date(a.date_publication).toLocaleDateString("fr-FR", { day: "2-digit", month: "short", year: "numeric" })}</span>
+      </>
+    ),
+    actions: (a) => (
+      <div className="flex items-center gap-1.5 justify-end">
+        <Link href={`/admin/actualites/${a.id}/modifier`}>
+          <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs">
+            <Pencil className="w-3.5 h-3.5 mr-1" />
+            Modifier
+          </Button>
+        </Link>
+        <SupprimerActualiteButton id={a.id} titre={a.titre} />
+      </div>
+    ),
+  };
+
   return (
     <div>
       <PageHeader
@@ -122,6 +162,7 @@ export default async function ActualitesAdminPage() {
         columns={columns}
         rows={articles}
         rowKey={(a) => a.id}
+        mobileCard={mobileCard}
         emptyState={<EmptyState icon={Newspaper} title="Aucun article" description="Créez votre premier article ci-dessus." />}
       />
     </div>

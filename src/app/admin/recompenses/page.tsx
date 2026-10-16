@@ -4,7 +4,7 @@ import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { RecompensesNav } from "@/components/admin/recompenses/RecompensesNav";
@@ -423,18 +423,85 @@ export default async function RecompensesPage(
             <KpiCard icon={Clock} label="Reste à payer" value={`${montantResteAPayer.toLocaleString("fr-FR")} F`} />
           </div>
 
-          <DataTable
-            columns={columns}
-            rows={elevesMeritants}
-            rowKey={(e) => e.eleveId}
-            emptyState={
-              <EmptyState
-                icon={Award}
-                title="Aucun élève méritant ce mois-ci"
-                description={`Aucune note méritante (Devoir ≥ 18/20 ou Interro Sciences = 20/20) enregistrée pour ${moisSelectionne}.`}
+          {(() => {
+            const mobileCard: MobileCardConfig<EleveMeritantRow> = {
+              badge: (e) => (
+                <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">
+                  {e.matricule}
+                </span>
+              ),
+              title: (e) => <span>{e.nom} {e.prenoms}</span>,
+              topRight: (e) => (
+                <div className="flex flex-col items-end gap-1">
+                  <span className="font-bold text-gray-900 text-xs sm:text-sm">
+                    {e.totalDu.toLocaleString("fr-FR")} F
+                  </span>
+                  {e.statut === "paye" ? (
+                    <Badge variant="success" className="text-[10px] px-1.5 py-0">Payé</Badge>
+                  ) : e.statut === "partiel" ? (
+                    <Badge variant="warning" className="text-[10px] px-1.5 py-0">Partiel ({e.totalRestant} F)</Badge>
+                  ) : (
+                    <Badge variant="warning" className="text-[10px] px-1.5 py-0">À payer</Badge>
+                  )}
+                </div>
+              ),
+              subtitle: (e) => (
+                <>
+                  <span className="font-medium text-gray-700">{e.nomClasse}</span>
+                  <span>•</span>
+                  <span>{e.nomSite}</span>
+                  <span>•</span>
+                  <span>{e.notes.length} note(s)</span>
+                </>
+              ),
+              extraInfo: (e) => (
+                <span>
+                  {e.notes.filter((n) => n.typeGain === "devoir").length} dev. ≥ 18 •{" "}
+                  {e.notes.filter((n) => n.typeGain === "interro").length} int. 20/20
+                </span>
+              ),
+              actions: (e) => (
+                <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                  <DetailsRecompensesDialog
+                    eleveNom={e.nom}
+                    elevePrenoms={e.prenoms}
+                    nomClasse={e.nomClasse}
+                    mois={moisSelectionne}
+                    notes={e.notes}
+                  />
+                  {e.totalRestant > 0 && anneeSelectionnee && (
+                    <PayerRecompenseButton
+                      eleveId={e.eleveId}
+                      eleveNom={e.nom}
+                      elevePrenoms={e.prenoms}
+                      nomClasse={e.nomClasse}
+                      mois={moisSelectionne}
+                      anneeScolaireId={anneeSelectionnee.id}
+                      notesImpayees={e.notes
+                        .filter((n) => !n.estPayee)
+                        .map((n) => ({ noteId: n.noteId, typeGain: n.typeGain, montant: n.montant }))}
+                    />
+                  )}
+                </div>
+              ),
+            };
+
+            return (
+              <DataTable
+                columns={columns}
+                rows={elevesMeritants}
+                rowKey={(e) => e.eleveId}
+                mobileCard={mobileCard}
+                emptyState={
+                  <EmptyState
+                    icon={Award}
+                    title="Aucun élève méritant ce mois-ci"
+                    description={`Aucune note méritante (Devoir ≥ 18/20 ou Interro Sciences = 20/20) enregistrée pour ${moisSelectionne}.`}
+                  />
+                }
               />
-            }
-          />
+            );
+          })()}
         </>
       )}
     </div>

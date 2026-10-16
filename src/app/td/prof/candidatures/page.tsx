@@ -1,11 +1,12 @@
-import { ClipboardList } from "lucide-react";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getTdProfesseurSession } from "@/lib/session-td";
 import { PageHeader } from "@/components/admin/PageHeader";
-import { EmptyState } from "@/components/admin/EmptyState";
-import { Badge } from "@/components/ui/badge";
-import { CandidatureButtonTD } from "@/components/td/CandidatureButtonTD";
-import { MAX_CANDIDATURES_PAR_CRENEAU } from "@/lib/constants";
+import {
+  CandidaturesTDView,
+  type CreneauItemTD,
+  type MatiereOptionTD,
+  type PostulationItemTD,
+} from "@/components/td/CandidaturesTDView";
 
 interface CreneauRow {
   id: number;
@@ -17,12 +18,11 @@ interface CreneauRow {
   montant_prevu: number;
 }
 
-const STATUT_BADGE: Record<string, { label: string; variant: "neutral" | "success" | "danger" }> = {
-  "En attente": { label: "En attente", variant: "neutral" },
-  Valide: { label: "Validée", variant: "success" },
-  Refuse: { label: "Refusée", variant: "danger" },
-  Retiree: { label: "Retirée par le coordonnateur", variant: "danger" },
-};
+interface PostulationRow {
+  id: number;
+  creneau_id: number;
+  statut_validation: string;
+}
 
 /** §10.7 GSR_ARCHITECTURE.md — créneaux ouverts aux candidatures (semaine publiée + créneau public). */
 export default async function CandidaturesTDPage() {
@@ -30,7 +30,13 @@ export default async function CandidaturesTDPage() {
   const professeurId = session.professeurId!;
   const supabaseAdmin = createServiceRoleClient();
 
-  const [{ data: creneaux }, { data: classes }, { data: matieres }, { data: mesPostulations }] = await Promise.all([
+  const [
+    { data: creneaux },
+    { data: classes },
+    { data: matieres },
+    { data: mesPostulations },
+    { data: prof },
+  ] = await Promise.all([
     supabaseAdmin
       .schema("td")
       .from("creneaux")
@@ -40,8 +46,9 @@ export default async function CandidaturesTDPage() {
       .order("date_td")
       .order("heure_debut"),
     supabaseAdmin.from("classes").select("id, nom_classe, sites(nom_site)"),
-    supabaseAdmin.schema("td").from("matieres_td").select("id, nom_matiere"),
+    supabaseAdmin.schema("td").from("matieres_td").select("id, nom_matiere").order("nom_matiere"),
     supabaseAdmin.schema("td").from("postulations").select("id, creneau_id, statut_validation").eq("professeur_id", professeurId),
+    supabaseAdmin.schema("td").from("professeurs").select("matiere_principale_id").eq("id", professeurId).maybeSingle(),
   ]);
 
   const listeCreneaux = (creneaux ?? []) as unknown as CreneauRow[];
@@ -56,10 +63,9 @@ export default async function CandidaturesTDPage() {
         .eq("statut_validation", "En attente")
     : { data: [] };
 
-  const nombreCandidatsParCreneau = new Map<number, number>();
+  const nombreCandidatsParCreneau: Record<number, number> = {};
   for (const cand of (candidaturesActives ?? [])) {
-    const current = nombreCandidatsParCreneau.get(cand.creneau_id) ?? 0;
-    nombreCandidatsParCreneau.set(cand.creneau_id, current + 1);
+    nombreCandidatsParCreneau[cand.creneau_id] = (nombreCandidatsParCreneau[cand.creneau_id] ?? 0) + 1;
   }
 
   const nomClasseParId = new Map(
@@ -69,44 +75,48 @@ export default async function CandidaturesTDPage() {
     ])
   );
   const nomMatiereParId = new Map((matieres ?? []).map((m) => [m.id, m.nom_matiere]));
-  const postulationParCreneau = new Map((mesPostulations ?? []).map((p) => [p.creneau_id, p]));
+
+  const postulationParCreneau: Record<number, PostulationItemTD> = {};
+  for (const p of ((mesPostulations ?? []) as unknown as PostulationRow[])) {
+    postulationParCreneau[p.creneau_id] = {
+      id: p.id,
+      statutValidation: p.statut_validation,
+    };
+  }
+
+  const creneauxItems: CreneauItemTD[] = listeCreneaux.map((c) => ({
+    id: c.id,
+    classeId: c.classe_id,
+    matiereId: c.matiere_id,
+    nomClasse: nomClasseParId.get(c.classe_id) ?? "—",
+    nomMatiere: nomMatiereParId.get(c.matiere_id) ?? "—",
+    dateTd: c.date_td,
+    heureDebut: c.heure_debut,
+    heureFin: c.heure_fin,
+    montantPrevu: Number(c.montant_prevu),
+  }));
+
+  const matieresOptions: MatiereOptionTD[] = (matieres ?? []).map((m) => ({
+    id: m.id,
+    nomMatiere: m.nom_matiere,
+  }));
+
+  const matierePrincipaleId = prof?.matiere_principale_id ?? null;
+  const matierePrincipaleNom = matierePrincipaleId
+    ? nomMatiereParId.get(matierePrincipaleId) ?? null
+    : null;
 
   return (
     <div>
       <PageHeader title="Candidatures" subtitle="Créneaux ouverts cette semaine" />
-
-      {listeCreneaux.length === 0 ? (
-        <EmptyState icon={ClipboardList} title="Aucun créneau ouvert" description="Revenez lorsqu'une semaine sera publiée." />
-      ) : (
-        <div className="space-y-2">
-          {listeCreneaux.map((c) => {
-            const maPostulation = postulationParCreneau.get(c.id);
-            const badge = maPostulation ? STATUT_BADGE[maPostulation.statut_validation] : null;
-            return (
-              <div key={c.id} className="bg-white rounded-2xl border border-gray-100 px-5 py-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {nomClasseParId.get(c.classe_id) ?? "—"} — {nomMatiereParId.get(c.matiere_id) ?? "—"}
-                  </p>
-                  <p className="text-xs text-gray-400">
-                    {new Date(c.date_td).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} ·{" "}
-                    {c.heure_debut.slice(0, 5)}–{c.heure_fin.slice(0, 5)} · {Number(c.montant_prevu).toLocaleString("fr-FR")} F
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {badge && <Badge variant={badge.variant}>{badge.label}</Badge>}
-                  <CandidatureButtonTD
-                    creneauId={c.id}
-                    postulationId={maPostulation?.id ?? null}
-                    statutValidation={maPostulation?.statut_validation ?? null}
-                    estComplet={(nombreCandidatsParCreneau.get(c.id) ?? 0) >= MAX_CANDIDATURES_PAR_CRENEAU}
-                  />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <CandidaturesTDView
+        creneaux={creneauxItems}
+        matieres={matieresOptions}
+        matierePrincipaleId={matierePrincipaleId}
+        matierePrincipaleNom={matierePrincipaleNom}
+        postulationParCreneau={postulationParCreneau}
+        nombreCandidatsParCreneau={nombreCandidatsParCreneau}
+      />
     </div>
   );
 }

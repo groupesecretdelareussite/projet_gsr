@@ -5,7 +5,7 @@ import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -271,7 +271,55 @@ export default async function ExonerationsPage(props: {
         />
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          <DataTable columns={colonnes} rows={rows} rowKey={(r) => r.id} />
+          <DataTable
+            bare
+            columns={colonnes}
+            rows={rows}
+            rowKey={(r) => r.id}
+            mobileCard={{
+              badge: (r) => (
+                <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">
+                  {r.eleves?.matricule}
+                </span>
+              ),
+              title: (r) => (
+                <Link
+                  href={`/admin/eleves/${r.eleve_id}`}
+                  onClick={(ev) => ev.stopPropagation()}
+                  className="hover:text-primary hover:underline"
+                >
+                  {r.eleves?.nom} {r.eleves?.prenoms}
+                </Link>
+              ),
+              topRight: (r) => (
+                <Badge variant={r.type_exoneration === "permanente" ? "neutral" : "warning"}>
+                  {r.type_exoneration === "permanente" ? "Permanente" : `Bourse (${r.nombre_mois} m.)`}
+                </Badge>
+              ),
+              subtitle: (r) => (
+                <>
+                  <span className="font-medium text-gray-700">{r.eleves?.classes?.nom_classe ?? "—"}</span>
+                  <span>•</span>
+                  <span>{r.eleves?.classes?.sites?.nom_site ?? "—"}</span>
+                  <span>•</span>
+                  <span>{r.type_exoneration === "permanente" ? "Année entière" : (r.mois_couverts ?? []).join(", ")}</span>
+                </>
+              ),
+              extraInfo: (r) => (
+                <span>
+                  {r.motif ? `Motif: ${r.motif} • ` : ""}Enregistré le {new Date(r.created_at).toLocaleDateString("fr-FR")}
+                </span>
+              ),
+              actions: (r) => (
+                <Link href={`/admin/eleves/${r.eleve_id}`}>
+                  <Button variant="outline" size="sm" className="h-8 px-2.5 text-xs gap-1">
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Fiche élève</span>
+                  </Button>
+                </Link>
+              ),
+            }}
+          />
         </div>
       )}
     </div>

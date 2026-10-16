@@ -4,7 +4,7 @@ import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { SupprimerPaiementDialog } from "@/components/admin/paiements/SupprimerPaiementDialog";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
@@ -216,14 +216,52 @@ export default async function HistoriquePaiementsPage(
         <AutoSubmitOnChange />
       </form>
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        rowKey={(p) => p.id}
-        emptyState={
-          <EmptyState icon={Wallet} title="Aucun paiement" description="Aucun paiement ne correspond aux filtres actuels." />
-        }
-      />
+      {(() => {
+        const mobileCard: MobileCardConfig<PaiementRow> = {
+          badge: (p) => (
+            <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">
+              {p.eleves?.matricule ?? "—"}
+            </span>
+          ),
+          title: (p) => `${p.eleves?.nom ?? ""} ${p.eleves?.prenoms ?? ""}`.trim(),
+          topRight: (p) => <span>{p.montant_paye} F</span>,
+          subtitle: (p) => (
+            <>
+              <span className="font-medium text-gray-700">{p.eleves?.classes?.nom_classe ?? "—"}</span>
+              <span>•</span>
+              <span>{p.eleves?.classes?.sites?.nom_site ?? "—"}</span>
+              <span>•</span>
+              <span>{p.mois_souscription}</span>
+            </>
+          ),
+          extraInfo: (p) => (
+            <span>
+              {new Date(p.date_paiement).toLocaleDateString("fr-FR")} • {MODE_PAIEMENT_LABELS[p.mode_paiement]}
+              {p.users?.username ? ` • Par ${p.users.username}` : ""}
+            </span>
+          ),
+          actions: peutSupprimer
+            ? (p) => (
+                <SupprimerPaiementDialog
+                  paiementId={p.id}
+                  description={`${p.eleves?.nom} ${p.eleves?.prenoms} — ${p.mois_souscription} — ${p.montant_paye} F`}
+                />
+              )
+            : undefined,
+        };
+
+        return (
+          <DataTable
+            columns={columns}
+            rows={rows}
+            rowKey={(p) => p.id}
+            mobileCard={mobileCard}
+            emptyState={
+              <EmptyState icon={Wallet} title="Aucun paiement" description="Aucun paiement ne correspond aux filtres actuels." />
+            }
+          />
+        );
+      })()}
     </div>
   );
 }

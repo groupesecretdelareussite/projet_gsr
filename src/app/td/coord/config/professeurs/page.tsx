@@ -4,7 +4,7 @@ import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { Badge } from "@/components/ui/badge";
 import { TdConfigTabs } from "@/components/td/TdConfigTabs";
 import { NouveauProfesseurDialog } from "@/components/td/NouveauProfesseurDialog";
@@ -100,6 +100,45 @@ export default async function ProfesseursTDPage() {
     },
   ];
 
+  const mobileCard: MobileCardConfig<ProfesseurRow> = {
+    badge: (p) => (
+      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-medium">
+        {nomMatiereParId.get(p.matiere_principale_id) ?? "—"}
+      </span>
+    ),
+    title: (p) => <span>{p.prenom} {p.nom}</span>,
+    topRight: (p) => (
+      <Badge variant={p.actif ? "success" : "danger"}>
+        {p.actif ? "Actif" : "Désactivé"}
+      </Badge>
+    ),
+    subtitle: (p) => (
+      <>
+        <span className="font-medium text-gray-700">{nomZoneParId.get(p.zone_id) ?? "—"}</span>
+        <span>•</span>
+        <span>{p.telephone}</span>
+      </>
+    ),
+    extraInfo: (p) => <span>{p.email}</span>,
+    actions: (p) => (
+      <div className="flex flex-wrap gap-1.5 justify-end">
+        <ModifierProfesseurDialog
+          professeurId={p.id}
+          initialNom={p.nom}
+          initialPrenom={p.prenom}
+          initialTelephone={p.telephone}
+          initialEmail={p.email}
+          initialZoneId={p.zone_id}
+          initialMatiereId={p.matiere_principale_id}
+          zones={zonesOptions}
+          matieres={matieresOptions}
+        />
+        <ReinitialiserMotDePasseProfDialog professeurId={p.id} nomComplet={`${p.prenom} ${p.nom}`} />
+        <DesactiverProfesseurButton professeurId={p.id} nomComplet={`${p.prenom} ${p.nom}`} actif={p.actif} />
+      </div>
+    ),
+  };
+
   return (
     <div>
       <PageHeader
@@ -112,6 +151,7 @@ export default async function ProfesseursTDPage() {
         columns={columns}
         rows={rows}
         rowKey={(p) => p.id}
+        mobileCard={mobileCard}
         emptyState={<EmptyState icon={GraduationCap} title="Aucun professeur" description="Créez le premier compte professeur." />}
       />
     </div>

@@ -1,4 +1,7 @@
 import type { ReactNode } from "react";
+import { DataTableMobileView, type MobileCardConfig } from "@/components/admin/DataTableMobileView";
+
+export { type MobileCardConfig };
 
 export interface DataTableColumn<T> {
   key: string;
@@ -13,13 +16,15 @@ interface DataTableProps<T> {
   emptyState?: ReactNode;
   /** Omet la carte (fond blanc, bordure) — pour un usage imbriqué dans une carte existante (ex. Bloc de la fiche élève). */
   bare?: boolean;
+  /** Configuration personnalisée pour le rendu mobile en cartes interactives épurées avec actions révélées au clic. */
+  mobileCard?: MobileCardConfig<T>;
 }
 
 /**
  * §3.3 GSR_ARCHITECTURE.md — thead dégradé vert clair, responsive -> cartes
  * sur mobile.
  */
-export function DataTable<T>({ columns, rows, rowKey, emptyState, bare = false }: DataTableProps<T>) {
+export function DataTable<T>({ columns, rows, rowKey, emptyState, bare = false, mobileCard }: DataTableProps<T>) {
   if (rows.length === 0 && emptyState) {
     return bare ? <>{emptyState}</> : <div className="bg-white rounded-2xl border border-gray-100">{emptyState}</div>;
   }
@@ -52,19 +57,23 @@ export function DataTable<T>({ columns, rows, rowKey, emptyState, bare = false }
         </table>
       </div>
 
-      {/* Mobile */}
-      <div className="md:hidden divide-y divide-gray-100">
-        {rows.map((row) => (
-          <div key={rowKey(row)} className="p-4 space-y-2">
-            {columns.map((col) => (
-              <div key={col.key} className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">{col.label}</span>
-                <span className="text-gray-700 text-right">{col.render(row)}</span>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
+      {/* Mobile : Cartes interactives si mobileCard est fourni, sinon fallback clé-valeur classique */}
+      {mobileCard ? (
+        <DataTableMobileView rows={rows} rowKey={rowKey} mobileCard={mobileCard} />
+      ) : (
+        <div className="md:hidden divide-y divide-gray-100">
+          {rows.map((row) => (
+            <div key={rowKey(row)} className="p-4 space-y-2">
+              {columns.map((col) => (
+                <div key={col.key} className="flex items-center justify-between gap-3 text-sm">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">{col.label}</span>
+                  <span className="text-gray-700 text-right">{col.render(row)}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

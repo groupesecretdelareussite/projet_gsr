@@ -5,7 +5,7 @@ import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { MODE_PAIEMENT_LABELS, type ModePaiement } from "@/lib/constants";
 
 interface PaiementSupprimeRow {
@@ -74,6 +74,33 @@ export default async function PaiementsSupprimesPage() {
     },
   ];
 
+  const mobileCard: MobileCardConfig<PaiementSupprimeRow> = {
+    badge: (p) => (
+      <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">
+        {p.matricule}
+      </span>
+    ),
+    title: (p) => <span>Mois de {p.mois_souscription}</span>,
+    topRight: (p) => (
+      <span className="line-through text-red-600 font-medium text-xs sm:text-sm">
+        {p.montant_paye} F
+      </span>
+    ),
+    subtitle: (p) => (
+      <>
+        <span>Payé le {new Date(p.date_paiement).toLocaleDateString("fr-FR")}</span>
+        <span>•</span>
+        <span>{MODE_PAIEMENT_LABELS[p.mode_paiement]}</span>
+      </>
+    ),
+    extraInfo: (p) => (
+      <span>
+        Supprimé le {new Date(p.date_suppression).toLocaleDateString("fr-FR")} par {p.users?.username ?? "—"}
+        {p.motif ? ` (Motif : ${p.motif})` : ""}
+      </span>
+    ),
+  };
+
   return (
     <div>
       <PageHeader title="Paiements supprimés" subtitle="Traçabilité complète des suppressions" />
@@ -82,6 +109,7 @@ export default async function PaiementsSupprimesPage() {
         columns={columns}
         rows={rows}
         rowKey={(p) => p.id}
+        mobileCard={mobileCard}
         emptyState={<EmptyState icon={History} title="Aucune suppression" description="Aucun paiement supprimé pour l'instant." />}
       />
     </div>

@@ -5,7 +5,7 @@ import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { KpiCard } from "@/components/admin/KpiCard";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { NouvelleDepenseDialog } from "@/components/admin/comptabilite/NouvelleDepenseDialog";
 import { ModifierDepenseDialog } from "@/components/admin/comptabilite/ModifierDepenseDialog";
@@ -274,12 +274,48 @@ export default async function ComptabilitePage(
       </div>
 
       <h2 className="text-sm font-semibold text-gray-700 mb-3">Dépenses annexes</h2>
-      <DataTable
-        columns={columns}
-        rows={depensesKpi}
-        rowKey={(d) => d.id}
-        emptyState={<EmptyState icon={Receipt} title="Aucune dépense" description="Ajoutez la première dépense annexe." />}
-      />
+      {(() => {
+        const mobileCard: MobileCardConfig<DepenseRow> = {
+          badge: (d) =>
+            d.categories_depenses?.nom ? (
+              <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full font-medium">
+                {d.categories_depenses.nom}
+              </span>
+            ) : null,
+          title: (d) => <span>{d.libelle}</span>,
+          topRight: (d) => (
+            <span className="font-semibold text-gray-900 text-xs sm:text-sm">
+              {Number(d.montant).toLocaleString("fr-FR")} F
+            </span>
+          ),
+          subtitle: (d) => (
+            <span>Engagée le {new Date(d.date_depense).toLocaleDateString("fr-FR")}</span>
+          ),
+          actions: (d) => (
+            <div className="flex flex-wrap gap-1.5 justify-end">
+              <ModifierDepenseDialog
+                depenseId={d.id}
+                initialCategorieId={d.categorie_id}
+                initialLibelle={d.libelle}
+                initialMontant={Number(d.montant)}
+                initialDateDepense={d.date_depense}
+                categoriesInitiales={categories ?? []}
+              />
+              <SupprimerDepenseButton depenseId={d.id} libelle={d.libelle} />
+            </div>
+          ),
+        };
+
+        return (
+          <DataTable
+            columns={columns}
+            rows={depensesKpi}
+            rowKey={(d) => d.id}
+            mobileCard={mobileCard}
+            emptyState={<EmptyState icon={Receipt} title="Aucune dépense" description="Ajoutez la première dépense annexe." />}
+          />
+        );
+      })()}
     </div>
   );
 }

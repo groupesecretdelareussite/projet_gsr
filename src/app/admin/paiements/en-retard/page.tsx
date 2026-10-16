@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
@@ -5,7 +6,7 @@ import { moisVisiblesRetard, resteAPayer } from "@/lib/paiements";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EmptyState } from "@/components/admin/EmptyState";
-import { DataTable, type DataTableColumn } from "@/components/admin/DataTable";
+import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { RelancerWhatsAppButton } from "@/components/admin/paiements/RelancerWhatsAppButton";
 import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
@@ -242,6 +243,52 @@ export default async function PaiementsEnRetardPage(props: {
     "Dernière relance": l.derniereRelance ? new Date(l.derniereRelance).toLocaleDateString("fr-FR") : "Jamais",
   }));
 
+  const mobileCard: MobileCardConfig<RetardRow> = {
+    badge: (l) => (
+      <span className="font-mono text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-700">
+        {l.eleve.matricule}
+      </span>
+    ),
+    title: (l) => (
+      <Link
+        href={`/admin/eleves/${l.eleve.id}`}
+        onClick={(ev) => ev.stopPropagation()}
+        className="hover:text-primary hover:underline"
+      >
+        {l.eleve.nom} {l.eleve.prenoms}
+      </Link>
+    ),
+    topRight: (l) => (
+      <span className="font-semibold text-red-600 text-xs sm:text-sm">{l.resteDu} F</span>
+    ),
+    subtitle: (l) => (
+      <>
+        <span className="font-medium text-gray-700">{l.eleve.classes?.nom_classe ?? "—"}</span>
+        <span>•</span>
+        <span>{l.eleve.classes?.sites?.nom_site ?? "—"}</span>
+        <span>•</span>
+        <span>Mois de {l.mois}</span>
+      </>
+    ),
+    extraInfo: (l) => (
+      <span>
+        Dernière relance : {l.derniereRelance ? new Date(l.derniereRelance).toLocaleDateString("fr-FR") : "Jamais"}
+      </span>
+    ),
+    actions: peutVoirContact
+      ? (l) =>
+          l.eleve.contact_parent ? (
+            <RelancerWhatsAppButton
+              matricule={l.eleve.matricule}
+              nomComplet={`${l.eleve.nom} ${l.eleve.prenoms}`}
+              moisSouscription={l.mois}
+              montantRestant={l.resteDu}
+              contactParent={l.eleve.contact_parent}
+            />
+          ) : null
+      : undefined,
+  };
+
   return (
     <div>
       <PageHeader
@@ -260,12 +307,12 @@ export default async function PaiementsEnRetardPage(props: {
       />
       <PaiementsNav active="en-retard" role={scope.role} />
 
-      <form method="get" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 max-w-2xl">
+      <form method="get" className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3 max-w-2xl">
         {moisVisibles.length > 1 ? (
           <select
             name="mois"
             defaultValue={moisFiltre}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+            className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate font-medium"
           >
             {moisVisibles.map((m) => (
               <option key={m} value={m}>
@@ -280,7 +327,7 @@ export default async function PaiementsEnRetardPage(props: {
           <select
             name="site_id"
             defaultValue={siteIdEffectif ?? ""}
-            className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+            className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
           >
             <option value="">Tous les sites</option>
             {sites?.map((s) => (
@@ -293,7 +340,7 @@ export default async function PaiementsEnRetardPage(props: {
         <select
           name="classe_id"
           defaultValue={classeIdValide ?? ""}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         >
           <option value="">Toutes les classes</option>
           {classesFiltrees.map((c) => (
@@ -309,6 +356,7 @@ export default async function PaiementsEnRetardPage(props: {
         columns={columns}
         rows={lignes}
         rowKey={(l) => `${l.eleve.id}-${l.mois}`}
+        mobileCard={mobileCard}
         emptyState={<EmptyState icon={AlertTriangle} title="Aucun retard" description="Tous les élèves sont à jour ou aucun retard ne correspond aux filtres." />}
       />
     </div>
