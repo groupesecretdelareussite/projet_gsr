@@ -138,7 +138,6 @@ export default async function ElevesSuspendusPage() {
     title: (e) => (
       <Link
         href={`/admin/eleves/${e.id}`}
-        onClick={(ev) => ev.stopPropagation()}
         className="hover:text-primary hover:underline"
       >
         {e.nom} {e.prenoms}

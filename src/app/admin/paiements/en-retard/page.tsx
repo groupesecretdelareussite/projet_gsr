@@ -252,7 +252,6 @@ export default async function PaiementsEnRetardPage(props: {
     title: (l) => (
       <Link
         href={`/admin/eleves/${l.eleve.id}`}
-        onClick={(ev) => ev.stopPropagation()}
         className="hover:text-primary hover:underline"
       >
         {l.eleve.nom} {l.eleve.prenoms}

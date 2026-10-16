@@ -70,17 +70,12 @@ export function AJourTable({
     title: (e) => (
       <Link
         href={`/admin/eleves/${e.id}`}
-        onClick={(ev) => ev.stopPropagation()}
         className="hover:text-primary hover:underline"
       >
         {e.nom} {e.prenoms}
       </Link>
     ),
-    topRight: (e) => (
-      <div onClick={(ev) => ev.stopPropagation()}>
-        <TelechargerQuittanceButton data={e.quittance} />
-      </div>
-    ),
+    topRight: (e) => <TelechargerQuittanceButton data={e.quittance} />,
     subtitle: (e) => (
       <>
         <span className="font-medium text-gray-700">{e.nomClasse}</span>

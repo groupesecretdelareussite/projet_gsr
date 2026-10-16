@@ -285,7 +285,6 @@ export default async function ExonerationsPage(props: {
               title: (r) => (
                 <Link
                   href={`/admin/eleves/${r.eleve_id}`}
-                  onClick={(ev) => ev.stopPropagation()}
                   className="hover:text-primary hover:underline"
                 >
                   {r.eleves?.nom} {r.eleves?.prenoms}
