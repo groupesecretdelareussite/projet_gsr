@@ -8,67 +8,85 @@ import RecrutementProfModal from "@/components/vitrine/RecrutementProfModal";
 /** Images de la page d'accueil hébergées dans le bucket public "galerie" (dossier vitrine/accueil), remplace public/images. */
 const STORAGE_ACCUEIL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie/vitrine/accueil`;
 
+/** Cartes des prestations GSR avec offsets sticky adaptés pour l'empilement mobile sous la navbar (h-16 = 64px) */
+const PRESTATIONS = [
+  {
+    id: "01",
+    tag: "En Vacances",
+    title: "Cours Intensifs Préparatoires",
+    description:
+      "En vacances, nous offrons des séances préparatoires pensées pour corriger les lacunes antérieures et aborder en douceur les nouvelles notions : documents de cours à l'appui et évaluations ciblées pour consolider les acquis.",
+    image: `${STORAGE_ACCUEIL}/img_cip.jpg`,
+    alt: "Cours Intensifs Préparatoires",
+    icon: BookOpen,
+    accent: "primary" as const,
+    link: "/programmes",
+    mobileTop: "top-[76px]",
+    zIndex: "z-10",
+  },
+  {
+    id: "02",
+    tag: "Année Scolaire",
+    title: "Programme d'Accompagnement Scolaire (T.D)",
+    description:
+      "Un suivi régulier et personnalisé des notes de chaque enfant tout au long de l'année scolaire. Des séances intensives pour maîtriser le programme, combler les lacunes au fur et mesure et exceller dans toutes les matières.",
+    image: `${STORAGE_ACCUEIL}/img_pas.jpg`,
+    alt: "Accompagnement Scolaire",
+    icon: CheckCircle,
+    accent: "secondary" as const,
+    link: "/programmes",
+    mobileTop: "top-[96px]",
+    zIndex: "z-20",
+  },
+  {
+    id: "03",
+    tag: "BEPC & BAC",
+    title: "Préparation aux Examens",
+    description:
+      "Un entraînement spécifique pour le BEPC et le BAC avec des examens blancs et des corrections méthodiques. Et un module de Développement personnel pour préparer nos élèves à aborder sereinement leurs examens avec confiance et méthode.",
+    image: `${STORAGE_ACCUEIL}/img_prepa.jpg`,
+    alt: "Préparation aux Examens",
+    icon: Trophy,
+    accent: "primary" as const,
+    link: "/programmes",
+    mobileTop: "top-[116px]",
+    zIndex: "z-30",
+  },
+];
+
 function Counter({ value, suffix="" }: { value: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
 
-  const [count,setCount] = useState(0);
-
-
-  useEffect(()=>{
-
+  useEffect(() => {
     let start = 0;
-
-    const duration = 4500;
-
+    const duration = 2500;
     const increment = value / (duration / 16);
 
-
-    const timer = setInterval(()=>{
-
+    const timer = setInterval(() => {
       start += increment;
-
-      if(start >= value){
+      if (start >= value) {
         setCount(value);
         clearInterval(timer);
-      }
-      else{
+      } else {
         setCount(Math.floor(start));
       }
+    }, 16);
 
-    },16);
-
-
-    return ()=>clearInterval(timer);
-
-
-  },[value]);
-
+    return () => clearInterval(timer);
+  }, [value]);
 
   return (
-    <h3 className="text-4xl font-bold text-primary mb-2">
+    <span>
       {count}{suffix}
-    </h3>
+    </span>
   );
 }
 
 export default function HomeClient() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-
-  const heroImages = [
-    `${STORAGE_ACCUEIL}/img_accueil_2.png`,
-    `${STORAGE_ACCUEIL}/img_accueil_3.png`,
-    `${STORAGE_ACCUEIL}/img_accueil_4.png`,
-    `${STORAGE_ACCUEIL}/img_accueil_6.png`,
-    `${STORAGE_ACCUEIL}/img_accueil_7.png`,
-  ];
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % heroImages.length);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [heroImages.length]);
+  // Image unique : l'élève en jaune (img_accueil_4.png)
+  const heroImage = `${STORAGE_ACCUEIL}/img_accueil_4.png`;
 
   const faqs = [
     { q: "Comment se déroulent les séances de soutien ?", a: "Nos séances se déroulent en présentiel. Chaque élève bénéficie d'un suivi régulier, d'évaluations périodiques et d'un accompagnement personnalisé selon ses difficultés." },
@@ -81,216 +99,274 @@ export default function HomeClient() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Hero Section — position: relative, overflow: hidden */}
+      {/* Hero Section — Design Moderne Inspiré de la maquette avec l'élève en jaune */}
       <section
         className="relative overflow-hidden"
-        style={{ background: "linear-gradient(110deg, #05330f 20%, #0a5c10 60%, #12aa00 100%)" }}
+        style={{ background: "linear-gradient(135deg, #03210c 0%, #064016 40%, #0a561c 75%, #0e7024 100%)" }}
       >
-        {/* Texture photo discrète, cohérente avec l'en-tête À propos */}
-        <div className="absolute inset-0 opacity-10">
-          <Image
-            src={`${STORAGE_ACCUEIL}/imgC.jpg`}
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover blur-sm scale-105"
-          />
-        </div>
-
-        {/* Images en rotation — absolute, collées en bas à droite, z-index: 1 */}
+        {/* Texture de carroyage / grille millimétrée subtile en filigrane */}
         <div
-          className="absolute bottom-0 right-0 hidden lg:block"
-          style={{ width: "650px", height: "560px", zIndex: 1 }}
-        >
-          {heroImages.map((src, index) => (
-            <div
-              key={src}
-              className={`absolute inset-0 transition-opacity duration-1000 ${
-                index === currentImageIndex ? "opacity-100" : "opacity-0"
-              }`}
-            >
-              {/*
-              <Image
-                src={src}
-                alt={`Illustration accueil ${index + 1}`}
-                fill
-                className="object-contain object-bottom drop-shadow-[0_0_8px_white]"
-              /> */}
-              <Image
-                  src={src}
-                  alt=""
-                  fill
-                  sizes="650px"
-                  className="object-contain object-bottom scale-105 brightness-0 invert"
-                  aria-hidden="true"
+          className="absolute inset-0 opacity-[0.06] pointer-events-none"
+          style={{
+            backgroundImage: `linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)`,
+            backgroundSize: "36px 36px",
+          }}
+        />
+
+        {/* Halo lumineux radial vert émeraude doux sous la composition visuelle */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: "radial-gradient(circle at 75% 45%, rgba(18, 170, 0, 0.22) 0%, transparent 60%)",
+          }}
+        />
+
+        {/* Conteneur principal Responsive */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative pt-6 sm:pt-8 lg:pt-10 pb-0 z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-end lg:items-start">
+            
+            {/* Colonne Gauche : Textes, Slogan et Actions (En avant-plan z-30, calée vers le haut pour combler le vide) */}
+            <div className="lg:col-span-7 text-center lg:text-left space-y-6 pt-2 sm:pt-4 lg:pt-6 xl:pt-8 pb-10 lg:pb-14 relative z-30 lg:self-start">
+              
+              {/* Titre Principal H1 comme avant */}
+              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight uppercase leading-tight text-white lg:w-max lg:whitespace-nowrap lg:max-w-none">
+                GROUPE SECRET DE LA RÉUSSITE
+              </h1>
+
+              {/* Slogan H2 avec taille réduite et surlignage sobre sans émoji */}
+              <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-secondary">
+                L&apos;excellence{" "}
+                <span className="relative inline-block px-2.5 py-0.5 mx-1 text-gray-950 font-bold bg-[#f6b40a] rounded shadow-xs -rotate-1 select-none">
+                  scolaire
+                </span>
+                , notre engagement !
+              </h2>
+
+              {/* Paragraphe descriptif */}
+              <p className="text-emerald-100/90 text-sm sm:text-base leading-relaxed max-w-xl mx-auto lg:mx-0">
+                Rejoignez le G.S.R pour un accompagnement scolaire de qualité. Des enseignants engagés, un encadrement sur mesure et des résultats prouvés pour la réussite de vos enfants au Bénin.
+              </p>
+
+              {/* Boutons d'action */}
+              <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
+                <Link
+                  href="/programmes"
+                  className="w-full sm:w-auto bg-[#12aa00] hover:bg-[#0e8f00] text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-md shadow-emerald-950/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <span>Découvrir nos programmes</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/portail-parents"
+                  className="w-full sm:w-auto bg-white/10 hover:bg-white/20 border border-white/25 text-white px-5 py-3 rounded-lg text-sm font-medium backdrop-blur-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Portail Parent
+                </Link>
+                <Link
+                  href="/td/login"
+                  className="w-full sm:w-auto bg-white text-[#05330f] hover:bg-emerald-50 px-5 py-3 rounded-lg text-sm font-medium shadow-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  Portail Professeurs
+                </Link>
+              </div>
+            </div>
+
+            {/* Colonne Droite : Composition Élève + Orbite Resserrée + Badges Flottants (Arrière-plan z-10 par rapport aux textes, collée en bas du hero) */}
+            <div className="lg:col-span-5 flex justify-center items-end relative z-10 select-none self-end -mb-px">
+              <div className="relative w-full max-w-[420px] sm:max-w-[500px] lg:max-w-[560px] xl:max-w-[620px] h-[450px] sm:h-[530px] lg:h-[610px] xl:h-[660px] flex items-end justify-center">
+
+                {/* Halo d'ambiance concentré derrière le haut du corps */}
+                <div className="absolute w-[280px] sm:w-[340px] lg:w-[400px] h-[280px] sm:h-[340px] lg:h-[400px] top-28 sm:top-32 lg:top-36 rounded-full bg-emerald-500/15 blur-2xl pointer-events-none" />
+
+                {/* Ligne orbitale elliptique réduite et resserrée autour du buste/épaules */}
+                <div
+                  className="absolute w-[290px] sm:w-[360px] lg:w-[430px] h-[210px] sm:h-[260px] lg:h-[300px] top-24 sm:top-28 lg:top-32 rounded-[50%] border border-dashed border-emerald-300/30 pointer-events-none"
+                  style={{ transform: "rotate(-8deg)" }}
                 />
 
-                {/* Image originale au-dessus */}
-                <Image
-                  src={src}
-                  alt={`Illustration accueil ${index + 1}`}
-                  fill
-                  sizes="650px"
-                  className="object-contain object-bottom"
-                  priority={index === 0}
-                />
+                {/* Badge Flottant 1 : Mathématiques (Jaune, haut-gauche de la tête) */}
+                <div
+                  className="absolute top-16 sm:top-20 lg:top-22 left-4 sm:left-8 lg:left-2 z-20 px-2.5 py-1 rounded-lg bg-[#f6b40a] text-gray-950 text-[11px] sm:text-xs font-bold shadow-md shadow-amber-500/20 border border-amber-300/50 transform -rotate-6 hover:scale-105 transition-transform"
+                >
+                  Mathématiques
+                </div>
 
+                {/* Badge Flottant 2 : PCT (Bleu Cyan, haut-droite de la tête) */}
+                <div
+                  className="absolute top-20 sm:top-24 lg:top-26 right-4 sm:right-8 lg:right-2 z-20 px-2.5 py-1 rounded-lg bg-sky-400 text-slate-950 text-[11px] sm:text-xs font-bold shadow-md shadow-sky-500/20 border border-sky-300/50 transform rotate-3 hover:scale-105 transition-transform"
+                >
+                  PCT
+                </div>
 
+                {/* Badge Flottant 3 : BEPC & BAC (Vert Menthe, gauche épaule) */}
+                <div
+                  className="absolute top-52 sm:top-60 lg:top-68 left-0 sm:left-4 lg:-left-2 z-20 px-2.5 py-1 rounded-lg bg-emerald-400 text-emerald-950 text-[11px] sm:text-xs font-bold shadow-md shadow-emerald-500/20 border border-emerald-300/50 transform -rotate-3 hover:scale-105 transition-transform"
+                >
+                  BEPC &amp; BAC
+                </div>
+
+                {/* Badge Flottant 4 : Excellence (Fuchsia, droite bras) */}
+                <div
+                  className="absolute top-56 sm:top-64 lg:top-72 right-0 sm:right-4 lg:-right-2 z-20 px-2.5 py-1 rounded-lg bg-pink-500 text-white text-[11px] sm:text-xs font-bold shadow-md shadow-pink-500/20 border border-pink-400/50 transform rotate-6 hover:scale-105 transition-transform"
+                >
+                  Excellence
+                </div>
+
+                {/* Badge Flottant 5 : Suivi sur-mesure (Ardoise sombre, bas-gauche près du livre) */}
+                <div
+                  className="absolute bottom-10 sm:bottom-12 lg:bottom-14 left-6 sm:left-10 lg:left-6 z-20 px-2.5 py-1 rounded-lg bg-slate-900/90 text-white text-[11px] sm:text-xs font-semibold shadow-md shadow-black/30 border border-white/20 transform rotate-2 hover:scale-105 transition-transform"
+                >
+                  Suivi sur-mesure
+                </div>
+
+                {/* Silhouette agrandie et mise en valeur de l'enfant en jaune, collée strictement en bas */}
+                <div className="relative w-[340px] sm:w-[440px] lg:w-[520px] xl:w-[580px] h-[430px] sm:h-[510px] lg:h-[590px] xl:h-[640px] z-10">
+                  <Image
+                    src={heroImage}
+                    alt="Élève du Groupe Secret de la Réussite"
+                    fill
+                    sizes="(max-width: 640px) 340px, (max-width: 1024px) 480px, 580px"
+                    className="object-contain object-bottom scale-105 sm:scale-110 lg:scale-[1.18] xl:scale-[1.22] origin-bottom drop-shadow-[0_16px_36px_rgba(0,0,0,0.5)]"
+                    priority
+                  />
+                </div>
+
+              </div>
             </div>
-          ))}
-        </div>
 
-        {/* Contenu texte — z-index: 2 (au-dessus de l'image) */}
-        <div
-          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative"
-          style={{ zIndex: 2 }}
-        >
-          <div className="text-white space-y-5 py-14 lg:py-20 max-w-xl">
-            <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight uppercase leading-tight lg:w-max lg:whitespace-nowrap lg:max-w-none">
-              GROUPE SECRET DE LA RÉUSSITE
-            </h1>
-            <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-secondary">
-              L&apos;excellence scolaire, notre engagement !
-            </h2>
-            <p className="text-gray-200 text-sm sm:text-base leading-relaxed">
-              Rejoignez le G.S.R pour un accompagnement scolaire de qualité.
-              Des enseignants engagés, un encadrement sur mesure et des résultats
-              prouvés pour la réussite de vos enfants au Bénin.
-            </p>
-            <div className="flex flex-wrap gap-3 pt-2">
-              <Link
-                href="/programmes"
-                className="bg-primary text-white hover:bg-primary-dark px-5 py-2.5 rounded-md text-sm font-medium shadow-sm flex items-center gap-2 transition-colors"
-              >
-                Découvrir nos programmes
-              </Link>
-              <Link
-                href="/portail-parents"
-                className="bg-transparent border border-white text-white hover:bg-white hover:text-primary px-5 py-2.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors"
-              >
-                Portail Parent
-              </Link>
-              <Link
-                href="/td/login"
-                className="bg-white text-primary hover:bg-gray-100 px-5 py-2.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors shadow-sm"
-              >
-                Portail Professeurs
-              </Link>
-            </div>
           </div>
         </div>
-
-        {/* Espace bas pour le chevauchement des cartes statistiques */}
-        <div className="h-16 sm:h-20"></div>
       </section>
 
-      {/* Stats overlapping cards — z-index: 10 (au-dessus de tout) */}
-      <section
-        className="relative -mt-12 sm:-mt-14 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
-        style={{ zIndex: 10 }}
-      >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center flex flex-col items-center justify-center transform transition hover:-translate-y-1">
-            <div className="bg-primary/10 p-4 rounded-full mb-4 text-primary">
-              <BookOpen className="w-8 h-8" />
+      {/* Bandeau Statistiques — Couleur exacte du footer (bg-dark) */}
+      <section className="bg-dark border-y border-white/10 text-white py-8 lg:py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 md:divide-x md:divide-white/10">
+            
+            {/* Stat 1 : Années d'expérience */}
+            <div className="flex items-center gap-4 text-left md:justify-center md:text-center md:flex-col md:gap-2">
+              <div className="w-12 h-12 rounded-xl  border border-white/15 flex items-center justify-center text-[#f6b40a] shrink-0">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+                  <Counter value={5} suffix="+" />
+                </div>
+                <p className="text-emerald-200/80 text-xs sm:text-sm font-medium">
+                  Années d&apos;expérience
+                </p>
+              </div>
             </div>
-            <Counter value={5} suffix="+" />
-            <p className="text-gray-600 font-medium">Années d&apos;expérience</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center flex flex-col items-center justify-center transform transition hover:-translate-y-1">
-            <div className="bg-primary/10 p-4 rounded-full mb-4 text-primary">
-              <Users className="w-8 h-8" />
+
+            {/* Stat 2 : Élèves formés en 2025 */}
+            <div className="flex items-center gap-4 text-left md:justify-center md:text-center md:flex-col md:gap-2 md:pl-8">
+              <div className="w-12 h-12 rounded-xl  border border-white/15 flex items-center justify-center text-[#f6b40a] shrink-0">
+                <Users className="w-6 h-6" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+                  <Counter value={800} suffix="+" />
+                </div>
+                <p className="text-emerald-200/80 text-xs sm:text-sm font-medium">
+                  Élèves formés en 2025
+                </p>
+              </div>
             </div>
-            <Counter value={800} suffix="+" />
-            <p className="text-gray-600 font-medium">Élèves formés en 2025</p>
-          </div>
-          <div className="bg-white rounded-xl shadow-lg p-8 text-center flex flex-col items-center justify-center transform transition hover:-translate-y-1">
-            <div className="bg-secondary/20 p-4 rounded-full mb-4 text-secondary">
-              <Trophy className="w-8 h-8" />
+
+            {/* Stat 3 : Taux de réussite en 2025 */}
+            <div className="flex items-center gap-4 text-left md:justify-center md:text-center md:flex-col md:gap-2 md:pl-8">
+              <div className="w-12 h-12 rounded-xl  border border-white/15 flex items-center justify-center text-[#f6b40a] shrink-0">
+                <Trophy className="w-6 h-6" />
+              </div>
+              <div className="space-y-0.5">
+                <div className="text-3xl lg:text-4xl font-extrabold text-[#f6b40a] tracking-tight">
+                  <Counter value={86} suffix="%" />
+                </div>
+                <p className="text-emerald-200/80 text-xs sm:text-sm font-medium">
+                  Taux de Réussite en 2025
+                </p>
+              </div>
             </div>
-            <Counter value={86} suffix="%" />
-            <p className="text-gray-600 font-medium">Taux de Réussite en 2025</p>
+
           </div>
         </div>
       </section>
 
       {/* Nos Prestations Section */}
-      <section className="py-24 bg-surface max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Nos Prestations</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+      <section className="py-20 md:py-24 bg-surface max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div className="text-center mb-12 md:mb-16">
+          
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 tracking-tight">Nos Prestations</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto text-base">
             Un accompagnement d&apos;excellence pour chaque étape de la réussite académique de votre enfant.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Card 1 */}
-          <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
-            <div className="relative h-56 w-full">
-              <Image src={`${STORAGE_ACCUEIL}/img_cip.jpg`} alt="Cours Intensifs" fill sizes="(min-width: 768px) 33vw, 100vw" className="object-cover" />
-            </div>
-            <div className="p-6 flex-grow flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="bg-primary rounded-full p-2">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight">Cours Intensifs Préparatoires</h3>
-              </div>
-              <p className="text-gray-600 text-sm mb-6 flex-grow">
-                En vacances, nous offrons des séances préparatoires pensées pour corriger les lacunes antérieures
-                et aborder en douceur les nouvelles notions : documents de cours à l&apos;appui et évaluations ciblées
-                pour consolider les acquis.
-              </p>
-              <Link href="/programmes" className="text-primary font-bold flex items-center text-sm hover:underline">
-                En savoir plus <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
-          </div>
+        {/* Cartes : empilement sticky sur mobile (< md) et grille responsive 3 colonnes sur desktop (>= md) */}
+        <div className="relative block md:grid md:grid-cols-3 md:gap-8">
+          {PRESTATIONS.map((prestation, index) => {
+            const Icon = prestation.icon;
+            const isSecondary = prestation.accent === "secondary";
+            const isLast = index === PRESTATIONS.length - 1;
 
-          {/* Card 2 */}
-          <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
-            <div className="relative h-56 w-full">
-              <Image src={`${STORAGE_ACCUEIL}/img_pas.jpg`} alt="Accompagnement Scolaire" fill sizes="(min-width: 768px) 33vw, 100vw" className="object-cover" />
-            </div>
-            <div className="p-6 flex-grow flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="bg-secondary rounded-full p-2">
-                  <CheckCircle className="w-5 h-5 text-white" />
-                </div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight">Programme d&apos;Accompagnement Scolaire (T.D)</h3>
-              </div>
-              <p className="text-gray-600 text-sm mb-6 flex-grow">
-                Un suivi régulier et personnalisé des notes de chaque enfant tout au long de l&apos;année scolaire. Des séances intensives pour
-                maîtriser le programme, combler les lacunes au fur et mesure et exceller dans toutes les matières.
-              </p>
-              <Link href="/programmes" className="text-secondary font-bold flex items-center text-sm hover:underline">
-                En savoir plus <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
-          </div>
+            return (
+              <div
+                key={prestation.id}
+                className={`
+                  group
+                  sticky ${prestation.mobileTop} ${prestation.zIndex}
+                  md:static md:top-auto md:z-auto
+                  bg-white rounded-2xl
+                  shadow-[0_12px_32px_rgba(0,0,0,0.08)] md:shadow-md md:hover:shadow-xl
+                  border border-gray-100/90
+                  border-t-4 ${isSecondary ? "border-t-secondary" : "border-t-primary"}
+                  overflow-hidden flex flex-col
+                  transition-all duration-300
+                  ${isLast ? "mb-0" : "mb-10 sm:mb-12 md:mb-0"}
+                `}
+              >
+                <div className="relative h-48 sm:h-52 md:h-56 w-full overflow-hidden bg-gray-100">
+                  <Image
+                    src={prestation.image}
+                    alt={prestation.alt}
+                    fill
+                    sizes="(min-width: 768px) 33vw, 100vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none" />
 
-          {/* Card 3 */}
-          <div className="bg-white rounded-xl shadow-md overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
-            <div className="relative h-56 w-full">
-              <Image src={`${STORAGE_ACCUEIL}/img_prepa.jpg`} alt="Préparation Examens" fill sizes="(min-width: 768px) 33vw, 100vw" className="object-cover" />
-            </div>
-            <div className="p-6 flex-grow flex flex-col">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="bg-primary rounded-full p-2">
-                  <Trophy className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 leading-tight">Préparation aux Examens</h3>
+
+                <div className="p-6 flex-grow flex flex-col">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div
+                      className={`rounded-full p-2.5 text-white shadow-sm flex-shrink-0 ${
+                        isSecondary ? "bg-secondary" : "bg-primary"
+                      }`}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 leading-tight">
+                      {prestation.title}
+                    </h3>
+                  </div>
+
+                  <p className="text-gray-600 text-sm mb-6 flex-grow leading-relaxed">
+                    {prestation.description}
+                  </p>
+
+                  <Link
+                    href={prestation.link}
+                    className={`font-bold flex items-center text-sm hover:underline mt-auto pt-2 ${
+                      isSecondary ? "text-amber-600" : "text-primary"
+                    }`}
+                  >
+                    En savoir plus <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </div>
               </div>
-              <p className="text-gray-600 text-sm mb-6 flex-grow">
-                Un entraînement spécifique pour le BEPC et le BAC avec des examens blancs et des corrections
-                méthodiques. Et un module de Développement personnel pour préparer nos élèves à aborder sereinement
-                leurs examens avec confiance et méthode.
-              </p>
-              <Link href="/programmes" className="text-primary font-bold flex items-center text-sm hover:underline">
-                En savoir plus <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
-          </div>
+            );
+          })}
         </div>
       </section>
 
