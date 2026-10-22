@@ -125,46 +125,49 @@ export default function HomeClient() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative pt-6 sm:pt-8 lg:pt-10 pb-0 z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-end lg:items-start">
             
-            {/* Colonne Gauche : Textes, Slogan et Actions (En avant-plan z-30, calée vers le haut pour combler le vide) */}
-            <div className="lg:col-span-7 text-center lg:text-left space-y-6 pt-2 sm:pt-4 lg:pt-6 xl:pt-8 pb-10 lg:pb-14 relative z-30 lg:self-start">
+            {/* Colonne Gauche : Textes, Slogan et Actions (En avant-plan z-30, calée vers le haut avec espacement aéré) */}
+            <div className="lg:col-span-7 text-center lg:text-left pt-4 sm:pt-6 lg:pt-10 xl:pt-14 pb-12 lg:pb-16 relative z-30 lg:self-start">
               
-              {/* Titre Principal H1 comme avant */}
-              <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight uppercase leading-tight text-white lg:w-max lg:whitespace-nowrap lg:max-w-none">
-                GROUPE SECRET DE LA RÉUSSITE
-              </h1>
+              {/* Bloc Titre H1 + Slogan H2 */}
+              <div className="space-y-4 lg:space-y-6">
+                {/* Titre Principal H1 */}
+                <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold tracking-tight uppercase leading-tight text-white lg:w-max lg:whitespace-nowrap lg:max-w-none">
+                  GROUPE SECRET DE LA RÉUSSITE
+                </h1>
 
-              {/* Slogan H2 avec taille réduite et surlignage sobre sans émoji */}
-              <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-secondary">
-                L&apos;excellence{" "}
-                <span className="relative inline-block px-2.5 py-0.5 mx-1 text-gray-950 font-bold bg-[#f6b40a] rounded shadow-xs -rotate-1 select-none">
-                  scolaire
-                </span>
-                , notre engagement !
-              </h2>
+                {/* Slogan H2 avec taille réduite et surlignage sobre sans émoji */}
+                <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-secondary">
+                  L&apos;excellence{" "}
+                  <span className="relative inline-block px-2.5 py-0.5 mx-1 text-gray-950 font-bold bg-[#f6b40a] rounded shadow-xs -rotate-1 select-none">
+                    scolaire
+                  </span>
+                  , notre engagement !
+                </h2>
+              </div>
 
-              {/* Paragraphe descriptif */}
-              <p className="text-emerald-100/90 text-sm sm:text-base leading-relaxed max-w-xl mx-auto lg:mx-0">
+              {/* Paragraphe descriptif — Déplacé nettement plus bas */}
+              <p className="mt-8 sm:mt-10 lg:mt-12 text-emerald-100/90 text-sm sm:text-base lg:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0">
                 Rejoignez le G.S.R pour un accompagnement scolaire de qualité. Des enseignants engagés, un encadrement sur mesure et des résultats prouvés pour la réussite de vos enfants au Bénin.
               </p>
 
-              {/* Boutons d'action */}
-              <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
+              {/* Boutons d'action — Déplacés nettement plus bas */}
+              <div className="mt-10 sm:mt-12 lg:mt-14 flex flex-col sm:flex-row flex-wrap items-center justify-center lg:justify-start gap-4">
                 <Link
                   href="/programmes"
-                  className="w-full sm:w-auto bg-[#12aa00] hover:bg-[#0e8f00] text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-md shadow-emerald-950/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full sm:w-auto bg-[#12aa00] hover:bg-[#0e8f00] text-white px-7 py-3.5 rounded-lg text-sm sm:text-base font-semibold shadow-md shadow-emerald-950/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <span>Découvrir nos programmes</span>
                   <ChevronRight className="w-4 h-4" />
                 </Link>
                 <Link
                   href="/portail-parents"
-                  className="w-full sm:w-auto bg-white/10 hover:bg-white/20 border border-white/25 text-white px-5 py-3 rounded-lg text-sm font-medium backdrop-blur-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full sm:w-auto bg-white/10 hover:bg-white/20 border border-white/25 text-white px-6 py-3.5 rounded-lg text-sm sm:text-base font-medium backdrop-blur-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Portail Parent
                 </Link>
                 <Link
                   href="/td/login"
-                  className="w-full sm:w-auto bg-white text-[#05330f] hover:bg-emerald-50 px-5 py-3 rounded-lg text-sm font-medium shadow-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full sm:w-auto bg-white text-[#05330f] hover:bg-emerald-50 px-6 py-3.5 rounded-lg text-sm sm:text-base font-medium shadow-sm flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
                 >
                   Portail Professeurs
                 </Link>
