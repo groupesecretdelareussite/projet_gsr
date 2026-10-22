@@ -176,6 +176,31 @@ Repères pour ne pas reperdre le contexte d'une session à l'autre. Le détail f
   - **Alignement des icônes à droite** : Regroupement unifié avec `ml-auto shrink-0` de l'ensemble des actions de la Topbar (loupe de recherche mobile, notifications, paramètres, aide) pour les accoler directement au séparateur vertical et au cercle de profil « Mon compte ».
   - **Gestion d'état découplée** : Création de `AdminSidebarContext` (`src/components/admin/AdminSidebarContext.tsx` et hook `useAdminSidebar`) enveloppant le layout admin (`src/app/admin/layout.tsx`). Permet à la Topbar d'ouvrir le tiroir latéral coulissant (Drawer avec voile sombre `bg-black/40 backdrop-blur-xs`, bouton de fermeture `[ ✕ ]`, auto-fermeture sur navigation, clic extérieur ou touche Échap) sans impacter le Server Component `AdminLayout`.
   - **Confort mobile** : Padding principal du contenu de `AdminLayout` assoupli de `p-6` à `p-4 sm:p-6`.
+- **Harmonisation UI Mobile des tableaux de données & Architecture Server Component RSC (2026-10-16)** :
+  - **Standard ergonomique issu de `ElevesTableInteractive`** : Généralisation à l'ensemble des tables de l'application du standard de cartes épurées remplaçant le tableau horizontal sur mobile (`md:hidden`). Au repos, la carte affiche uniquement les informations clés (badge matricule/rang, nom avec lien direct, statut/montant dans l'angle droit, classe/site en sous-titre) et masque entièrement les actions (boutons, modales) pour éliminer la surcharge visuelle. Un tap sur la carte déploie le volet d'actions avec animation fluide et rotation d'un indicateur `ChevronDown`.
+  - **Règle absolue React Server Components (RSC) & Résolution définitive** :
+    - *Piège initial* : 14 des 15 pages de données sont des Server Components purs (SSR avec cookies Supabase Auth). Confier le dépliement de la carte mobile à un sous-composant Client Component (`"use client"`) recevant des fonctions de rendu en props (`title: (row) => ...`, `rowKey`) ou injecter des gestionnaires d'événements (`onClick={(ev) => ev.stopPropagation()}`) dans le JSX des Server Components viole les règles fondamentales de Next.js App Router et provoque un crash à l'exécution intercepté par `src/app/admin/error.tsx` (*"Une interruption inattendue est survenue"*).
+    - *Solution 100% Server Component* : [`DataTable.tsx`](src/components/admin/DataTable.tsx) intègre directement le rendu mobile via les balises HTML standard `<details name="table-mobile-card" className="group ...">` et `<summary className="list-none ...">`.
+    - *Accordéon exclusif natif* : L'attribut standard HTML5 `name="table-mobile-card"` garantit qu'ouvrir une carte referme automatiquement les autres, sans aucun état React client (`useState`) ni JavaScript additionnel.
+    - *Pivètement du chevron* via Tailwind `group-open:rotate-180 transition-transform duration-200` et fond déployé via `open:bg-gray-50/80`.
+    - *Séparation hermétique des zones de clic* : Le nom principal est un `<Link>` standard. Les boutons d'actions sont logés dans le corps du `<details>` en dehors du `<summary>`, ce qui garantit qu'un clic sur une modale, un lien ou une action n'entraîne aucune fermeture involontaire de la carte. Les lignes sans actions sont rendues en simple `<div>` statique sans chevron.
+    - *Rétrocompatibilité absolue* : La prop optionnelle `mobileCard?: MobileCardConfig<T>` permet d'activer ce mode sans toucher aux tables existantes qui conservent le fallback clé-valeur par défaut.
+  - **15 pages migrées et validées** :
+    1. *Élèves suspendus* (`eleves/suspendus`) : réinscription déployée au clic.
+    2. *Paiements à jour* (`paiements/a-jour` / `AJourTable`) : téléchargement direct quittance PDF.
+    3. *Paiements en retard* (`paiements/en-retard`) : filtres compactés en 2 colonnes (`grid-cols-2 sm:grid-cols-3`), bouton *Relancer WhatsApp* préservé en style `variant="outline"` sans surcouche verte.
+    4. *Historique des paiements* (`paiements/historique`) : montant préservé en format brut `${p.montant_paye} F`.
+    5. *Exonérations* (`paiements/exonerations`) : annulation d'exonération révélée au clic.
+    6. *Paiements supprimés* (`paiements/supprimes`) : consultation d'audit au clic.
+    7. *Récompenses du mois* (`recompenses`) : consultation historique au clic.
+    8. *Cumul des récompenses* (`recompenses/cumul`) : progression au clic.
+    9. *Suivi officiel des moyennes* (`notes/suivi-moyennes`) : registre officiel du coordonnateur (MS1, MS2, MA). La page de calcul dynamique temps réel multi-matières `/admin/notes/moyennes` reste **strictement intouchée**.
+    10. *Présences par classe* (`presences/historique/classe`) : carte statique compacte en lecture seule.
+    11. *Paramètres utilisateurs* (`parametres/utilisateurs`) : édition et activation/désactivation au clic.
+    12. *Actualités* (`actualites`) : édition et suppression au clic.
+    13. *Centre de notifications* (`notifications`) : filtres compactés, marquage comme lu direct.
+    14. *Comptabilité générale* (`comptabilite`) : pièces justificatives et détail au clic.
+    15. *Professeurs TD* (`td/coord/config/professeurs`) : édition et créneaux au clic.
 
 ## Architecture
 
@@ -215,7 +240,7 @@ Client-side, `useUserScope()` (`src/hooks/useUserScope.ts`) reads scope from `Sc
 - Interface is French-only (labels, messages, routes) — technical tokens like `MoMo` or subject codes are the only exception.
 - **Lexend is the single font sitewide** (admin, TD, portail parents, vitrine) — loaded once in `src/app/layout.tsx` (`--font-lexend` → Tailwind `font-sans`). Decided 2026-08-15. Before that: Inter sitewide by default with a vitrine-only Lexend override — and this doc used to claim a third, system-font treatment for admin/TD that never matched any actual code (caught by audit 2026-08-14).
 - Brand green `#12AA00` / `#0e8f00` gradient on primary buttons, page headers, and the admin sidebar; `#f6b40a` accent is vitrine-only.
-- Recurring admin patterns to follow when adding pages: gradient `PageHeader`, `ActionsBar` (icon+label buttons, label hidden on mobile), responsive `DataTable` (cards on mobile via `data-label`), `EmptyState`, colored pill `Badge`s — all already implemented in `src/components/admin/`.
+- Recurring admin patterns to follow when adding pages: gradient `PageHeader`, `ActionsBar` (icon+label buttons, label hidden on mobile), responsive `DataTable` (cartes interactives sur mobile via `mobileCard?: MobileCardConfig<T>` avec accordéon natif `<details>/<summary>`, fallback clé-valeur historique si absent), `EmptyState`, colored pill `Badge`s — all already implemented in `src/components/admin/`.
 - **Navigation responsive Admin** : Sur grand écran (`≥ lg`), sidebar desktop permanente de 280px. Sur mobile (`< lg`), la sidebar est 100% masquée au repos ; elle est déclenchée sous forme de tiroir coulissant (Drawer avec voile sombre et touche Échap) par le bouton Hamburger `[ ☰ ]` situé à gauche de la Topbar avec le Logo GSR (`AdminSidebarContext`). Toutes les icônes d'actions de la Topbar sont regroupées à droite (`ml-auto`) à côté du cercle « Mon compte ». Main content padding assoupli à `p-4 sm:p-6`.
 
 <!-- BEGIN:nextjs-agent-rules -->
