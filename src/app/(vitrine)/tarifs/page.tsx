@@ -161,7 +161,7 @@ export default function TarifsPage() {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#FFCC00] hover:bg-[#E5B800] text-gray-950 font-bold px-7 py-3.5 rounded-xl shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]"
             >
               <Phone className="w-4 h-4 text-gray-950 shrink-0" />
-              <span>Appeler MTN</span>
+              <span>Appeler (MTN)</span>
             </a>
             <a
               href="tel:+2290149761635"
@@ -170,7 +170,7 @@ export default function TarifsPage() {
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#1C3B72] hover:bg-[#152E59] text-white font-bold px-7 py-3.5 rounded-xl shadow-md shadow-blue-950/20 hover:shadow-lg hover:shadow-blue-950/30 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]"
             >
               <Phone className="w-4 h-4 text-white shrink-0" />
-              <span>Appeler Celtiis</span>
+              <span>Appeler (Celtiis)</span>
             </a>
           </div>
         </section>
