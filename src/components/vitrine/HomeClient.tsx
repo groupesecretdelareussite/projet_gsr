@@ -419,7 +419,7 @@ export default function HomeClient() {
         </div>
       </section>
 
-      {/* Témoignages Section */}
+      {/* ── Section Témoignages (En attente de vraies données) ──
       <section className="py-24 bg-gray-50 border-y border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -448,8 +448,9 @@ export default function HomeClient() {
           </div>
         </div>
       </section>
+      */}
 
-      {/* Video Section */}
+      {/* ── Section Vidéo (En attente de vraies données) ──
       <section className="py-24 bg-surface max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-12">Découvrez notre groupe en vidéo</h2>
         <div className="relative rounded-2xl overflow-hidden shadow-xl aspect-video group cursor-pointer border border-gray-100">
@@ -461,6 +462,7 @@ export default function HomeClient() {
           </div>
         </div>
       </section>
+      */}
 
       {/* CTA Section */}
       <section className="py-20 bg-surface">
@@ -473,31 +475,23 @@ export default function HomeClient() {
             {/* Bouton MTN */}
             <a
               href="tel:+2290196084067"
-              className="w-full sm:w-auto bg-[#0b2a10] hover:bg-[#061e0b] text-white border border-amber-400/40 px-6 py-3.5 rounded-xl font-semibold inline-flex items-center justify-between sm:justify-start gap-4 transition-all hover:scale-[1.02] shadow-md shadow-emerald-950/20 group"
+              title="Appeler MTN (+229 01 96 08 40 67)"
+              aria-label="Appeler via MTN (+229 01 96 08 40 67)"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#FFCC00] hover:bg-[#E5B800] text-gray-950 font-bold px-7 py-3.5 rounded-xl shadow-md shadow-amber-500/20 hover:shadow-lg hover:shadow-amber-500/30 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]"
             >
-              <span className="flex items-center gap-2.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 group-hover:scale-125 transition-transform" />
-                <span className="text-sm font-bold">Appeler MTN</span>
-              </span>
-              <span className="text-xs font-mono text-amber-300 bg-white/10 px-2 py-0.5 rounded">
-                01 96 08 40 67
-              </span>
-              <Phone className="w-4 h-4 text-amber-400 shrink-0" />
+              <Phone className="w-4 h-4 text-gray-950 shrink-0" />
+              <span>Appeler MTN</span>
             </a>
 
             {/* Bouton Celtiis */}
             <a
               href="tel:+2290149761635"
-              className="w-full sm:w-auto bg-[#0b2a10] hover:bg-[#061e0b] text-white border border-sky-400/40 px-6 py-3.5 rounded-xl font-semibold inline-flex items-center justify-between sm:justify-start gap-4 transition-all hover:scale-[1.02] shadow-md shadow-emerald-950/20 group"
+              title="Appeler Celtiis (+229 01 49 76 16 35)"
+              aria-label="Appeler via Celtiis (+229 01 49 76 16 35)"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-[#1C3B72] hover:bg-[#152E59] text-white font-bold px-7 py-3.5 rounded-xl shadow-md shadow-blue-950/20 hover:shadow-lg hover:shadow-blue-950/30 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.98]"
             >
-              <span className="flex items-center gap-2.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-400 group-hover:scale-125 transition-transform" />
-                <span className="text-sm font-bold">Appeler Celtiis</span>
-              </span>
-              <span className="text-xs font-mono text-sky-300 bg-white/10 px-2 py-0.5 rounded">
-                01 49 76 16 35
-              </span>
-              <Phone className="w-4 h-4 text-sky-400 shrink-0" />
+              <Phone className="w-4 h-4 text-white shrink-0" />
+              <span>Appeler Celtiis</span>
             </a>
           </div>
         </div>

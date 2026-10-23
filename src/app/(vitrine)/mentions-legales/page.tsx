@@ -80,37 +80,10 @@ export default function MentionsLegalesPage() {
               </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
-                1.2 Hébergement technique
-              </h3>
-              <p className="mb-2 text-gray-700">
-                Le site web et les services en ligne sont hébergés par :
-              </p>
-              <div className="pl-4 sm:pl-6 space-y-1 text-gray-700 border-l-2 border-gray-200 mb-3">
-                <p className="font-semibold text-gray-900">Vercel Inc.</p>
-                <p className="text-sm">440 N Barranca Ave #4133, Covina, CA 91723, États-Unis</p>
-                <p className="text-sm">
-                  Site web :{" "}
-                  <a
-                    href="https://vercel.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    vercel.com
-                  </a>
-                </p>
-              </div>
-              <p className="text-xs text-gray-500">
-                La base de données et les mécanismes de gestion d’authentification sécurisée sont administrés sur une
-                infrastructure cloud opérée avec Supabase, disposant de sauvegardes automatiques et d&apos;un chiffrement de pointe.
-              </p>
-            </div>
 
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                1.3 Propriété intellectuelle et droits d&apos;auteur
+                1.2 Propriété intellectuelle et droits d&apos;auteur
               </h3>
               <p className="mb-2 text-gray-700">
                 L&apos;ensemble des contenus présents sur ce site (structure générale, textes, logos, emblèmes, graphismes,
@@ -127,7 +100,7 @@ export default function MentionsLegalesPage() {
 
             <div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">
-                1.4 Liens hypertextes et limitation de responsabilité
+                1.3 Liens hypertextes et limitation de responsabilité
               </h3>
               <p className="mb-2 text-gray-700">
                 Le site <span className="font-semibold text-gray-900">groupe-secretdelareussite.com</span> peut proposer des

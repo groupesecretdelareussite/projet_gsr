@@ -72,7 +72,7 @@ export default function RecrutementProfModal() {
 
           <div className="relative z-10 pr-10">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-emerald-100 text-xs font-semibold uppercase tracking-wider backdrop-blur-sm mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <p></p>
               <span>Recrutement</span>
             </div>
 
@@ -108,7 +108,7 @@ export default function RecrutementProfModal() {
             Vous êtes enseignant du secondaire ? Vous souhaitez accompagner nos élèves vers l&apos;excellence ?
           </p>
 
-          <div className="bg-emerald-50/70 border border-emerald-100 rounded-2xl p-4 space-y-2.5">
+          <div className=" border border-emerald-100 rounded-2xl p-4 space-y-2.5">
             <div className="flex items-center gap-2.5 text-xs sm:text-sm text-gray-700">
               <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
               <span>Matières scientifiques et littéraires</span>
