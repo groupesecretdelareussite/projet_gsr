@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { ChevronDown } from "lucide-react";
+import { PageHeader } from "@/components/vitrine/PageHeader";
 
 const STORAGE_GALERIE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie/vitrine/galerie`;
 
@@ -114,16 +115,14 @@ export default function GalerieClient() {
 
   return (
     <div>
-      {/* ── Header ── */}
-      <div className="bg-white py-12 text-center px-4 border-b border-gray-100">
-        <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-3">
-          Notre Galerie Photos
-        </h1>
-        <p className="text-gray-500 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-          Découvrez l'environnement stimulant et les moments marquants de la vie à
-          GSR. Une plongée visuelle dans notre quotidien éducatif.
-        </p>
-      </div>
+      {/* ── Page Header Harmonisé ── */}
+      <PageHeader
+        title="Notre Galerie Photos"
+        description="Découvrez l'environnement stimulant et les moments marquants de la vie à GSR. Une plongée visuelle dans notre quotidien éducatif."
+        breadcrumb={[{ label: "Galerie" }]}
+        align="center"
+        maxWidth="max-w-4xl"
+      />
 
       {/* ── Contenu ── */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-10">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import { Target, Award, BookOpen, Users, Shield } from "lucide-react";
+import { PageHeader } from "@/components/vitrine/PageHeader";
 
 /** Images dédiées à la page À propos, hébergées dans le bucket public "galerie" (dossier vitrine/apropos), remplace public/images. */
 const STORAGE_APROPOS = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie/vitrine/apropos`;
@@ -20,31 +21,14 @@ export const metadata: Metadata = {
 export default function AProposPage() {
   return (
     <div>
-      {/* ── Hero Header ── */}
-      <div
-        className="relative overflow-hidden py-24 sm:py-32 flex flex-col items-center justify-center text-center px-4"
-        style={{ background: "linear-gradient(110deg, #05330f 20%, #0a5c10 60%, #12aa00 100%)" }}
-      >
-        {/* Overlay image floue en fond */}
-        <div className="absolute inset-0 opacity-10">
-          <Image
-            src={`${STORAGE_APROPOS}/img_hero_apropos.jpg`}
-            alt=""
-            fill
-            sizes="100vw"
-            className="object-cover"
-          />
-        </div>
-        <div className="relative z-10 max-w-3xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold text-white mb-4">
-            À Propos de Nous
-          </h1>
-          <p className="text-white/90 text-sm sm:text-base lg:text-lg leading-relaxed max-w-2xl mx-auto">
-            L'excellence académique au service de la réussite de chaque élève, bâtie
-            sur la méthode, la rigueur, la discipline et l'innovation pédagogique.
-          </p>
-        </div>
-      </div>
+      {/* ── Page Header Harmonisé ── */}
+      <PageHeader
+        title="À Propos de Nous"
+        description="L'excellence académique au service de la réussite de chaque élève, bâtie sur la méthode, la rigueur, la discipline et l'innovation pédagogique."
+        breadcrumb={[{ label: "À propos" }]}
+        align="center"
+        maxWidth="max-w-4xl"
+      />
 
       {/* ── Notre Histoire ── */}
       <section className="py-20 bg-white">

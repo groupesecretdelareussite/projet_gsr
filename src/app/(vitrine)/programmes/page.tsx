@@ -4,6 +4,7 @@ import { BookOpen, Calendar, GraduationCap, LogIn, MapPin, ShieldCheck } from "l
 import { createClient } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 import { TelechargerProgrammeStaffButton } from "@/components/td/TelechargerProgrammeStaffButton";
+import { PageHeader } from "@/components/vitrine/PageHeader";
 import {
   regrouperEtTrierCreneauxParClasse,
   type ClasseMetadata,
@@ -116,20 +117,12 @@ export default async function ProgrammesPage(props: { searchParams: Promise<{ si
 
   return (
     <div>
-      {/* ── Page Header ── */}
-      <div
-        className="px-6 py-12 md:py-16"
-        style={{ background: "linear-gradient(110deg, #05330f 20%, #0a5c10 60%, #12aa00 100%)" }}
-      >
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-2">
-            Nos Programmes de TD
-          </h1>
-          <p className="text-white text-sm sm:text-base">
-            Le planning hebdomadaire réel, publié par nos coordonnateurs
-          </p>
-        </div>
-      </div>
+      {/* ── Page Header Harmonisé ── */}
+      <PageHeader
+        title="Nos Programmes de TD"
+        description="Le planning hebdomadaire publié"
+        breadcrumb={[{ label: "Programmes" }]}
+      />
 
       {/* ── Contenu principal ── */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
@@ -265,10 +258,7 @@ export default async function ProgrammesPage(props: { searchParams: Promise<{ si
 
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="max-w-2xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-3 border border-white/10">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-                  Espace Réservé au Personnel Staff
-                </div>
+                
                 <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
                   Programme Officiel &amp; Attribution des Professeurs
                 </h3>
@@ -277,14 +267,14 @@ export default async function ProgrammesPage(props: { searchParams: Promise<{ si
                     Connecté en tant que <strong className="text-white">{staffProfile?.username}</strong> (
                     {staffRoleLabel}
                     {staffNomSite ? ` — Site ${staffNomSite}` : ""}). Vous pouvez télécharger la
-                    feuille de route hebdomadaire complète au format paysage avec les coordonnées
+                    feuille de route hebdomadaire complète avec les coordonnées
                     directes des professeurs pour chaque séance.
                   </p>
                 ) : (
                   <p className="text-white/80 text-sm leading-relaxed">
                     Vous êtes Chef de site ou membre de l&apos;équipe GSR ? Connectez-vous avec vos
-                    identifiants pour télécharger la feuille de route hebdomadaire complète (PDF
-                    paysage) avec la liste des professeurs attribués à chaque créneau.
+                    identifiants pour télécharger la feuille de route hebdomadaire complète
+                    avec la liste des professeurs attribués à chaque créneau.
                   </p>
                 )}
               </div>
@@ -305,8 +295,8 @@ export default async function ProgrammesPage(props: { searchParams: Promise<{ si
             </div>
 
             <div className="mt-6 pt-4 border-t border-white/10 text-[11px] text-white/60 flex flex-wrap items-center justify-between gap-2">
-              <span>Document administratif confidentiel réservé à l&apos;encadrement GSR.</span>
-              <span>Format Paysage (A4) · Tableau par jour · Scoping sécurisé par site</span>
+              <span>Document administratif confidentiel réservé.</span>
+            
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { MapPin, Phone, Calendar, Map } from "lucide-react";
 import { CarteSites } from "@/components/vitrine/CarteSites";
+import { PageHeader } from "@/components/vitrine/PageHeader";
 
 /** Photos dédiées par site, hébergées dans le bucket public "galerie" (dossier vitrine/sites), remplace public/images. */
 const STORAGE_SITES = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/galerie/vitrine/sites`;
@@ -51,21 +52,13 @@ const SITES = [
 export default function SitesPage() {
   return (
     <div>
-      {/* ── Hero Header ── */}
-      <div
-        className="py-16 sm:py-20 px-4"
-        style={{ background: "linear-gradient(135deg, #12AA00, #0e8f00)" }}
-      >
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Nos Sites au Bénin
-          </h1>
-          <p className="text-white/90 text-sm sm:text-base max-w-2xl leading-relaxed">
-            Retrouvez-nous dans nos différents centres d&apos;excellence à travers le pays.
-            Chaque site offre un environnement d&apos;apprentissage premium et sécurisé.
-          </p>
-        </div>
-      </div>
+      {/* ── Page Header Harmonisé ── */}
+      <PageHeader
+        title="Nos Sites au Bénin"
+        description="Retrouvez-nous dans nos différents centres d'excellence à Cotonou. Chaque site offre un environnement d'apprentissage premium et sécurisé."
+        breadcrumb={[{ label: "Sites" }]}
+        maxWidth="max-w-6xl"
+      />
 
       {/* ── Cartes des sites ── */}
       <section className="py-16 px-4">

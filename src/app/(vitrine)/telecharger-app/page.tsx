@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Download, ShieldCheck } from "lucide-react";
+import { PageHeader } from "@/components/vitrine/PageHeader";
 
 export const metadata = {
   title: "Télécharger l'application mobile GSR Staff & Enseignants",
@@ -9,17 +10,17 @@ export const metadata = {
 
 export default function TelechargerAppPage() {
   return (
-    <div className="bg-slate-50 min-h-screen py-16">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* En-tête */}
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
-            Application Mobile GSR
-          </h1>
-          <p className="mt-3 text-lg text-slate-600 max-w-2xl mx-auto">
-            Portail dédié au personnel administratif (coordonnateurs, superviseurs, chefs de site) et aux enseignants TD.
-          </p>
-        </div>
+    <div className="bg-slate-50 min-h-screen pb-16">
+      {/* ── Page Header Harmonisé ── */}
+      <PageHeader
+        title="Application Mobile GSR"
+        description="Portail dédié au personnel administratif (coordonnateurs, superviseurs, chefs de site) et aux enseignants TD."
+        breadcrumb={[{ label: "Application Staff" }]}
+        align="center"
+        maxWidth="max-w-3xl"
+      />
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
 
         {/* Carte Téléchargement Principal */}
         <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-xl mb-12 relative overflow-hidden">

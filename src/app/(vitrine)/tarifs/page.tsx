@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen, CheckCircle, Trophy, Home, Gift, CalendarClock, Phone, ChevronRight } from "lucide-react";
+import { PageHeader } from "@/components/vitrine/PageHeader";
 
 export const metadata: Metadata = {
   title: "Tarifs des cours de soutien scolaire | GSR Bénin",
@@ -60,20 +61,12 @@ function TarifTable({ data }: { data: { classes: string; montant: string }[] }) 
 export default function TarifsPage() {
   return (
     <div>
-      {/* ── Hero Header ── */}
-      <div
-        className="py-16 sm:py-20 px-4"
-        style={{ background: "linear-gradient(110deg, #05330f 20%, #0a5c10 60%, #12aa00 100%)" }}
-      >
-        <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-            Nos Tarifs
-          </h1>
-          <p className="text-white/90 text-sm sm:text-base max-w-2xl leading-relaxed">
-            Une grille tarifaire claire pour chacune de nos prestations, adaptée à chaque classe.
-          </p>
-        </div>
-      </div>
+      {/* ── Page Header Harmonisé ── */}
+      <PageHeader
+        title="Nos Tarifs"
+        description="Une grille tarifaire claire et transparente pour chacune de nos prestations, adaptée à chaque classe."
+        breadcrumb={[{ label: "Tarifs" }]}
+      />
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 space-y-16">
         {/* ── Cours Intensifs Préparatoires ── */}

@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ChevronRight, Play, BookOpen, Users, Trophy, ChevronDown, CheckCircle, Phone } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import RecrutementProfModal from "@/components/vitrine/RecrutementProfModal";
 
 /** Images de la page d'accueil hébergées dans le bucket public "galerie" (dossier vitrine/accueil), remplace public/images. */
@@ -54,12 +54,13 @@ const PRESTATIONS = [
   },
 ];
 
-function Counter({ value, suffix="" }: { value: number; suffix?: string }) {
+function Counter({ value, suffix="", trigger = true }: { value: number; suffix?: string; trigger?: boolean }) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    if (!trigger) return;
     let start = 0;
-    const duration = 2500;
+    const duration = 2200;
     const increment = value / (duration / 16);
 
     const timer = setInterval(() => {
@@ -73,7 +74,7 @@ function Counter({ value, suffix="" }: { value: number; suffix?: string }) {
     }, 16);
 
     return () => clearInterval(timer);
-  }, [value]);
+  }, [value, trigger]);
 
   return (
     <span>
@@ -84,6 +85,23 @@ function Counter({ value, suffix="" }: { value: number; suffix?: string }) {
 
 export default function HomeClient() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+  const [statsVisible, setStatsVisible] = useState(false);
+  const statsRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!statsRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setStatsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.2 }
+    );
+    observer.observe(statsRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Image unique : l'élève en jaune (img_accueil_4.png)
   const heroImage = `${STORAGE_ACCUEIL}/img_accueil_4.png`;
@@ -187,18 +205,13 @@ export default function HomeClient() {
                   style={{ transform: "rotate(-8deg)" }}
                 />
 
-                {/* Badge Flottant 1 : Mathématiques (Jaune, haut-gauche de la tête) */}
-                <div
-                  className="absolute top-16 sm:top-20 lg:top-22 left-4 sm:left-8 lg:left-2 z-20 px-2.5 py-1 rounded-lg bg-[#f6b40a] text-gray-950 text-[11px] sm:text-xs font-bold shadow-md shadow-amber-500/20 border border-amber-300/50 transform -rotate-6 hover:scale-105 transition-transform"
-                >
-                  Mathématiques
-                </div>
+                
 
                 {/* Badge Flottant 2 : PCT (Bleu Cyan, haut-droite de la tête) */}
                 <div
                   className="absolute top-20 sm:top-24 lg:top-26 right-4 sm:right-8 lg:right-2 z-20 px-2.5 py-1 rounded-lg bg-sky-400 text-slate-950 text-[11px] sm:text-xs font-bold shadow-md shadow-sky-500/20 border border-sky-300/50 transform rotate-3 hover:scale-105 transition-transform"
                 >
-                  PCT
+                  Coaching
                 </div>
 
                 {/* Badge Flottant 3 : BEPC & BAC (Vert Menthe, gauche épaule) */}
@@ -241,19 +254,19 @@ export default function HomeClient() {
         </div>
       </section>
 
-      {/* Bandeau Statistiques — Couleur exacte du footer (bg-dark) */}
-      <section className="bg-dark border-y border-white/10 text-white py-8 lg:py-10">
+      {/* Bandeau Statistiques — Déclenché au scroll & icônes raffinées (bg-dark) */}
+      <section ref={statsRef} className="bg-dark border-y border-white/10 text-white py-8 lg:py-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 md:divide-x md:divide-white/10">
             
             {/* Stat 1 : Années d'expérience */}
             <div className="flex items-center gap-4 text-left md:justify-center md:text-center md:flex-col md:gap-2">
-              <div className="w-12 h-12 rounded-xl  border border-white/15 flex items-center justify-center text-[#f6b40a] shrink-0">
+              <div className="w-12 h-12 rounded-xl  border border-[#f6b40a]/30 shadow-md shadow-amber-500/10 flex items-center justify-center text-[#f6b40a] shrink-0">
                 <BookOpen className="w-6 h-6" />
               </div>
               <div className="space-y-0.5">
                 <div className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
-                  <Counter value={5} suffix="+" />
+                  <Counter value={5} suffix="+" trigger={statsVisible} />
                 </div>
                 <p className="text-emerald-200/80 text-xs sm:text-sm font-medium">
                   Années d&apos;expérience
@@ -263,12 +276,12 @@ export default function HomeClient() {
 
             {/* Stat 2 : Élèves formés en 2025 */}
             <div className="flex items-center gap-4 text-left md:justify-center md:text-center md:flex-col md:gap-2 md:pl-8">
-              <div className="w-12 h-12 rounded-xl  border border-white/15 flex items-center justify-center text-[#f6b40a] shrink-0">
+              <div className="w-12 h-12 rounded-xl border border-[#f6b40a]/30 shadow-md shadow-amber-500/10 flex items-center justify-center text-[#f6b40a] shrink-0">
                 <Users className="w-6 h-6" />
               </div>
               <div className="space-y-0.5">
                 <div className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
-                  <Counter value={800} suffix="+" />
+                  <Counter value={800} suffix="+" trigger={statsVisible} />
                 </div>
                 <p className="text-emerald-200/80 text-xs sm:text-sm font-medium">
                   Élèves formés en 2025
@@ -278,12 +291,12 @@ export default function HomeClient() {
 
             {/* Stat 3 : Taux de réussite en 2025 */}
             <div className="flex items-center gap-4 text-left md:justify-center md:text-center md:flex-col md:gap-2 md:pl-8">
-              <div className="w-12 h-12 rounded-xl  border border-white/15 flex items-center justify-center text-[#f6b40a] shrink-0">
+              <div className="w-12 h-12 rounded-xl border border-[#f6b40a]/30 shadow-md shadow-amber-500/10 flex items-center justify-center text-[#f6b40a] shrink-0">
                 <Trophy className="w-6 h-6" />
               </div>
               <div className="space-y-0.5">
-                <div className="text-3xl lg:text-4xl font-extrabold text-[#f6b40a] tracking-tight">
-                  <Counter value={86} suffix="%" />
+                <div className="text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
+                  <Counter value={86} suffix="%" trigger={statsVisible} />
                 </div>
                 <p className="text-emerald-200/80 text-xs sm:text-sm font-medium">
                   Taux de Réussite en 2025
@@ -456,20 +469,35 @@ export default function HomeClient() {
           <p className="text-gray-600 mb-10 max-w-2xl mx-auto leading-relaxed">
             Nous vous mettons en relation avec des répétiteurs qualifiés, rigoureusement sélectionnés pour répondre aux besoins spécifiques de votre enfant à domicile.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4">
+            {/* Bouton MTN */}
             <a
               href="tel:+2290196084067"
-              className="bg-dark text-white hover:bg-dark/90 px-8 py-3 rounded-md font-medium inline-flex items-center gap-2 transition-colors shadow-md"
+              className="w-full sm:w-auto bg-[#0b2a10] hover:bg-[#061e0b] text-white border border-amber-400/40 px-6 py-3.5 rounded-xl font-semibold inline-flex items-center justify-between sm:justify-start gap-4 transition-all hover:scale-[1.02] shadow-md shadow-emerald-950/20 group"
             >
-              <Phone className="w-5 h-5" />
-              Appeler MTN
+              <span className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 group-hover:scale-125 transition-transform" />
+                <span className="text-sm font-bold">Appeler MTN</span>
+              </span>
+              <span className="text-xs font-mono text-amber-300 bg-white/10 px-2 py-0.5 rounded">
+                01 96 08 40 67
+              </span>
+              <Phone className="w-4 h-4 text-amber-400 shrink-0" />
             </a>
+
+            {/* Bouton Celtiis */}
             <a
               href="tel:+2290149761635"
-              className="bg-dark text-white hover:bg-dark/90 px-8 py-3 rounded-md font-medium inline-flex items-center gap-2 transition-colors shadow-md"
+              className="w-full sm:w-auto bg-[#0b2a10] hover:bg-[#061e0b] text-white border border-sky-400/40 px-6 py-3.5 rounded-xl font-semibold inline-flex items-center justify-between sm:justify-start gap-4 transition-all hover:scale-[1.02] shadow-md shadow-emerald-950/20 group"
             >
-              <Phone className="w-5 h-5" />
-              Appeler Celtiis
+              <span className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-sky-400 group-hover:scale-125 transition-transform" />
+                <span className="text-sm font-bold">Appeler Celtiis</span>
+              </span>
+              <span className="text-xs font-mono text-sky-300 bg-white/10 px-2 py-0.5 rounded">
+                01 49 76 16 35
+              </span>
+              <Phone className="w-4 h-4 text-sky-400 shrink-0" />
             </a>
           </div>
         </div>
@@ -483,25 +511,44 @@ export default function HomeClient() {
           </div>
 
           <div className="space-y-4">
-            {faqs.map((faq, index) => (
-              <div
-                key={index}
-                className={`bg-white border rounded-lg overflow-hidden transition-colors shadow-sm ${openFaq === index ? 'border-gray-300 ring-1 ring-gray-300' : 'border-gray-200'}`}
-              >
-                <button
-                  className="w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none"
-                  onClick={() => setOpenFaq(openFaq === index ? null : index)}
+            {faqs.map((faq, index) => {
+              const isOpen = openFaq === index;
+              return (
+                <div
+                  key={index}
+                  className={`bg-white border rounded-xl overflow-hidden transition-all shadow-xs ${
+                    isOpen ? 'border-primary/40 ring-1 ring-primary/20 shadow-sm' : 'border-gray-200 hover:border-gray-300'
+                  }`}
                 >
-                  <span className="font-semibold text-gray-800">{faq.q}</span>
-                  <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${openFaq === index ? 'rotate-180 text-gray-800' : ''}`} />
-                </button>
-                {openFaq === index && (
-                  <div className="px-6 pb-5 text-gray-600 text-sm leading-relaxed border-t border-gray-100 pt-4 mt-2">
-                    <p>{faq.a}</p>
+                  <button
+                    type="button"
+                    className="w-full px-6 py-5 text-left flex justify-between items-center focus:outline-none transition-colors"
+                    onClick={() => setOpenFaq(isOpen ? null : index)}
+                    aria-expanded={isOpen}
+                  >
+                    <span className={`font-semibold text-base transition-colors ${isOpen ? 'text-primary' : 'text-gray-800'}`}>
+                      {faq.q}
+                    </span>
+                    <ChevronDown
+                      className={`w-5 h-5 transition-transform duration-300 shrink-0 ml-3 ${
+                        isOpen ? 'rotate-180 text-primary' : 'text-gray-400'
+                      }`}
+                    />
+                  </button>
+                  <div
+                    className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+                      isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
+                    }`}
+                  >
+                    <div className="overflow-hidden">
+                      <div className="px-6 pb-5 text-gray-600 text-sm sm:text-base leading-relaxed border-t border-gray-100/80 pt-4">
+                        <p>{faq.a}</p>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -37,31 +37,35 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-6">Liens utiles</h3>
             <ul className="space-y-4">
               <li>
-                <Link href="/" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Accueil
+                <Link href="/" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2.5 group">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:bg-amber-300 group-hover:scale-125 transition-all"></span>
+                  <span className="transition-transform duration-200 group-hover:translate-x-1">Accueil</span>
                 </Link>
               </li>
               <li>
-                <Link href="/programmes" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Programmes
+                <Link href="/programmes" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2.5 group">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:bg-amber-300 group-hover:scale-125 transition-all"></span>
+                  <span className="transition-transform duration-200 group-hover:translate-x-1">Programmes</span>
                 </Link>
               </li>
               <li>
-                <Link href="/portail-parents" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Portail parents
+                <Link href="/portail-parents" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2.5 group">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:bg-amber-300 group-hover:scale-125 transition-all"></span>
+                  <span className="transition-transform duration-200 group-hover:translate-x-1">Portail parents</span>
                 </Link>
               </li>
               <li>
-                <Link href="/telecharger-app" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Application Mobile Staff
+                <Link href="/telecharger-app" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2.5 group">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:bg-amber-300 group-hover:scale-125 transition-all"></span>
+                  <span className="transition-transform duration-200 group-hover:translate-x-1">Application Mobile Staff</span>
                 </Link>
               </li>
               <li>
-                <Link href="/mentions-legales" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Mentions légales & Confidentialité
+                <Link href="/mentions-legales" className="text-gray-300 hover:text-white transition-colors flex items-center gap-2.5 group">
+                  <span className="w-1.5 h-1.5 rounded-full bg-secondary group-hover:bg-amber-300 group-hover:scale-125 transition-all"></span>
+                  <span className="transition-transform duration-200 group-hover:translate-x-1">Mentions légales &amp; Confidentialité</span>
                 </Link>
               </li>
-              
             </ul>
           </div>
 

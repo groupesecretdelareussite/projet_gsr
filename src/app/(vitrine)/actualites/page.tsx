@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import type { Article, Categorie } from "@/lib/actualites";
 import { ActualitesContent } from "@/components/vitrine/ActualitesContent";
+import { PageHeader } from "@/components/vitrine/PageHeader";
 
 export const metadata: Metadata = {
   title: "Actualités et vie scolaire | Groupe Secret de la Réussite",
@@ -58,15 +59,17 @@ export default async function ActualitesPage() {
   const autresArticles = autresRows.map(versArticle);
 
   return (
-    <div className="bg-gray-50/50 min-h-screen py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-4 tracking-tight">Actualités & Événements</h1>
-          <p className="text-gray-600 text-sm sm:text-base leading-relaxed">
-            Restez informé de la vie scolaire, des événements marquants et des réussites de notre communauté éducative. Découvrez les dernières nouvelles du GSR.
-          </p>
-        </div>
+    <div className="bg-gray-50/50 min-h-screen pb-16">
+      {/* ── Page Header Harmonisé ── */}
+      <PageHeader
+        title="Actualités & Événements"
+        description="Restez informé de la vie scolaire, des événements marquants et des réussites de notre communauté éducative. Découvrez les dernières nouvelles du GSR."
+        breadcrumb={[{ label: "Actualités" }]}
+        align="center"
+        maxWidth="max-w-4xl"
+      />
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
         <ActualitesContent aLaUne={aLaUne} autresArticles={autresArticles} />
       </div>
     </div>

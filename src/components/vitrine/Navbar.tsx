@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { ShieldCheck } from "lucide-react";
 
 const navLinks = [
   { name: "Accueil", href: "/" },
@@ -20,7 +21,7 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-100 shadow-sm">
+    <nav className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-xs transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -50,9 +51,10 @@ export default function Navbar() {
           <div className="hidden md:flex items-center">
             <Link
               href="/admin/login"
-              className="inline-flex items-center justify-center px-6 py-2 border border-primary text-sm font-medium rounded-md text-primary bg-white hover:bg-primary/5 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-primary/25 bg-primary/5 hover:bg-primary hover:text-white text-primary text-sm font-semibold transition-all duration-200 shadow-xs hover:shadow-md hover:scale-[1.02]"
             >
-              Espace Staff
+              <ShieldCheck className="w-4 h-4" />
+              <span>Espace Staff</span>
             </Link>
           </div>
 
@@ -107,10 +109,11 @@ export default function Navbar() {
             ))}
             <Link
               href="/admin/login"
-              className="block w-full mt-4 text-center px-3 py-2 rounded-md text-base font-medium border border-primary text-primary hover:bg-primary/5"
+              className="flex items-center justify-center gap-2 w-full mt-4 text-center px-4 py-2.5 rounded-xl text-base font-semibold border border-primary/25 bg-primary/5 text-primary hover:bg-primary hover:text-white transition-colors"
               onClick={() => setIsMobileMenuOpen(false)}
             >
-              Espace Staff
+              <ShieldCheck className="w-5 h-5" />
+              <span>Espace Staff</span>
             </Link>
           </div>
         </div>
