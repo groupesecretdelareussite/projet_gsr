@@ -29,6 +29,10 @@ function LoginForm() {
         setError(result.error);
         return;
       }
+      if (result.requireMfa) {
+        router.push("/admin/verifier-2fa");
+        return;
+      }
       const rawRedirect = searchParams.get("redirect");
       // Protection anti open-redirect : doit commencer par / et ne pas commencer par //
       const destination =

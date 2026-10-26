@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { NouvelUtilisateurDialog } from "@/components/admin/parametres/NouvelUtilisateurDialog";
 import { ModifierUtilisateurDialog } from "@/components/admin/parametres/ModifierUtilisateurDialog";
 import { ReinitialiserMotDePasseDialog } from "@/components/admin/parametres/ReinitialiserMotDePasseDialog";
+import { ReinitialiserMfaDialog } from "@/components/admin/parametres/ReinitialiserMfaDialog";
 import { DesactiverUtilisateurButton } from "@/components/admin/parametres/DesactiverUtilisateurButton";
 import { SupprimerUtilisateurDialog } from "@/components/admin/parametres/SupprimerUtilisateurDialog";
 import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
@@ -95,6 +96,7 @@ export default async function UtilisateursPage() {
             estSoiMeme={u.id === scope.userId}
           />
           <ReinitialiserMotDePasseDialog userId={u.id} username={u.username} />
+          {u.id !== scope.userId && <ReinitialiserMfaDialog userId={u.id} username={u.username} />}
           {u.id !== scope.userId && <DesactiverUtilisateurButton userId={u.id} username={u.username} actif={u.actif} />}
           {u.id !== scope.userId && <SupprimerUtilisateurDialog userId={u.id} username={u.username} />}
         </div>
@@ -137,6 +139,7 @@ export default async function UtilisateursPage() {
           estSoiMeme={u.id === scope.userId}
         />
         <ReinitialiserMotDePasseDialog userId={u.id} username={u.username} />
+        {u.id !== scope.userId && <ReinitialiserMfaDialog userId={u.id} username={u.username} />}
         {u.id !== scope.userId && <DesactiverUtilisateurButton userId={u.id} username={u.username} actif={u.actif} />}
         {u.id !== scope.userId && <SupprimerUtilisateurDialog userId={u.id} username={u.username} />}
       </div>

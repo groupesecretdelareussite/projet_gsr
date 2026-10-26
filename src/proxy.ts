@@ -52,6 +52,7 @@ export async function proxy(request: NextRequest) {
 
   const aActiviteValide = Boolean(request.cookies.get(ADMIN_ACTIVITY_COOKIE));
   const isLoginPage = request.nextUrl.pathname === "/admin/login";
+  const isVerifier2faPage = request.nextUrl.pathname === "/admin/verifier-2fa";
   const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
 
   // Routes accessibles sans session Supabase Auth : connexion + flux "mot de
@@ -67,11 +68,16 @@ export async function proxy(request: NextRequest) {
     return redirectResponse;
   }
 
-  if (user && isLoginPage) {
+  if (user && (isLoginPage || isVerifier2faPage)) {
     if (aActiviteValide) {
       return NextResponse.redirect(new URL("/admin/tableau-de-bord", request.url));
     }
-    // Session Supabase résiduelle mais cookie d'activité absent (inactivité 20 min ou déconnexion) :
+    // Si sur /admin/verifier-2fa avec un utilisateur connecté mais sans cookie d'activité :
+    // C'est l'état attendu pendant le challenge 2FA. Laisser afficher l'écran sans purger.
+    if (isVerifier2faPage) {
+      return response;
+    }
+    // Session Supabase résiduelle sur login mais cookie d'activité absent (inactivité 20 min ou déconnexion) :
     // Ne JAMAIS rediriger vers /admin/tableau-de-bord pour éviter la boucle infinie (ERR_TOO_MANY_REDIRECTS).
     // Purger les cookies obsolètes et laisser afficher l'écran de connexion.
     purgerCookiesSession(response, request);
@@ -112,7 +118,9 @@ export async function proxy(request: NextRequest) {
   // évite de casser ce flux, sans rouvrir l'accès sans session (déjà garanti
   // par la vérification !user && isAdminRoute ci-dessus).
   const isRouteExempteeInactivite =
-    isRoutePubliqueAdmin || request.nextUrl.pathname === "/admin/reinitialiser-mot-de-passe";
+    isRoutePubliqueAdmin ||
+    isVerifier2faPage ||
+    request.nextUrl.pathname === "/admin/reinitialiser-mot-de-passe";
   const routeProtegeeParInactivite = (isAdminRoute && !isRouteExempteeInactivite) || isTdCoordRoute;
 
   if (user && routeProtegeeParInactivite && !aActiviteValide) {

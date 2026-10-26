@@ -21,13 +21,20 @@ function getAppBaseUrl(): string {
     : "http://localhost:3000";
 }
 
+import {
+  genererLotCodesSecours,
+  hacherCodeSecours,
+  verifierCodeSecoursHash,
+} from "@/lib/mfa";
+
 /**
  * §5.1 GSR_ARCHITECTURE.md — l'écran /admin/login ne demande que
  * username + mot de passe. Supabase Auth ne connaît que l'email : on résout
  * d'abord l'email associé via le client service role (RLS interdit toute
  * lecture non authentifiée sur `users`), puis on authentifie normalement.
+ * Si le compte a configuré la 2FA (TOTP), renvoie { requireMfa: true }.
  */
-export async function login(username: string, password: string): Promise<{ error?: string }> {
+export async function login(username: string, password: string): Promise<{ error?: string; requireMfa?: boolean }> {
   const cleanUsername = username?.trim().toLowerCase();
   if (!cleanUsername) {
     return { error: "Identifiants invalides" };
@@ -63,10 +70,317 @@ export async function login(username: string, password: string): Promise<{ error
     return { error: "Identifiants invalides" };
   }
 
+  // Vérifier si un facteur TOTP vérifié est actif sur ce compte
+  const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aalData && aalData.nextLevel === "aal2" && aalData.currentLevel === "aal1") {
+    // Mot de passe correct, mais second facteur (TOTP) requis
+    // On ne pose pas encore ADMIN_ACTIVITY_COOKIE pour empêcher l'accès au tableau de bord
+    return { requireMfa: true };
+  }
+
   const c = await cookies();
   c.set(ADMIN_ACTIVITY_COOKIE, "1", ADMIN_ACTIVITY_COOKIE_OPTIONS);
 
   return {};
+}
+
+/**
+ * Vérifie le code TOTP à 6 chiffres émis par Google Authenticator lors de la connexion.
+ */
+export async function verifierCodeMfa(code: string): Promise<{ error?: string; success?: boolean }> {
+  const cleanCode = code?.replace(/[\s-]/g, "").trim();
+  if (!cleanCode || cleanCode.length !== 6) {
+    return { error: "Le code de vérification doit comporter 6 chiffres." };
+  }
+
+  const supabase = await createClient();
+  const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+  if (factorsError) {
+    return { error: factorsError.message };
+  }
+
+  const verifiedFactor = factors?.totp?.find((f) => f.status === "verified");
+  if (!verifiedFactor) {
+    return { error: "Aucun facteur 2FA actif trouvé sur ce compte." };
+  }
+
+  const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({
+    factorId: verifiedFactor.id,
+    code: cleanCode,
+  });
+
+  if (verifyError) {
+    return { error: "Code incorrect. Vérifiez l'heure de votre téléphone ou réessayez." };
+  }
+
+  const c = await cookies();
+  c.set(ADMIN_ACTIVITY_COOKIE, "1", ADMIN_ACTIVITY_COOKIE_OPTIONS);
+
+  return { success: true };
+}
+
+/**
+ * Valide un code de secours (backup code) à usage unique issu de la fiche PDF.
+ */
+export async function verifierCodeSecours(code: string): Promise<{ error?: string; success?: boolean; codesRestants?: number }> {
+  const cleanCode = code?.trim();
+  if (!cleanCode) {
+    return { error: "Veuillez saisir un code de secours." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Session invalide ou expirée. Veuillez vous reconnecter." };
+  }
+
+  const supabaseAdmin = createServiceRoleClient();
+  const { data: backupRows, error: dbError } = await supabaseAdmin
+    .from("mfa_backup_codes")
+    .select("id, code_hash")
+    .eq("user_id", user.id)
+    .eq("utilise", false);
+
+  if (dbError) {
+    return { error: dbError.message };
+  }
+
+  const matchingRow = (backupRows ?? []).find((r) => verifierCodeSecoursHash(cleanCode, r.code_hash));
+  if (!matchingRow) {
+    return { error: "Code de secours invalide ou déjà utilisé." };
+  }
+
+  // Consommer le code (usage unique strict)
+  await supabaseAdmin
+    .from("mfa_backup_codes")
+    .update({ utilise: true, utilise_le: new Date().toISOString() })
+    .eq("id", matchingRow.id);
+
+  const c = await cookies();
+  c.set(ADMIN_ACTIVITY_COOKIE, "1", ADMIN_ACTIVITY_COOKIE_OPTIONS);
+
+  const codesRestants = Math.max(0, (backupRows?.length ?? 1) - 1);
+  return { success: true, codesRestants };
+}
+
+/**
+ * Initialise l'enrôlement 2FA (génère le secret et le QR Code SVG).
+ */
+export async function initierEnrolementMfa(): Promise<{
+  error?: string;
+  factorId?: string;
+  qrCode?: string;
+  secret?: string;
+  uri?: string;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) {
+    return { error: "Non authentifié" };
+  }
+
+  // Nettoyer d'éventuels facteurs non vérifiés issus d'essais précédents annulés
+  const { data: factors } = await supabase.auth.mfa.listFactors();
+  for (const f of factors?.totp ?? []) {
+    if ((f.status as string) === "unverified") {
+      await supabase.auth.mfa.unenroll({ factorId: f.id });
+    }
+  }
+
+  const { data, error } = await supabase.auth.mfa.enroll({
+    factorType: "totp",
+    issuer: "GSR Admin",
+    friendlyName: user.email,
+  });
+
+  if (error || !data) {
+    return { error: error?.message ?? "Échec de l'enrôlement 2FA" };
+  }
+
+  return {
+    factorId: data.id,
+    qrCode: data.totp.qr_code,
+    secret: data.totp.secret,
+    uri: data.totp.uri,
+  };
+}
+
+/**
+ * Valide le premier code à 6 chiffres pour certifier l'enrôlement,
+ * puis génère et enregistre les 5 codes de secours à usage unique.
+ */
+export async function validerEnrolementMfa(
+  factorId: string,
+  code: string
+): Promise<{ error?: string; backupCodes?: string[] }> {
+  const cleanCode = code?.replace(/[\s-]/g, "").trim();
+  if (!cleanCode || cleanCode.length !== 6) {
+    return { error: "Le code de vérification doit comporter 6 chiffres." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Non authentifié" };
+  }
+
+  const { error: verifyError } = await supabase.auth.mfa.challengeAndVerify({
+    factorId,
+    code: cleanCode,
+  });
+
+  if (verifyError) {
+    return { error: "Code incorrect. Vérifiez l'heure de votre téléphone et réessayez." };
+  }
+
+  // Générer les 5 codes de secours
+  const plainCodes = genererLotCodesSecours(5);
+  const supabaseAdmin = createServiceRoleClient();
+
+  // Remplacer d'anciens codes de secours s'il en existait
+  await supabaseAdmin.from("mfa_backup_codes").delete().eq("user_id", user.id);
+
+  const rows = plainCodes.map((c) => ({
+    user_id: user.id,
+    code_hash: hacherCodeSecours(c),
+    utilise: false,
+  }));
+
+  const { error: insertError } = await supabaseAdmin.from("mfa_backup_codes").insert(rows);
+  if (insertError) {
+    return { error: "2FA activé mais erreur lors de la génération des codes de secours." };
+  }
+
+  return { backupCodes: plainCodes };
+}
+
+/**
+ * Retourne l'état 2FA du compte connecté.
+ */
+export async function obtenirStatutMfa(): Promise<{
+  actif: boolean;
+  dateActivation?: string;
+  codesRestants: number;
+}> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { actif: false, codesRestants: 0 };
+  }
+
+  const { data: factors } = await supabase.auth.mfa.listFactors();
+  const verifiedTotp = factors?.totp?.find((f) => f.status === "verified");
+
+  if (!verifiedTotp) {
+    return { actif: false, codesRestants: 0 };
+  }
+
+  const supabaseAdmin = createServiceRoleClient();
+  const { count } = await supabaseAdmin
+    .from("mfa_backup_codes")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("utilise", false);
+
+  return {
+    actif: true,
+    dateActivation: verifiedTotp.created_at,
+    codesRestants: count ?? 0,
+  };
+}
+
+/**
+ * Désactive le 2FA sur son propre compte après confirmation du mot de passe.
+ */
+export async function desactiverMonMfa(motDePasse: string): Promise<{ error?: string }> {
+  if (!motDePasse) {
+    return { error: "Veuillez saisir votre mot de passe actuel." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) {
+    return { error: "Non authentifié" };
+  }
+
+  const { error: pwdError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: motDePasse,
+  });
+
+  if (pwdError) {
+    return { error: "Mot de passe actuel incorrect." };
+  }
+
+  const { data: factors } = await supabase.auth.mfa.listFactors();
+  for (const f of factors?.all ?? []) {
+    await supabase.auth.mfa.unenroll({ factorId: f.id });
+  }
+
+  const supabaseAdmin = createServiceRoleClient();
+  await supabaseAdmin.from("mfa_backup_codes").delete().eq("user_id", user.id);
+
+  return {};
+}
+
+/**
+ * Régénère un nouveau jeu de 5 codes de secours après confirmation du mot de passe.
+ */
+export async function regenererMesCodesSecours(motDePasse: string): Promise<{ error?: string; backupCodes?: string[] }> {
+  if (!motDePasse) {
+    return { error: "Veuillez saisir votre mot de passe actuel." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) {
+    return { error: "Non authentifié" };
+  }
+
+  const { error: pwdError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: motDePasse,
+  });
+
+  if (pwdError) {
+    return { error: "Mot de passe actuel incorrect." };
+  }
+
+  const plainCodes = genererLotCodesSecours(5);
+  const supabaseAdmin = createServiceRoleClient();
+
+  await supabaseAdmin.from("mfa_backup_codes").delete().eq("user_id", user.id);
+
+  const rows = plainCodes.map((c) => ({
+    user_id: user.id,
+    code_hash: hacherCodeSecours(c),
+    utilise: false,
+  }));
+
+  const { error: insertError } = await supabaseAdmin.from("mfa_backup_codes").insert(rows);
+  if (insertError) {
+    return { error: "Erreur lors de l'enregistrement des nouveaux codes." };
+  }
+
+  return { backupCodes: plainCodes };
 }
 
 export async function logout() {

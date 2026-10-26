@@ -15,12 +15,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const h = await headers();
   const pathname = h.get("x-pathname");
 
-  // Les écrans d'authentification autonomes (connexion, mot de passe oublié, réinitialisation)
+  // Les écrans d'authentification autonomes (connexion, mot de passe oublié, réinitialisation, 2FA)
   // sont rendus sans la sidebar et la topbar d'administration.
   if (
     pathname === "/admin/reinitialiser-mot-de-passe" ||
     pathname === "/admin/mot-de-passe-oublie" ||
-    pathname === "/admin/login"
+    pathname === "/admin/login" ||
+    pathname === "/admin/verifier-2fa" ||
+    pathname?.startsWith("/admin/auth/confirm")
   ) {
     return <>{children}</>;
   }

@@ -181,3 +181,26 @@ export async function supprimerUtilisateur(userId: string): Promise<{ error?: st
   revalidateUtilisateursPath();
   return {};
 }
+
+/**
+ * Action exclusive du coordonnateur : réinitialise (désactive de force) le 2FA d'un utilisateur
+ * qui aurait égaré son téléphone et ses codes de secours, lui permettant de se reconnecter
+ * par mot de passe et de réenrôler un nouveau téléphone par la suite dans « Mon compte ».
+ */
+export async function reinitialiserMfaUtilisateur(userId: string): Promise<{ error?: string }> {
+  await getScopeAndAssert();
+  const supabaseAdmin = createServiceRoleClient();
+
+  const { data: factors, error: listError } = await supabaseAdmin.auth.admin.mfa.listFactors({ userId });
+  if (listError) return { error: listError.message };
+
+  for (const factor of factors?.factors ?? []) {
+    await supabaseAdmin.auth.admin.mfa.deleteFactor({ id: factor.id, userId });
+  }
+
+  await supabaseAdmin.from("mfa_backup_codes").delete().eq("user_id", userId);
+
+  revalidateUtilisateursPath();
+  return {};
+}
+

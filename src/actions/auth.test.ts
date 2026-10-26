@@ -53,13 +53,22 @@ describe("login — assainissement des identifiants (espaces & casse)", () => {
       error: null,
     });
 
+    const mockGetAal = vi.fn().mockResolvedValue({
+      data: { currentLevel: "aal1", nextLevel: "aal1" },
+      error: null,
+    });
+
     vi.mocked(createClient).mockResolvedValue({
-      auth: { signInWithPassword: mockSignInWithPassword },
+      auth: {
+        signInWithPassword: mockSignInWithPassword,
+        mfa: { getAuthenticatorAssuranceLevel: mockGetAal },
+      },
     } as never);
 
     const res = await login("   M.Traore   ", "motdepasse123");
 
     expect(res.error).toBeUndefined();
+    expect(res.requireMfa).toBeUndefined();
     // Le username envoyé à PostgreSQL doit être nettoyé
     expect(mockEq).toHaveBeenCalledWith("username", "m.traore");
     // L'authentification Supabase Auth doit être appelée avec l'email résolu
@@ -67,6 +76,42 @@ describe("login — assainissement des identifiants (espaces & casse)", () => {
       email: "m.traore@gsr.bj",
       password: "motdepasse123",
     });
+  });
+
+  it("renvoie requireMfa: true si le compte possède un facteur TOTP actif (aal2 requis)", async () => {
+    const mockSingle = vi.fn().mockResolvedValue({
+      data: { email: "coordonnateur@gsr.bj", actif: true },
+      error: null,
+    });
+    const mockEq = vi.fn().mockReturnValue({ single: mockSingle });
+    const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
+    const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
+
+    vi.mocked(createServiceRoleClient).mockReturnValue({
+      from: mockFrom,
+    } as never);
+
+    const mockSignInWithPassword = vi.fn().mockResolvedValue({
+      data: { user: { id: "coord-123" } },
+      error: null,
+    });
+
+    const mockGetAal = vi.fn().mockResolvedValue({
+      data: { currentLevel: "aal1", nextLevel: "aal2" },
+      error: null,
+    });
+
+    vi.mocked(createClient).mockResolvedValue({
+      auth: {
+        signInWithPassword: mockSignInWithPassword,
+        mfa: { getAuthenticatorAssuranceLevel: mockGetAal },
+      },
+    } as never);
+
+    const res = await login("coordonnateur", "motdepasse123");
+
+    expect(res.error).toBeUndefined();
+    expect(res.requireMfa).toBe(true);
   });
 });
 
