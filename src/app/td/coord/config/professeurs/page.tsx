@@ -8,7 +8,6 @@ import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/compon
 import { Badge } from "@/components/ui/badge";
 import { TdConfigTabs } from "@/components/td/TdConfigTabs";
 import { NouveauProfesseurDialog } from "@/components/td/NouveauProfesseurDialog";
-import { ModifierProfesseurDialog } from "@/components/td/ModifierProfesseurDialog";
 import { ReinitialiserMotDePasseProfDialog } from "@/components/td/ReinitialiserMotDePasseProfDialog";
 import { DesactiverProfesseurButton } from "@/components/td/DesactiverProfesseurButton";
 import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
@@ -82,17 +81,6 @@ export default async function ProfesseursTDPage() {
       label: "Actions",
       render: (p) => (
         <div className={`flex flex-wrap gap-2 ${ACTIONS_HOVER_REVEAL}`}>
-          <ModifierProfesseurDialog
-            professeurId={p.id}
-            initialNom={p.nom}
-            initialPrenom={p.prenom}
-            initialTelephone={p.telephone}
-            initialEmail={p.email}
-            initialZoneId={p.zone_id}
-            initialMatiereId={p.matiere_principale_id}
-            zones={zonesOptions}
-            matieres={matieresOptions}
-          />
           <ReinitialiserMotDePasseProfDialog professeurId={p.id} nomComplet={`${p.prenom} ${p.nom}`} />
           <DesactiverProfesseurButton professeurId={p.id} nomComplet={`${p.prenom} ${p.nom}`} actif={p.actif} />
         </div>
@@ -122,17 +110,6 @@ export default async function ProfesseursTDPage() {
     extraInfo: (p) => <span>{p.email}</span>,
     actions: (p) => (
       <div className="flex flex-wrap gap-1.5 justify-end">
-        <ModifierProfesseurDialog
-          professeurId={p.id}
-          initialNom={p.nom}
-          initialPrenom={p.prenom}
-          initialTelephone={p.telephone}
-          initialEmail={p.email}
-          initialZoneId={p.zone_id}
-          initialMatiereId={p.matiere_principale_id}
-          zones={zonesOptions}
-          matieres={matieresOptions}
-        />
         <ReinitialiserMotDePasseProfDialog professeurId={p.id} nomComplet={`${p.prenom} ${p.nom}`} />
         <DesactiverProfesseurButton professeurId={p.id} nomComplet={`${p.prenom} ${p.nom}`} actif={p.actif} />
       </div>

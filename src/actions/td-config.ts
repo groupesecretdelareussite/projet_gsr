@@ -162,38 +162,6 @@ export async function creerProfesseurTD(input: CreerProfesseurInput): Promise<{ 
   return {};
 }
 
-export interface ModifierProfesseurInput {
-  id: number;
-  nom: string;
-  prenom: string;
-  telephone: string;
-  email: string;
-  zoneId: number;
-  matierePrincipaleId: number;
-}
-
-export async function modifierProfesseurTD(input: ModifierProfesseurInput): Promise<{ error?: string }> {
-  await getScopeAndAssert();
-  const supabaseAdmin = createServiceRoleClient();
-
-  const { error } = await supabaseAdmin
-    .schema("td")
-    .from("professeurs")
-    .update({
-      nom: input.nom,
-      prenom: input.prenom,
-      telephone: input.telephone,
-      email: input.email,
-      zone_id: input.zoneId,
-      matiere_principale_id: input.matierePrincipaleId,
-    })
-    .eq("id", input.id);
-  if (error) return { error: error.message };
-
-  revalidateConfigPath("professeurs");
-  return {};
-}
-
 /** §5.7 — réinitialisation manuelle par le coordonnateur, les professeurs n'ayant pas de flux natif « mot de passe oublié » (§5.3). */
 export async function reinitialiserMotDePasseProfTD(professeurId: number, nouveauMdp: string): Promise<{ error?: string }> {
   await getScopeAndAssert();

@@ -1,9 +1,11 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getTdProfesseurSession } from "@/lib/session-td";
 import { tropDeTentatives, enregistrerTentative, extraireIpClient } from "@/lib/brute-force";
+import { normaliserNumero, validerNumeroTelephone } from "@/lib/telephone";
 
 /**
  * §10.1 GSR_ARCHITECTURE.md — branche "Professeur" du sélecteur /td/login,
@@ -125,6 +127,136 @@ export async function changerMonMotDePasseProf(ancienMdp: string, nouveauMdp: st
   if (updateErr) {
     return { error: updateErr.message };
   }
+
+  return {};
+}
+
+export interface ModifierMonProfilProfInput {
+  nom: string;
+  prenom: string;
+  telephone: string;
+  email: string;
+  zoneId: number;
+  matierePrincipaleId: number;
+}
+
+/**
+  * Modification en libre-service par le professeur connecté de ses propres informations.
+  * Met à jour ses coordonnées dans `td.professeurs` ainsi que sa session active.
+  */
+export async function modifierMonProfilProf(input: ModifierMonProfilProfInput): Promise<{ error?: string }> {
+  const session = await getTdProfesseurSession();
+  if (!session.professeurId) {
+    return { error: "Non authentifié" };
+  }
+
+  const nom = input.nom?.trim();
+  const prenom = input.prenom?.trim();
+  if (!nom || nom.length < 2 || nom.length > 100) {
+    return { error: "Le nom doit comporter entre 2 et 100 caractères" };
+  }
+  if (!prenom || prenom.length < 2 || prenom.length > 100) {
+    return { error: "Le prénom doit comporter entre 2 et 100 caractères" };
+  }
+
+  const email = input.email?.trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email) || email.length > 150) {
+    return { error: "Adresse email invalide" };
+  }
+
+  const telNormalise = normaliserNumero(input.telephone ?? "");
+  const erreurTel = validerNumeroTelephone(telNormalise);
+  if (erreurTel) {
+    return { error: erreurTel };
+  }
+
+  if (!input.zoneId || isNaN(input.zoneId)) {
+    return { error: "Veuillez sélectionner une zone géographique" };
+  }
+  if (!input.matierePrincipaleId || isNaN(input.matierePrincipaleId)) {
+    return { error: "Veuillez sélectionner votre matière principale" };
+  }
+
+  const supabaseAdmin = createServiceRoleClient();
+
+  // Vérifier compte actif et validé
+  const { data: prof, error: fetchErr } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .select("id, actif, valide")
+    .eq("id", session.professeurId)
+    .maybeSingle();
+
+  if (fetchErr || !prof) {
+    return { error: "Compte professeur introuvable" };
+  }
+  if (!prof.actif || (prof as { valide?: boolean }).valide === false) {
+    return { error: "Compte inactif ou non validé" };
+  }
+
+  // Vérifier doublon email avec un autre professeur
+  const { data: autreProfEmail } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .select("id")
+    .eq("email", email)
+    .neq("id", session.professeurId)
+    .maybeSingle();
+
+  if (autreProfEmail) {
+    return { error: "Cette adresse email est déjà associée à un autre compte professeur" };
+  }
+
+  // Vérifier doublon téléphone avec un autre professeur
+  const { data: autreProfTel } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .select("id")
+    .eq("telephone", telNormalise)
+    .neq("id", session.professeurId)
+    .maybeSingle();
+
+  if (autreProfTel) {
+    return { error: "Ce numéro de téléphone est déjà associé à un autre compte professeur" };
+  }
+
+  // Vérifier l'existence de la zone et de la matière
+  const [{ data: zone }, { data: matiere }] = await Promise.all([
+    supabaseAdmin.schema("td").from("zones").select("id").eq("id", input.zoneId).maybeSingle(),
+    supabaseAdmin.schema("td").from("matieres_td").select("id").eq("id", input.matierePrincipaleId).maybeSingle(),
+  ]);
+
+  if (!zone) {
+    return { error: "La zone sélectionnée n'existe pas" };
+  }
+  if (!matiere) {
+    return { error: "La matière sélectionnée n'existe pas" };
+  }
+
+  const { error: updateErr } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .update({
+      nom,
+      prenom,
+      telephone: telNormalise,
+      email,
+      zone_id: input.zoneId,
+      matiere_principale_id: input.matierePrincipaleId,
+    })
+    .eq("id", session.professeurId);
+
+  if (updateErr) {
+    return { error: updateErr.message };
+  }
+
+  session.nom = nom;
+  session.prenom = prenom;
+  await session.save();
+
+  revalidatePath("/td/prof/mon-compte");
+  revalidatePath("/td/coord/config/professeurs");
 
   return {};
 }
