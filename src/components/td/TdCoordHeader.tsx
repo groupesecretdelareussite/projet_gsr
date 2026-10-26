@@ -9,6 +9,7 @@ import {
   CalendarClock,
   Gavel,
   Wallet,
+  CreditCard,
   Settings,
   HelpCircle,
   LogOut,
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { label: "Planning", href: "/td/coord/planning", icon: CalendarClock },
   { label: "Arbitrage", href: "/td/coord/arbitrage", icon: Gavel },
   { label: "Finance", href: "/td/coord/finance", icon: Wallet },
+  { label: "Paiements", href: "/td/coord/paiements", icon: CreditCard },
   {
     label: "Configuration",
     href: "/td/coord/config/zones",
