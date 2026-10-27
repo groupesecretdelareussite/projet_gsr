@@ -18,6 +18,7 @@ import { estVenuDansLeMois } from "@/lib/reinscription";
 import { formaterNumeroAffichage } from "@/lib/telephone";
 import { moisCourant, resteAPayer } from "@/lib/paiements";
 import { RAISON_LABELS, MODE_PAIEMENT_LABELS, type MoisScolaire } from "@/lib/constants";
+import { formaterDateCourt } from "@/lib/date-utils";
 
 const ROLES_ELEVES = ["coordonnateur", "comptable", "superviseur", "chef_site", "secretaire"];
 const ROLES_PAIEMENTS = ["coordonnateur", "comptable", "superviseur"];
@@ -332,7 +333,7 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
       render: (l) => <span className={l.montant === null ? "text-gray-400 italic" : "text-gray-700"}>{l.montant === null ? "Exonéré" : `${l.montant} F`}</span>,
     },
     { key: "mode", label: "Mode", render: (l) => (l.mode ? MODE_PAIEMENT_LABELS[l.mode as keyof typeof MODE_PAIEMENT_LABELS] : "—") },
-    { key: "date", label: "Date", render: (l) => new Date(l.date).toLocaleDateString("fr-FR") },
+    { key: "date", label: "Date", render: (l) => formaterDateCourt(l.date) },
   ];
 
   return (
@@ -458,7 +459,7 @@ export default async function FicheElevePage(props: { params: Promise<{ id: stri
               </div>
               <div>
                 <dt className="text-gray-400">Depuis le</dt>
-                <dd className="text-gray-700">{new Date(suspension.date_suspension).toLocaleDateString("fr-FR")}</dd>
+                <dd className="text-gray-700">{formaterDateCourt(suspension.date_suspension)}</dd>
               </div>
             </dl>
             <p className="text-sm text-gray-600">{suspension.motif}</p>

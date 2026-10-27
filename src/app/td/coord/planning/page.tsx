@@ -12,6 +12,7 @@ import { NouveauCreneauTDDialog } from "@/components/td/NouveauCreneauTDDialog";
 import { SemaineActionsTD } from "@/components/td/SemaineActionsTD";
 import { SupprimerCreneauTDButton } from "@/components/td/SupprimerCreneauTDButton";
 import { LibererCreneauTDDialog } from "@/components/td/LibererCreneauTDDialog";
+import { formaterDateTd, formaterDateCourt } from "@/lib/date-utils";
 
 interface SemaineRow {
   id: number;
@@ -102,7 +103,7 @@ export default async function PlanningTDPage(props: { searchParams: Promise<{ se
                     <p className="text-sm font-medium text-gray-900">{s.libelle}</p>
                     <div className="flex items-center justify-between mt-1.5">
                       <span className="text-xs text-gray-400">
-                        {new Date(s.date_debut).toLocaleDateString("fr-FR")} — {new Date(s.date_fin).toLocaleDateString("fr-FR")}
+                        {formaterDateCourt(s.date_debut)} — {formaterDateCourt(s.date_fin)}
                       </span>
                       <Badge variant={badge.variant}>{badge.label}</Badge>
                     </div>
@@ -122,8 +123,7 @@ export default async function PlanningTDPage(props: { searchParams: Promise<{ se
                 <div>
                   <h2 className="font-bold text-gray-900">{semaineActive.libelle}</h2>
                   <p className="text-xs text-gray-400">
-                    {new Date(semaineActive.date_debut).toLocaleDateString("fr-FR")} —{" "}
-                    {new Date(semaineActive.date_fin).toLocaleDateString("fr-FR")}
+                    {formaterDateCourt(semaineActive.date_debut)} — {formaterDateCourt(semaineActive.date_fin)}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -161,7 +161,7 @@ export default async function PlanningTDPage(props: { searchParams: Promise<{ se
                             {nomClasseParId.get(c.classe_id) ?? "—"} — {nomMatiereParId.get(c.matiere_id) ?? "—"}
                           </p>
                           <p className="text-xs text-gray-400">
-                            {new Date(c.date_td).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} ·{" "}
+                            {formaterDateTd(c.date_td)} ·{" "}
                             {c.heure_debut.slice(0, 5)}–{c.heure_fin.slice(0, 5)} · {Number(c.montant_prevu).toLocaleString("fr-FR")} F
                           </p>
                         </div>

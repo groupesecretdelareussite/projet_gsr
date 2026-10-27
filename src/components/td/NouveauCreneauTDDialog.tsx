@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { creerCreneauTD } from "@/actions/td-creneaux";
+import { formaterDateMois } from "@/lib/date-utils";
 
 interface Option {
   id: number;
@@ -143,9 +144,7 @@ export function NouveauCreneauTDDialog({ semaineId, dateDebut, dateFin, classes,
             </div>
             <div>
               <Label htmlFor="dateTd">
-                Date (du{" "}
-                {new Date(`${dateDebut}T00:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} au{" "}
-                {new Date(`${dateFin}T00:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })})
+                Date (du {formaterDateMois(dateDebut)} au {formaterDateMois(dateFin)})
               </Label>
               <Input
                 id="dateTd"

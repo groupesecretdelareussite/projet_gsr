@@ -32,6 +32,16 @@ describe("tropDeTentatives — seuil de verrouillage partagé par les 3 portails
     await expect(tropDeTentatives(client, "test@example.com", "admin")).resolves.toBe(false);
   });
 
+  it("avec IP, retourne true si le seuil par IP (5) est atteint", async () => {
+    const { client } = makeCountClient(5);
+    await expect(tropDeTentatives(client, "test@example.com", "admin", "1.2.3.4")).resolves.toBe(true);
+  });
+
+  it("avec IP, retourne true si le seuil global du compte (8) est atteint", async () => {
+    const { client } = makeCountClient(8);
+    await expect(tropDeTentatives(client, "test@example.com", "admin", "1.2.3.4")).resolves.toBe(true);
+  });
+
   it.each(["admin", "parent", "td"] as const)("filtre bien par le portail %s", async (portail) => {
     const { client, eqCalls } = makeCountClient(0);
     await tropDeTentatives(client, "identifiant-test", portail);

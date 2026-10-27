@@ -11,6 +11,7 @@ import { HistoriqueEleveFiltre } from "@/components/admin/presences/HistoriqueEl
 import type { EleveResultat } from "@/components/admin/EleveAutocomplete";
 import { plageDatesMoisScolaire } from "@/lib/presences";
 import { MOIS_SCOLAIRES, type MoisScolaire } from "@/lib/constants";
+import { formaterDateCourt } from "@/lib/date-utils";
 
 interface LigneHistorique {
   date_presence: string;
@@ -69,7 +70,7 @@ export default async function HistoriqueElevePage(
   }
 
   const columns: DataTableColumn<LigneHistorique>[] = [
-    { key: "date", label: "Date", render: (h) => new Date(h.date_presence).toLocaleDateString("fr-FR") },
+    { key: "date", label: "Date", render: (h) => formaterDateCourt(h.date_presence) },
     {
       key: "statut",
       label: "Statut",

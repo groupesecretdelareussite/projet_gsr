@@ -9,6 +9,7 @@ import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { PresencesNav } from "@/components/admin/presences/PresencesNav";
 import { Button } from "@/components/ui/button";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
+import { formaterDateTd } from "@/lib/date-utils";
 
 function aujourdhui(): string {
   return new Date().toISOString().slice(0, 10);
@@ -71,7 +72,7 @@ export default async function PresencesPage(
     <div>
       <PageHeader
         title="Présences"
-        subtitle={`Appel du jour — ${new Date(datePresence).toLocaleDateString("fr-FR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}`}
+        subtitle={`Appel du jour — ${formaterDateTd(datePresence, { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}`}
       />
       <PresencesNav active="appel" />
 

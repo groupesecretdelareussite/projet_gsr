@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/admin/EmptyState";
 import { Badge } from "@/components/ui/badge";
 import { ArbitrageButtonTD } from "@/components/td/ArbitrageButtonTD";
 import { AffecterProfesseurDirectTDDialog, type ProfesseurOptionTD } from "@/components/td/AffecterProfesseurDirectTDDialog";
+import { formaterDateTd } from "@/lib/date-utils";
 
 interface CreneauRow {
   id: number;
@@ -93,14 +94,14 @@ export default async function ArbitrageTDPage() {
                     {nomClasseParId.get(creneau.classe_id) ?? "—"} — {nomMatiereParId.get(creneau.matiere_id) ?? "—"}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {new Date(creneau.date_td).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} ·{" "}
+                    {formaterDateTd(creneau.date_td)} ·{" "}
                     {creneau.heure_debut.slice(0, 5)}–{creneau.heure_fin.slice(0, 5)} · {Number(creneau.montant_prevu).toLocaleString("fr-FR")} F
                   </p>
                 </div>
                 <AffecterProfesseurDirectTDDialog
                   creneauId={creneau.id}
                   titreCreneau={`${nomClasseParId.get(creneau.classe_id) ?? "—"} — ${nomMatiereParId.get(creneau.matiere_id) ?? "—"}`}
-                  dateHeureCreneau={`${new Date(creneau.date_td).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · ${creneau.heure_debut.slice(0, 5)}–${creneau.heure_fin.slice(0, 5)}`}
+                  dateHeureCreneau={`${formaterDateTd(creneau.date_td)} · ${creneau.heure_debut.slice(0, 5)}–${creneau.heure_fin.slice(0, 5)}`}
                   matiereId={creneau.matiere_id}
                   professeurs={professeursOptions}
                   nomMatiereParId={nomMatiereObj}

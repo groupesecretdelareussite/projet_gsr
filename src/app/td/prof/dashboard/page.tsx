@@ -4,6 +4,7 @@ import { getTdProfesseurSession } from "@/lib/session-td";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { EmptyState } from "@/components/admin/EmptyState";
+import { formaterDateTd } from "@/lib/date-utils";
 
 interface CreneauRow {
   id: number;
@@ -73,8 +74,7 @@ export default async function DashboardProfesseurPage() {
             {nomClasseParId.get(c.classe_id) ?? "—"} — {nomMatiereParId.get(c.matiere_id) ?? "—"}
           </p>
           <p className="text-xs text-gray-400">
-            {new Date(c.date_td).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} ·{" "}
-            {c.heure_debut.slice(0, 5)}–{c.heure_fin.slice(0, 5)}
+            {formaterDateTd(c.date_td)} · {c.heure_debut.slice(0, 5)}–{c.heure_fin.slice(0, 5)}
           </p>
         </div>
         <span className="text-sm font-semibold text-primary">{Number(c.montant_prevu).toLocaleString("fr-FR")} F</span>

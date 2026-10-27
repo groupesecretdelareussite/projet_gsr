@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope } from "@/lib/auth-scope";
 import { getOrdreNiveau } from "@/lib/programmes-tri";
+import { formaterDateTd } from "@/lib/date-utils";
 import {
   ProgrammeHebdoStaffPDF,
   type ProgrammeHebdoDataPDF,
@@ -195,7 +196,7 @@ export async function GET(request: NextRequest) {
       return a.heure.localeCompare(b.heure);
     });
 
-    const dateFormatee = new Date(`${dateIso}T00:00:00`).toLocaleDateString("fr-FR", {
+    const dateFormatee = formaterDateTd(dateIso, {
       weekday: "long",
       day: "numeric",
       month: "long",

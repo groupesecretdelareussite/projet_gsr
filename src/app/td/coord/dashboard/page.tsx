@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { KpiCard } from "@/components/admin/KpiCard";
 import { Badge } from "@/components/ui/badge";
+import { formaterDateTd } from "@/lib/date-utils";
 
 interface CreneauRow {
   id: number;
@@ -103,8 +104,7 @@ export default async function DashboardCoordTDPage() {
                     {nomClasseParId.get(c.classe_id) ?? "—"} — {nomMatiereParId.get(c.matiere_id) ?? "—"}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {new Date(c.date_td).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} ·{" "}
-                    {c.heure_debut.slice(0, 5)}–{c.heure_fin.slice(0, 5)}
+                    {formaterDateTd(c.date_td)} · {c.heure_debut.slice(0, 5)}–{c.heure_fin.slice(0, 5)}
                   </p>
                 </div>
                 {professeurId ? (

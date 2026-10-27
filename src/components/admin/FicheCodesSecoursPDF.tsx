@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     lineHeight: 1.35,
   },
 
-  // LISTE DES CODES EN TRÈS GRAND FORMAT
+  // LISTE DES CODES
   codesContainer: {
     gap: 9,
     marginBottom: 18,
@@ -278,7 +278,7 @@ export function FicheCodesSecoursPDF({ data }: { data: FicheCodesSecoursData }) 
           </Text>
         </View>
 
-        {/* LES 5 CODES EN TRÈS GRAND FORMAT */}
+        {/* LES 5 CODES*/}
         <View style={styles.codesContainer}>
           {data.codes.map((code, index) => (
             <View key={index} style={styles.codeCard}>

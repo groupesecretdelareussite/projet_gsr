@@ -374,7 +374,7 @@ export function GestionMfaCard() {
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-xs font-semibold text-gray-700">Vos 5 codes de secours (très grand format) :</p>
+                  <p className="text-xs font-semibold text-gray-700">Vos 5 codes de secours :</p>
                   <div className="bg-gray-900 rounded-xl p-3 text-center space-y-2">
                     {codesSecoursGeneres.map((c, i) => (
                       <div

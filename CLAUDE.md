@@ -26,7 +26,7 @@ Seeding the first admin account (one-shot, service-role key required — never r
 SUPABASE_SERVICE_ROLE_KEY=xxx SEED_ADMIN_USERNAME=admin SEED_ADMIN_PASSWORD=xxx npx tsx scripts/seed-admin.ts
 ```
 
-SQL migrations live in `sql/` and are applied manually to Supabase in numeric order (`001_schema_public.sql` → `031_td_paiements_professeurs.sql` as of this writing); there is no migration runner. **Toutes les migrations `001` à `027` et `030` sont intégralement appliquées sur l'instance Supabase de test (`pqnszrnxlwipqhcwqwhd`). Sur Client / Prod (`gedmhgcdhghionubfoih`), `001` à `027` sont appliquées (`028`, `029`, `030` et `031` restent à appliquer via le SQL Editor).**
+SQL migrations live in `sql/` and are applied manually to Supabase in numeric order (`001_schema_public.sql` → `031_td_paiements_professeurs.sql` as of this writing); there is no migration runner. **Toutes les migrations `001` à `031` sont intégralement appliquées sur les deux instances Supabase (Test `pqnszrnxlwipqhcwqwhd` et Client / Prod `gedmhgcdhghionubfoih`).**
 
 ## Current implementation state
 

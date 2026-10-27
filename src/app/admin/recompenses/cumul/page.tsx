@@ -9,6 +9,7 @@ import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { RecompensesNav } from "@/components/admin/recompenses/RecompensesNav";
 import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
+import { formaterDateCourt } from "@/lib/date-utils";
 
 interface RecompenseCumulDB {
   id: number;
@@ -208,7 +209,7 @@ export default async function RecompensesCumulPage(
     "Interros (F)": e.totalInterros,
     "Total Gagné (F)": e.totalGagne,
     "Nb Récompenses": e.nbRecompenses,
-    "Dernier Paiement": e.dernierPaiement ? new Date(e.dernierPaiement).toLocaleDateString("fr-FR") : "—",
+    "Dernier Paiement": e.dernierPaiement ? formaterDateCourt(e.dernierPaiement) : "—",
   }));
 
   const columns: DataTableColumn<EleveCumulRow>[] = [
@@ -286,7 +287,7 @@ export default async function RecompensesCumulPage(
       label: "Dernier versement",
       render: (e) => (
         <span className="text-xs text-gray-500">
-          {e.dernierPaiement ? new Date(e.dernierPaiement).toLocaleDateString("fr-FR") : "—"}
+          {e.dernierPaiement ? formaterDateCourt(e.dernierPaiement) : "—"}
         </span>
       ),
     },
@@ -395,7 +396,7 @@ export default async function RecompensesCumulPage(
               extraInfo: (e) => (
                 <span>
                   Devoirs: {e.totalDevoirs.toLocaleString("fr-FR")} F ({e.nbDevoirs}) • Interros: {e.totalInterros.toLocaleString("fr-FR")} F ({e.nbInterros})
-                  {e.dernierPaiement ? ` • Dernier: ${new Date(e.dernierPaiement).toLocaleDateString("fr-FR")}` : ""}
+                  {e.dernierPaiement ? ` • Dernier: ${formaterDateCourt(e.dernierPaiement)}` : ""}
                 </span>
               ),
             };

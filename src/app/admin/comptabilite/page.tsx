@@ -15,6 +15,7 @@ import { EntreesSortiesChart } from "@/components/admin/comptabilite/EntreesSort
 import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import { moisCourant } from "@/lib/paiements";
 import { MOIS_SCOLAIRES, type MoisScolaire } from "@/lib/constants";
+import { parseDateLocale, formaterDateCourt } from "@/lib/date-utils";
 
 interface DepenseRow {
   id: number;
@@ -100,11 +101,11 @@ export default async function ComptabilitePage(
   // filtrées comme les dépenses/rémunérations, via moisCourant(date_paiement).
   const paiementsKpi = moisFiltre ? (paiements ?? []).filter((p) => p.mois_souscription === moisFiltre) : paiements ?? [];
   const penalitesKpi = moisFiltre
-    ? (penalites ?? []).filter((p) => moisCourant(new Date(p.date_paiement)) === moisFiltre)
+    ? (penalites ?? []).filter((p) => moisCourant(parseDateLocale(p.date_paiement)) === moisFiltre)
     : penalites ?? [];
-  const creneauxKpi = moisFiltre ? creneauxRemuneres.filter((c) => moisCourant(new Date(c.date_td)) === moisFiltre) : creneauxRemuneres;
+  const creneauxKpi = moisFiltre ? creneauxRemuneres.filter((c) => moisCourant(parseDateLocale(c.date_td)) === moisFiltre) : creneauxRemuneres;
   const recompensesKpi = moisFiltre ? (recompenses ?? []).filter((r) => r.mois === moisFiltre) : recompenses ?? [];
-  const depensesKpi = moisFiltre ? depensesRows.filter((d) => moisCourant(new Date(d.date_depense)) === moisFiltre) : depensesRows;
+  const depensesKpi = moisFiltre ? depensesRows.filter((d) => moisCourant(parseDateLocale(d.date_depense)) === moisFiltre) : depensesRows;
 
   const totalPaiementsTd = paiementsKpi.reduce((s, p) => s + p.montant_paye, 0);
   const totalPenalites = penalitesKpi.reduce((s, p) => s + Number(p.montant), 0);
@@ -121,12 +122,12 @@ export default async function ComptabilitePage(
     entreesParMois.set(p.mois_souscription, (entreesParMois.get(p.mois_souscription) ?? 0) + p.montant_paye);
   }
   for (const p of penalites ?? []) {
-    const m = moisCourant(new Date(p.date_paiement));
+    const m = moisCourant(parseDateLocale(p.date_paiement));
     if (m) entreesParMois.set(m, (entreesParMois.get(m) ?? 0) + Number(p.montant));
   }
   const sortiesParMois = new Map<MoisScolaire, number>();
   for (const c of creneauxRemuneres) {
-    const m = moisCourant(new Date(c.date_td));
+    const m = moisCourant(parseDateLocale(c.date_td));
     if (m) sortiesParMois.set(m, (sortiesParMois.get(m) ?? 0) + Number(c.montant_prevu));
   }
   for (const r of recompenses ?? []) {
@@ -134,7 +135,7 @@ export default async function ComptabilitePage(
     if (m) sortiesParMois.set(m, (sortiesParMois.get(m) ?? 0) + Number(r.montant));
   }
   for (const d of depensesRows) {
-    const m = moisCourant(new Date(d.date_depense));
+    const m = moisCourant(parseDateLocale(d.date_depense));
     if (m) sortiesParMois.set(m, (sortiesParMois.get(m) ?? 0) + Number(d.montant));
   }
   const donneesMensuelles = MOIS_SCOLAIRES.map((m) => ({
@@ -146,14 +147,14 @@ export default async function ComptabilitePage(
   const moisTitre = moisFiltre ?? "Tous les mois";
   const dateExport = new Date().toLocaleDateString("fr-FR");
   const lignesExport = depensesKpi.map((d) => ({
-    Date: new Date(d.date_depense).toLocaleDateString("fr-FR"),
+    Date: formaterDateCourt(d.date_depense),
     Catégorie: d.categories_depenses?.nom ?? "—",
     Libellé: d.libelle,
     Montant: Number(d.montant),
   }));
 
   const columns: DataTableColumn<DepenseRow>[] = [
-    { key: "date", label: "Date", render: (d) => new Date(d.date_depense).toLocaleDateString("fr-FR") },
+    { key: "date", label: "Date", render: (d) => formaterDateCourt(d.date_depense) },
     { key: "categorie", label: "Catégorie", render: (d) => d.categories_depenses?.nom ?? "—" },
     { key: "libelle", label: "Libellé", render: (d) => d.libelle },
     { key: "montant", label: "Montant", render: (d) => `${Number(d.montant).toLocaleString("fr-FR")} F` },
@@ -289,7 +290,7 @@ export default async function ComptabilitePage(
             </span>
           ),
           subtitle: (d) => (
-            <span>Engagée le {new Date(d.date_depense).toLocaleDateString("fr-FR")}</span>
+            <span>Engagée le {formaterDateCourt(d.date_depense)}</span>
           ),
           actions: (d) => (
             <div className="flex flex-wrap gap-1.5 justify-end">

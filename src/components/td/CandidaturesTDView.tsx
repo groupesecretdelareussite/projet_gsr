@@ -15,6 +15,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { MAX_CANDIDATURES_PAR_CRENEAU } from "@/lib/constants";
+import { formaterDateTd } from "@/lib/date-utils";
 
 export interface CreneauItemTD {
   id: number;
@@ -261,12 +262,7 @@ export function CandidaturesTDView({
                     )}
                   </div>
                   <p className="text-xs text-gray-400 mt-0.5">
-                    {new Date(c.dateTd).toLocaleDateString("fr-FR", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                    })}{" "}
-                    · {c.heureDebut.slice(0, 5)}–{c.heureFin.slice(0, 5)} ·{" "}
+                    {formaterDateTd(c.dateTd)} · {c.heureDebut.slice(0, 5)}–{c.heureFin.slice(0, 5)} ·{" "}
                     {Number(c.montantPrevu).toLocaleString("fr-FR")} F
                   </p>
                 </div>

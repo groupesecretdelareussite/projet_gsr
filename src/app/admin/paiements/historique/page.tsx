@@ -11,6 +11,7 @@ import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import { MODE_PAIEMENT_LABELS, MOIS_SCOLAIRES, type ModePaiement } from "@/lib/constants";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
+import { formaterDateCourt } from "@/lib/date-utils";
 
 interface PaiementRow {
   id: number;
@@ -95,7 +96,7 @@ export default async function HistoriquePaiementsPage(
   const moisTitre = searchParams.mois ?? "Tous les mois";
   const dateExport = new Date().toLocaleDateString("fr-FR");
   const lignesExport = rows.map((p) => ({
-    Date: new Date(p.date_paiement).toLocaleDateString("fr-FR"),
+    Date: formaterDateCourt(p.date_paiement),
     Élève: `${p.eleves?.nom ?? ""} ${p.eleves?.prenoms ?? ""}`.trim(),
     Matricule: p.eleves?.matricule ?? "—",
     Classe: p.eleves?.classes?.nom_classe ?? "—",
@@ -106,7 +107,7 @@ export default async function HistoriquePaiementsPage(
   }));
 
   const columns: DataTableColumn<PaiementRow>[] = [
-    { key: "date", label: "Date", render: (p) => new Date(p.date_paiement).toLocaleDateString("fr-FR") },
+    { key: "date", label: "Date", render: (p) => formaterDateCourt(p.date_paiement) },
     {
       key: "eleve",
       label: "Élève",
@@ -236,7 +237,7 @@ export default async function HistoriquePaiementsPage(
           ),
           extraInfo: (p) => (
             <span>
-              {new Date(p.date_paiement).toLocaleDateString("fr-FR")} • {MODE_PAIEMENT_LABELS[p.mode_paiement]}
+              {formaterDateCourt(p.date_paiement)} • {MODE_PAIEMENT_LABELS[p.mode_paiement]}
               {p.users?.username ? ` • Par ${p.users.username}` : ""}
             </span>
           ),

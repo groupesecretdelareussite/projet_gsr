@@ -9,6 +9,7 @@ import {
   regrouperEtTrierCreneauxParClasse,
   type ClasseMetadata,
 } from "@/lib/programmes-tri";
+import { formaterDateTd } from "@/lib/date-utils";
 
 export const metadata: Metadata = {
   title: "Nos programmes — Cours intensifs, TD et préparation examens | GSR",
@@ -184,11 +185,7 @@ export default async function ProgrammesPage(props: { searchParams: Promise<{ si
                   </div>
                   <div>
                     <h2 className="text-xl font-bold text-gray-900 capitalize">
-                      {new Date(`${jour}T00:00:00`).toLocaleDateString("fr-FR", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                      })}
+                      {formaterDateTd(jour)}
                     </h2>
                     <p className="text-xs text-gray-500">
                       {groupesClasses.length} classe{groupesClasses.length > 1 ? "s" : ""} · {creneauxJour.length} séance{creneauxJour.length > 1 ? "s" : ""} au total

@@ -7,6 +7,7 @@ import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { MODE_PAIEMENT_LABELS, type ModePaiement } from "@/lib/constants";
+import { formaterDateCourt } from "@/lib/date-utils";
 
 interface PaiementSupprimeRow {
   id: number;
@@ -55,7 +56,7 @@ export default async function PaiementsSupprimesPage() {
     { key: "matricule", label: "Matricule", render: (p) => <span className="font-mono text-xs">{p.matricule}</span> },
     { key: "mois", label: "Mois", render: (p) => p.mois_souscription },
     { key: "montant", label: "Montant", render: (p) => `${p.montant_paye} F` },
-    { key: "date_paiement", label: "Date du paiement", render: (p) => new Date(p.date_paiement).toLocaleDateString("fr-FR") },
+    { key: "date_paiement", label: "Date du paiement", render: (p) => formaterDateCourt(p.date_paiement) },
     { key: "mode", label: "Mode", render: (p) => MODE_PAIEMENT_LABELS[p.mode_paiement] },
     {
       key: "motif",
@@ -88,7 +89,7 @@ export default async function PaiementsSupprimesPage() {
     ),
     subtitle: (p) => (
       <>
-        <span>Payé le {new Date(p.date_paiement).toLocaleDateString("fr-FR")}</span>
+        <span>Payé le {formaterDateCourt(p.date_paiement)}</span>
         <span>•</span>
         <span>{MODE_PAIEMENT_LABELS[p.mode_paiement]}</span>
       </>

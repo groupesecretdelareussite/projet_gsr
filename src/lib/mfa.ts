@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
 // Alphabet sans caractères ambigus (pas de 0/O, 1/I/L)
 const CHARS_SECURITE = "23456789ABCDEFGHJKMNPQRSTUVWXYZ";
@@ -45,18 +46,28 @@ export function genererLotCodesSecours(nombre = 5): string[] {
 }
 
 /**
- * Hache un code de secours avec SHA-256 pour stockage sécurisé en base de données.
+ * Hache un code de secours avec bcryptjs (coût 10) intégrant un sel cryptographique aléatoire unique.
  */
-export function hacherCodeSecours(code: string): string {
+export async function hacherCodeSecours(code: string): Promise<string> {
   const normalise = normaliserCodeSecours(code);
-  return crypto.createHash("sha256").update(normalise).digest("hex");
+  return bcrypt.hash(normalise, 10);
 }
 
 /**
- * Vérifie si un code saisi correspond à un hachage stocké en temps constant.
+ * Vérifie si un code saisi correspond à un hachage stocké.
+ * Supporte les nouveaux hashs salés bcrypt et assure la rétrocompatibilité
+ * avec les anciens hashs SHA-256 vérifiés en temps constant.
  */
-export function verifierCodeSecoursHash(codeSaisi: string, hashEnBase: string): boolean {
-  const hashSaisi = hacherCodeSecours(codeSaisi);
+export async function verifierCodeSecoursHash(codeSaisi: string, hashEnBase: string): Promise<boolean> {
+  const normalise = normaliserCodeSecours(codeSaisi);
+
+  // 1. Nouveaux codes hachés avec bcrypt ($2a$, $2b$, $2y$)
+  if (hashEnBase.startsWith("$2")) {
+    return bcrypt.compare(normalise, hashEnBase);
+  }
+
+  // 2. Fallback rétrocompatible pour les anciens hashs SHA-256 (temps constant)
+  const hashSaisi = crypto.createHash("sha256").update(normalise).digest("hex");
   if (hashSaisi.length !== hashEnBase.length) {
     return false;
   }

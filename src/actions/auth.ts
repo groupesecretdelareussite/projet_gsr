@@ -94,6 +94,21 @@ export async function verifierCodeMfa(code: string): Promise<{ error?: string; s
   }
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Session invalide ou expirée. Veuillez vous reconnecter." };
+  }
+
+  const supabaseAdmin = createServiceRoleClient();
+  const ip = await extraireIpClient();
+
+  if (await tropDeTentatives(supabaseAdmin, user.id, "admin", ip)) {
+    return { error: "Trop de tentatives MFA infructueuses. Veuillez patienter 15 minutes." };
+  }
+
   const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
   if (factorsError) {
     return { error: factorsError.message };
@@ -110,8 +125,11 @@ export async function verifierCodeMfa(code: string): Promise<{ error?: string; s
   });
 
   if (verifyError) {
+    await enregistrerTentative(supabaseAdmin, user.id, "admin", false, ip);
     return { error: "Code incorrect. Vérifiez l'heure de votre téléphone ou réessayez." };
   }
+
+  await enregistrerTentative(supabaseAdmin, user.id, "admin", true, ip);
 
   const c = await cookies();
   c.set(ADMIN_ACTIVITY_COOKIE, "1", ADMIN_ACTIVITY_COOKIE_OPTIONS);
@@ -138,6 +156,12 @@ export async function verifierCodeSecours(code: string): Promise<{ error?: strin
   }
 
   const supabaseAdmin = createServiceRoleClient();
+  const ip = await extraireIpClient();
+
+  if (await tropDeTentatives(supabaseAdmin, user.id, "admin", ip)) {
+    return { error: "Trop de tentatives avec un code de secours. Veuillez patienter 15 minutes." };
+  }
+
   const { data: backupRows, error: dbError } = await supabaseAdmin
     .from("mfa_backup_codes")
     .select("id, code_hash")
@@ -148,10 +172,20 @@ export async function verifierCodeSecours(code: string): Promise<{ error?: strin
     return { error: dbError.message };
   }
 
-  const matchingRow = (backupRows ?? []).find((r) => verifierCodeSecoursHash(cleanCode, r.code_hash));
+  let matchingRow = null;
+  for (const r of backupRows ?? []) {
+    if (await verifierCodeSecoursHash(cleanCode, r.code_hash)) {
+      matchingRow = r;
+      break;
+    }
+  }
+
   if (!matchingRow) {
+    await enregistrerTentative(supabaseAdmin, user.id, "admin", false, ip);
     return { error: "Code de secours invalide ou déjà utilisé." };
   }
+
+  await enregistrerTentative(supabaseAdmin, user.id, "admin", true, ip);
 
   // Consommer le code (usage unique strict)
   await supabaseAdmin
@@ -249,11 +283,13 @@ export async function validerEnrolementMfa(
   // Remplacer d'anciens codes de secours s'il en existait
   await supabaseAdmin.from("mfa_backup_codes").delete().eq("user_id", user.id);
 
-  const rows = plainCodes.map((c) => ({
-    user_id: user.id,
-    code_hash: hacherCodeSecours(c),
-    utilise: false,
-  }));
+  const rows = await Promise.all(
+    plainCodes.map(async (c) => ({
+      user_id: user.id,
+      code_hash: await hacherCodeSecours(c),
+      utilise: false,
+    }))
+  );
 
   const { error: insertError } = await supabaseAdmin.from("mfa_backup_codes").insert(rows);
   if (insertError) {
@@ -369,11 +405,13 @@ export async function regenererMesCodesSecours(motDePasse: string): Promise<{ er
 
   await supabaseAdmin.from("mfa_backup_codes").delete().eq("user_id", user.id);
 
-  const rows = plainCodes.map((c) => ({
-    user_id: user.id,
-    code_hash: hacherCodeSecours(c),
-    utilise: false,
-  }));
+  const rows = await Promise.all(
+    plainCodes.map(async (c) => ({
+      user_id: user.id,
+      code_hash: await hacherCodeSecours(c),
+      utilise: false,
+    }))
+  );
 
   const { error: insertError } = await supabaseAdmin.from("mfa_backup_codes").insert(rows);
   if (insertError) {

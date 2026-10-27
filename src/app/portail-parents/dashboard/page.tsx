@@ -4,6 +4,7 @@ import { getParentSession } from "@/lib/session-parent";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { resteAPayer } from "@/lib/paiements";
 import { MOIS_SCOLAIRES, RAISON_LABELS, type MoisScolaire, type RaisonSuspensionManuelle } from "@/lib/constants";
+import { parseDateLocale, formaterDateTd } from "@/lib/date-utils";
 import { Badge } from "@/components/ui/badge";
 import { DeconnexionParentButton } from "@/components/parents/DeconnexionParentButton";
 import { ParentInactivityWatcher } from "@/components/parents/ParentInactivityWatcher";
@@ -18,7 +19,7 @@ interface EleveDashboard {
 }
 
 function estDansLeMoisCourant(dateIso: string): boolean {
-  const d = new Date(dateIso);
+  const d = parseDateLocale(dateIso);
   const now = new Date();
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
 }
@@ -254,7 +255,7 @@ async function ActifDashboard({
             {presences.map((p) => (
               <div key={p.date_presence} className="flex items-center justify-between py-2 text-sm">
                 <span className="text-gray-600">
-                  {new Date(p.date_presence).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                  {formaterDateTd(p.date_presence, { day: "2-digit", month: "long", year: "numeric" })}
                 </span>
                 <Badge variant={p.present ? "success" : "danger"}>{p.present ? "Présent" : "Absent"}</Badge>
               </div>
