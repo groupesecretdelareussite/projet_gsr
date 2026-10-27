@@ -55,7 +55,7 @@ export default function AProposPage() {
                   académiques et d'exceller dans leurs parcours scolaires.
                 </p>
                 <p>
-                  Aujourd'hui, fort de ses différents sites répartis dans le pays, le GSR est fier
+                  Aujourd'hui, fort de ses différents sites répartis à Cotonou, le GSR est fier
                   d'avoir accompagné près de 1000 élèves. Il représente bien plus qu'un
                   centre d'études : c'est une communauté engagée où parents, enseignants et
                   élèves collaborent étroitement pour bâtir un avenir prometteur.
