@@ -210,7 +210,7 @@ Repères pour ne pas reperdre le contexte d'une session à l'autre. Le détail f
     12. *Actualités* (`actualites`) : édition et suppression au clic.
     13. *Centre de notifications* (`notifications`) : filtres compactés, marquage comme lu direct.
     14. *Comptabilité générale* (`comptabilite`) : pièces justificatives et détail au clic.
-    15. *Professeurs TD* (`td/coord/config/professeurs`) : édition et créneaux au clic.
+    15. *Professeurs TD* (`td/coord/config/professeurs`) : réinitialisation mot de passe et activation/désactivation au clic (édition des données personnelles réservée au professeur).
 - **Portail TD — Filtrage des candidatures par matière (2026-10-26)** :
   - Sur `/td/prof/candidatures` (`CandidaturesTDView.tsx`), introduction d'un sélecteur interactif filtrant les créneaux par matière.
   - *Matière par défaut* : Présélection automatique de la matière principale de l'enseignant (`professeur.matiere_id`) au chargement pour un ciblage direct et sans encombrement visuel.
@@ -226,6 +226,11 @@ Repères pour ne pas reperdre le contexte d'une session à l'autre. Le détail f
   - **Dashboard Coordonnateur (`/td/coord/paiements`, `PaiementsCoordView.tsx`)** : 3 KPIs financiers, onglets « En attente » et « Historique », et barre de recherche universelle instantanée (nom, prof, #DEM, référence opérateur, tél, réseau). Modale de validation `ValiderPaiementTDDialog.tsx` avec **référence de transaction opérateur obligatoire** (horodatage `paye_le` et clôture). Modale de rejet `RejeterDemandeTDDialog.tsx` avec motif explicatif obligatoire et recrédit immédiat du solde enseignant.
   - **Espace Professeur (`/td/prof/gains`, `GainsProfView.tsx`)** : 3 cartes de solde (Disponible, En attente, Déjà perçu), formulaire de retrait dynamique `DemandeRetraitProfForm.tsx`, tableau d'historique personnel et bouton d'assistance WhatsApp officiel pré-rempli (ID demande et référence MoMo).
   - **Distinction Finance vs Paiements** : `/td/coord/finance` traite du pilotage budgétaire et analytique par semaine (coût théorique des créneaux clôturés et en cours) ; `/td/coord/paiements` pilote les décaissements réels de trésorerie et la traçabilité des transferts Mobile Money.
+- **Portail TD — Modification Profil Professeur en Autonomie & Restriction Coordonnateur (2026-10-26)** :
+  - *Espace Professeur* (`/td/prof/mon-compte`, composant `MonProfilProfForm.tsx`) : Remplacement de l'ancienne carte en lecture seule par un formulaire d'édition complet permettant à l'enseignant de modifier en libre-service son nom, prénom, email de connexion, numéro de téléphone (international normalisé avec `PhoneInput`), zone géographique et matière principale.
+  - *Server Action sécurisée* : `modifierMonProfilProf` (`src/actions/auth-td.ts`) vérifie la session active (`session.professeurId`), l'état actif/validé du compte, valide les contraintes de format (nom/prénom 2-100 car., email regex, téléphone valide Bénin), prévient les collisions en vérifiant l'unicité stricte de l'email et du téléphone contre les autres enseignants (`id != session.professeurId`), vérifie l'existence des clés étrangères `zone_id` et `matiere_principale_id`, met à jour `td.professeurs` et synchronise le cookie iron-session (`session.nom`, `session.prenom`).
+  - *Restriction Coordonnateur* (`/td/coord/config/professeurs`) : Droit d'édition des données personnelles supprimé pour le coordonnateur. Retrait de l'action `modifierProfesseurTD` (`src/actions/td-config.ts`), suppression du dialogue `ModifierProfesseurDialog.tsx` de la vue tableau et mobile. Le coordonnateur conserve exclusivement la réinitialisation du mot de passe en cas d'oubli (`reinitialiserMotDePasseProfTD` / `ReinitialiserMotDePasseProfDialog`) ainsi que l'activation/désactivation du compte prof (`desactiverProfesseurTD`/`reactiverProfesseurTD`).
+  - *Couverture de tests* : Suite de tests unitaires dédiée dans `src/actions/auth-td.test.ts` (rejets non authentifié, inactif, doublon email, doublon téléphone, formats invalides, et succès avec mise à jour session/base).
 
 ## Architecture
 
