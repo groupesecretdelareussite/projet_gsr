@@ -139,9 +139,14 @@ export default function TdLoginPage() {
             </div>
           </div>
 
-          {typeCompte === "professeur" && (
-            <p className="text-xs text-gray-400">Mot de passe oublié ? Contactez le coordonnateur pour une réinitialisation.</p>
-          )}
+          <div className="flex items-center justify-end -mt-1">
+            <Link
+              href={typeCompte === "professeur" ? "/td/mot-de-passe-oublie" : "/admin/mot-de-passe-oublie"}
+              className="text-xs font-semibold text-primary hover:underline transition-colors"
+            >
+              Mot de passe oublié ?
+            </Link>
+          </div>
 
           {error && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{error}</p>

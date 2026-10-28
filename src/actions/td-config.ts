@@ -171,7 +171,15 @@ export async function reinitialiserMotDePasseProfTD(professeurId: number, nouvea
   const supabaseAdmin = createServiceRoleClient();
   const hash = await bcrypt.hash(nouveauMdp, 10);
 
-  const { error } = await supabaseAdmin.schema("td").from("professeurs").update({ mot_de_passe: hash }).eq("id", professeurId);
+  const { error } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .update({
+      mot_de_passe: hash,
+      reset_token_hash: null,
+      reset_token_expires_at: null,
+    })
+    .eq("id", professeurId);
   if (error) return { error: error.message };
 
   return {};

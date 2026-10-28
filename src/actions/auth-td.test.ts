@@ -15,10 +15,21 @@ vi.mock("bcryptjs", () => ({
   },
 }));
 
+vi.mock("@/lib/email", () => ({
+  envoyerEmailReinitialisationProf: vi.fn().mockResolvedValue({ success: true }),
+}));
+
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getTdProfesseurSession } from "@/lib/session-td";
+import { envoyerEmailReinitialisationProf } from "@/lib/email";
 import bcrypt from "bcryptjs";
-import { changerMonMotDePasseProf, connexionProfesseurTD, modifierMonProfilProf } from "./auth-td";
+import {
+  changerMonMotDePasseProf,
+  connexionProfesseurTD,
+  modifierMonProfilProf,
+  demanderReinitialisationProfesseurTD,
+  reinitialiserMotDePasseAvecTokenProfTD,
+} from "./auth-td";
 
 describe("changerMonMotDePasseProf — changement de mot de passe en libre-service", () => {
   beforeEach(() => {
@@ -353,6 +364,164 @@ describe("modifierMonProfilProf — modification de profil en libre-service", ()
     expect(mockSession.nom).toBe("Dupont");
     expect(mockSession.prenom).toBe("Jean");
     expect(mockSave).toHaveBeenCalled();
+  });
+});
+
+describe("demanderReinitialisationProfesseurTD — demande de lien par email", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("rejette si l'email est invalide", async () => {
+    const res = await demanderReinitialisationProfesseurTD("email-invalide");
+    expect(res.error).toBe("Veuillez fournir une adresse email valide");
+  });
+
+  it("retourne un succès générique même si le professeur n'existe pas (anti-énumération)", async () => {
+    const mockFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    });
+
+    vi.mocked(createServiceRoleClient).mockReturnValue({
+      schema: vi.fn().mockReturnValue({ from: mockFrom }),
+    } as never);
+
+    const res = await demanderReinitialisationProfesseurTD("inconnu@gsr.bj");
+    expect(res.error).toBeUndefined();
+    expect(res.message).toContain("Si un compte professeur actif correspond");
+    expect(envoyerEmailReinitialisationProf).not.toHaveBeenCalled();
+  });
+
+  it("génère un token hashé en SHA-256 et expédie l'email quand le professeur existe", async () => {
+    const mockUpdateEq = vi.fn().mockResolvedValue({ error: null });
+    const mockUpdate = vi.fn().mockReturnValue({ eq: mockUpdateEq });
+
+    const mockFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { id: 10, email: "prof@gsr.bj", prenom: "Koffi", nom: "Sossa", actif: true, valide: true },
+            error: null,
+          }),
+        }),
+      }),
+      update: mockUpdate,
+    });
+
+    vi.mocked(createServiceRoleClient).mockReturnValue({
+      schema: vi.fn().mockReturnValue({ from: mockFrom }),
+    } as never);
+
+    const res = await demanderReinitialisationProfesseurTD("prof@gsr.bj");
+    expect(res.error).toBeUndefined();
+    expect(res.message).toContain("Si un compte professeur actif correspond");
+
+    expect(mockUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reset_token_hash: expect.any(String),
+        reset_token_expires_at: expect.any(String),
+      })
+    );
+    expect(envoyerEmailReinitialisationProf).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "prof@gsr.bj",
+        prenom: "Koffi",
+        token: expect.any(String),
+      })
+    );
+  });
+});
+
+describe("reinitialiserMotDePasseAvecTokenProfTD — validation du nouveau mot de passe", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it.each(["", "court", "1234567"])(
+    "rejette un nouveau mot de passe trop court (%s)",
+    async (nouveauMdp) => {
+      const res = await reinitialiserMotDePasseAvecTokenProfTD("token123", nouveauMdp);
+      expect(res.error).toBe("Le mot de passe doit contenir au moins 8 caractères");
+    }
+  );
+
+  it("rejette si le token est manquant", async () => {
+    const res = await reinitialiserMotDePasseAvecTokenProfTD("", "NouveauSecret123");
+    expect(res.error).toBe("Jeton de réinitialisation manquant ou invalide");
+  });
+
+  it("rejette si le token est introuvable ou déjà consommé", async () => {
+    const mockFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        }),
+      }),
+    });
+
+    vi.mocked(createServiceRoleClient).mockReturnValue({
+      schema: vi.fn().mockReturnValue({ from: mockFrom }),
+    } as never);
+
+    const res = await reinitialiserMotDePasseAvecTokenProfTD("token_inconnu", "NouveauSecret123");
+    expect(res.error).toBe("Lien de réinitialisation invalide ou déjà utilisé.");
+  });
+
+  it("rejette si le token a expiré (> 15 minutes)", async () => {
+    const datePassee = new Date(Date.now() - 20 * 60 * 1000).toISOString();
+    const mockFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { id: 10, email: "prof@gsr.bj", actif: true, valide: true, reset_token_expires_at: datePassee },
+            error: null,
+          }),
+        }),
+      }),
+    });
+
+    vi.mocked(createServiceRoleClient).mockReturnValue({
+      schema: vi.fn().mockReturnValue({ from: mockFrom }),
+    } as never);
+
+    const res = await reinitialiserMotDePasseAvecTokenProfTD("token_expire", "NouveauSecret123");
+    expect(res.error).toContain("Ce lien de réinitialisation a expiré");
+  });
+
+  it("met à jour le mot de passe avec bcrypt et purge le token si valide", async () => {
+    const dateFuture = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    const mockUpdateEq = vi.fn().mockResolvedValue({ error: null });
+    const mockUpdate = vi.fn().mockReturnValue({ eq: mockUpdateEq });
+
+    const mockFrom = vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          maybeSingle: vi.fn().mockResolvedValue({
+            data: { id: 10, email: "prof@gsr.bj", actif: true, valide: true, reset_token_expires_at: dateFuture },
+            error: null,
+          }),
+        }),
+      }),
+      update: mockUpdate,
+    });
+
+    vi.mocked(createServiceRoleClient).mockReturnValue({
+      schema: vi.fn().mockReturnValue({ from: mockFrom }),
+    } as never);
+
+    const res = await reinitialiserMotDePasseAvecTokenProfTD("token_valide_123", "NouveauSecret123");
+    expect(res.error).toBeUndefined();
+    expect(bcrypt.hash).toHaveBeenCalledWith("NouveauSecret123", 10);
+    expect(mockUpdate).toHaveBeenCalledWith({
+      mot_de_passe: "mocked_new_hash",
+      reset_token_hash: null,
+      reset_token_expires_at: null,
+    });
+    expect(mockUpdateEq).toHaveBeenCalledWith("id", 10);
   });
 });
 

@@ -1,11 +1,14 @@
 "use server";
 
+import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getTdProfesseurSession } from "@/lib/session-td";
 import { tropDeTentatives, enregistrerTentative, extraireIpClient } from "@/lib/brute-force";
 import { normaliserNumero, validerNumeroTelephone } from "@/lib/telephone";
+import { envoyerEmailReinitialisationProf } from "@/lib/email";
 
 /**
  * §10.1 GSR_ARCHITECTURE.md — branche "Professeur" du sélecteur /td/login,
@@ -257,6 +260,160 @@ export async function modifierMonProfilProf(input: ModifierMonProfilProfInput): 
 
   revalidatePath("/td/prof/mon-compte");
   revalidatePath("/td/coord/config/professeurs");
+
+  return {};
+}
+
+/**
+ * Demande de réinitialisation de mot de passe par email pour un professeur TD.
+ * Sécurisé contre le brute-force (IP + email, max 5 tentatives / 15 min),
+ * protège contre l'énumération de comptes (retourne toujours un succès générique),
+ * génère un jeton cryptographique 256 bits dont seul le hash SHA-256 est stocké en base.
+ */
+export async function demanderReinitialisationProfesseurTD(
+  email: string
+): Promise<{ error?: string; message?: string }> {
+  const cleanEmail = email?.trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+    return { error: "Veuillez fournir une adresse email valide" };
+  }
+
+  const supabaseAdmin = createServiceRoleClient();
+  const ip = await extraireIpClient();
+
+  if (await tropDeTentatives(supabaseAdmin, cleanEmail, "td", ip)) {
+    return { error: "Trop de tentatives, réessayez dans 15 minutes." };
+  }
+
+  const { data: prof, error: fetchErr } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .select("id, email, prenom, nom, actif, valide")
+    .eq("email", cleanEmail)
+    .maybeSingle();
+
+  // Si le professeur n'existe pas, ou si son compte est inactif / non validé :
+  // On enregistre l'échec pour le rate-limiting mais on retourne le message générique de succès (anti-énumération).
+  if (fetchErr || !prof || !prof.actif || (prof as { valide?: boolean }).valide === false) {
+    await enregistrerTentative(supabaseAdmin, cleanEmail, "td", false, ip);
+    return {
+      message: "Si un compte professeur actif correspond à cette adresse, un lien de réinitialisation vous a été envoyé.",
+    };
+  }
+
+  // Génération d'un token aléatoire brut (256 bits)
+  const token = crypto.randomBytes(32).toString("hex");
+  // Stockage uniquement du hash SHA-256 en base de données
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  // Durée de validité : 15 minutes
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+  const { error: updateErr } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .update({
+      reset_token_hash: tokenHash,
+      reset_token_expires_at: expiresAt,
+    })
+    .eq("id", prof.id);
+
+  if (updateErr) {
+    console.error("[AUTH TD] Erreur enregistrement token reset :", updateErr.message);
+    return { error: "Une erreur est survenue lors du traitement de la demande." };
+  }
+
+  // Déterminer dynamiquement l'URL de base (origin)
+  let origin = process.env.NEXT_PUBLIC_APP_URL || "https://groupe-secretdelareussite.com";
+  try {
+    const h = await headers();
+    const host = h.get("host");
+    const proto = h.get("x-forwarded-proto") ?? (process.env.NODE_ENV === "production" ? "https" : "http");
+    if (host) {
+      origin = `${proto}://${host}`;
+    }
+  } catch {
+    // Fallback si appelé hors contexte de requête HTTP (ex: tests automatisés)
+  }
+
+  const resEmail = await envoyerEmailReinitialisationProf({
+    email: prof.email,
+    prenom: prof.prenom,
+    token,
+    origin,
+  });
+
+  if (!resEmail.success) {
+    await enregistrerTentative(supabaseAdmin, cleanEmail, "td", false, ip);
+    return { error: "Échec de l'envoi de l'email. Veuillez réessayer dans quelques instants ou contacter le coordonnateur." };
+  }
+
+  await enregistrerTentative(supabaseAdmin, cleanEmail, "td", true, ip);
+
+  return {
+    message: "Si un compte professeur actif correspond à cette adresse, un lien de réinitialisation vous a été envoyé.",
+  };
+}
+
+/**
+ * Validation finale du nouveau mot de passe avec le token de réinitialisation.
+ * Vérifie l'authenticité et la non-expiration du hash SHA-256, hache avec bcrypt (cost 10),
+ * et purge le token de manière atomique.
+ */
+export async function reinitialiserMotDePasseAvecTokenProfTD(
+  token: string,
+  nouveauMdp: string
+): Promise<{ error?: string }> {
+  if (!nouveauMdp || nouveauMdp.length < 8) {
+    return { error: "Le mot de passe doit contenir au moins 8 caractères" };
+  }
+  if (nouveauMdp.length > 128) {
+    return { error: "Le mot de passe ne doit pas dépasser 128 caractères" };
+  }
+  if (!token || typeof token !== "string" || token.trim().length === 0) {
+    return { error: "Jeton de réinitialisation manquant ou invalide" };
+  }
+
+  const tokenNettoye = token.trim();
+  const tokenHash = crypto.createHash("sha256").update(tokenNettoye).digest("hex");
+  const supabaseAdmin = createServiceRoleClient();
+  const maintenant = new Date().toISOString();
+
+  const { data: prof, error: fetchErr } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .select("id, email, actif, valide, reset_token_expires_at")
+    .eq("reset_token_hash", tokenHash)
+    .maybeSingle();
+
+  if (fetchErr || !prof) {
+    return { error: "Lien de réinitialisation invalide ou déjà utilisé." };
+  }
+
+  if (!prof.reset_token_expires_at || new Date(prof.reset_token_expires_at) < new Date(maintenant)) {
+    return { error: "Ce lien de réinitialisation a expiré (durée maximale de 15 minutes). Veuillez refaire une demande." };
+  }
+
+  if (!prof.actif || (prof as { valide?: boolean }).valide === false) {
+    return { error: "Ce compte professeur est inactif ou non validé. Veuillez contacter le coordonnateur." };
+  }
+
+  const hashMdp = await bcrypt.hash(nouveauMdp, 10);
+
+  const { error: updateErr } = await supabaseAdmin
+    .schema("td")
+    .from("professeurs")
+    .update({
+      mot_de_passe: hashMdp,
+      reset_token_hash: null,
+      reset_token_expires_at: null,
+    })
+    .eq("id", prof.id);
+
+  if (updateErr) {
+    console.error("[AUTH TD] Erreur mise à jour mot de passe prof :", updateErr.message);
+    return { error: updateErr.message };
+  }
 
   return {};
 }
