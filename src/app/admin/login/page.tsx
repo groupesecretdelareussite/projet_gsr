@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { User, Lock, Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck } from "lucide-react";
 import { login } from "@/actions/auth";
+import { CONTACTS_GSR, genererLienWhatsAppSupport } from "@/lib/constants";
 
 function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -152,7 +153,13 @@ function LoginForm() {
           <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Retour au site
           </Link>
-          <a href="tel:+2290196084067" className="text-primary font-semibold hover:underline">
+          <a
+            href={genererLienWhatsAppSupport("Bonjour Support GSR, j'ai besoin d'aide pour me connecter à la console d'administration.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Support Technique GSR (${CONTACTS_GSR.supportTechnique.telephone} - ${CONTACTS_GSR.supportTechnique.disponibilite})`}
+            className="text-primary font-semibold hover:underline"
+          >
             Besoin d&apos;aide ?
           </a>
         </div>

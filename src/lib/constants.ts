@@ -72,3 +72,30 @@ export type Semestre = (typeof SEMESTRES)[number];
 
 export const MAX_CANDIDATURES_PAR_CRENEAU = 3;
 
+/** Coordonnées officielles du Groupe Secret de la Réussite (GSR). */
+export const CONTACTS_GSR = {
+  coordination: {
+    telephone: "+229 01 49 76 16 35",
+    appelHref: "tel:+2290149761635",
+    label: "Coordination Générale",
+  },
+  supportTechnique: {
+    telephone: "+229 01 65 81 56 57",
+    whatsappNumero: "2290165815657",
+    whatsappHref: "https://wa.me/2290165815657",
+    disponibilite: "WhatsApp uniquement",
+    label: "Support Technique",
+  },
+  general: {
+    telephoneMtn: "+229 01 96 08 40 67",
+    email: "contact@groupe-secretdelareussite.com",
+  },
+} as const;
+
+/** Génère un lien direct wa.me vers le Support Technique GSR (+229 01 65 81 56 57). */
+export function genererLienWhatsAppSupport(sujet?: string): string {
+  const base = CONTACTS_GSR.supportTechnique.whatsappHref;
+  if (!sujet) return base;
+  return `${base}?text=${encodeURIComponent(sujet)}`;
+}
+

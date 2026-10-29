@@ -26,7 +26,7 @@ Seeding the first admin account (one-shot, service-role key required — never r
 SUPABASE_SERVICE_ROLE_KEY=xxx SEED_ADMIN_USERNAME=admin SEED_ADMIN_PASSWORD=xxx npx tsx scripts/seed-admin.ts
 ```
 
-SQL migrations live in `sql/` and are applied manually to Supabase in numeric order (`001_schema_public.sql` → `031_td_paiements_professeurs.sql` as of this writing); there is no migration runner. **Toutes les migrations `001` à `031` sont intégralement appliquées sur les deux instances Supabase (Test `pqnszrnxlwipqhcwqwhd` et Client / Prod `gedmhgcdhghionubfoih`).**
+SQL migrations live in `sql/` and are applied manually to Supabase in numeric order (`001_schema_public.sql` → `032_professeurs_password_reset.sql` as of this writing); there is no migration runner. **Toutes les migrations `001` à `032` sont intégralement appliquées sur les deux instances Supabase (Test `pqnszrnxlwipqhcwqwhd` et Client / Prod `gedmhgcdhghionubfoih`).**
 
 ## Current implementation state
 
@@ -236,6 +236,20 @@ Repères pour ne pas reperdre le contexte d'une session à l'autre. Le détail f
   - *Server Action sécurisée* : `modifierMonProfilProf` (`src/actions/auth-td.ts`) vérifie la session active (`session.professeurId`), l'état actif/validé du compte, valide les contraintes de format (nom/prénom 2-100 car., email regex, téléphone valide Bénin), prévient les collisions en vérifiant l'unicité stricte de l'email et du téléphone contre les autres enseignants (`id != session.professeurId`), vérifie l'existence des clés étrangères `zone_id` et `matiere_principale_id`, met à jour `td.professeurs` et synchronise le cookie iron-session (`session.nom`, `session.prenom`).
   - *Restriction Coordonnateur* (`/td/coord/config/professeurs`) : Droit d'édition des données personnelles supprimé pour le coordonnateur. Retrait de l'action `modifierProfesseurTD` (`src/actions/td-config.ts`), suppression du dialogue `ModifierProfesseurDialog.tsx` de la vue tableau et mobile. Le coordonnateur conserve exclusivement la réinitialisation du mot de passe en cas d'oubli (`reinitialiserMotDePasseProfTD` / `ReinitialiserMotDePasseProfDialog`) ainsi que l'activation/désactivation du compte prof (`desactiverProfesseurTD`/`reactiverProfesseurTD`).
   - *Couverture de tests* : Suite de tests unitaires dédiée dans `src/actions/auth-td.test.ts` (rejets non authentifié, inactif, doublon email, doublon téléphone, formats invalides, et succès avec mise à jour session/base).
+- **Portail TD — Réinitialisation de Mot de Passe Professeur en Autonomie & Maintien Coordonnateur (2026-10-28, `sql/032_professeurs_password_reset.sql`)** :
+  - **Double modalité de réinitialisation** :
+    1. *Réinitialisation autonome par e-mail* (`/td/mot-de-passe-oublie`, `/td/reinitialiser-mot-de-passe`) : L'enseignant saisit son identifiant (e-mail ou téléphone) sur un écran dédié accessible depuis le login TD (`/td/login`). Un e-mail contenant un lien sécurisé à usage unique lui est envoyé via le service SMTP LWS officiel (`src/lib/email.ts`).
+    2. *Maintien de la réinitialisation directe par le Coordonnateur* (`/td/coord/config/professeurs`, `reinitialiserMotDePasseProfTD`) : Le coordonnateur conserve le contrôle direct pour dépanner immédiatement un professeur sans passer par l'e-mail. L'action purge automatiquement tout jeton de réinitialisation en attente (`reset_token_hash = null`, `reset_token_expires_at = null`).
+  - **Sécurité cryptographique & Anti-brute force** :
+    - *Jeton sécurisé* : Jeton cryptographique 256 bits (`crypto.randomBytes(32)`), transmis en clair uniquement dans l'URL de l'e-mail, et stocké exclusivement sous forme d'empreinte **SHA-256** (`reset_token_hash`) dans `td.professeurs` avec expiration stricte de **15 minutes** (`reset_token_expires_at`).
+    - *Index partiel* : `idx_professeurs_reset_token_hash` sur `td.professeurs (reset_token_hash) WHERE reset_token_hash IS NOT NULL`.
+    - *Protection anti-énumération* : `demanderReinitialisationProfesseurTD` renvoie une réponse positive générique constante, même si l'identifiant n'existe pas ou correspond à un compte inactif.
+    - *Anti brute-force* : Contrôle strict `tropDeTentatives` (5 échecs / 15 min par IP et identifiant, 8 échecs globaux par compte, 25 par IP) et enregistrement dans `public.login_attempts`.
+    - *Validation du mot de passe* : Hachage sécurisé **bcrypt** (10 rounds), jauge interactive de force du mot de passe en temps réel (`JaugeMotDePasse`), masquage/démasquage, validation de confirmation et mise à jour atomique avec invalidation du token.
+  - **Service d'expédition SMTP (`src/lib/email.ts`)** :
+    - `nodemailer` configuré avec le serveur SMTP LWS (`mail.groupe-secretdelareussite.com:587`, STARTTLS).
+    - Expéditeur officiel : `SMTP_FROM="Support Technique GSR" <support@groupe-secretdelareussite.com>`.
+    - Template HTML soigné aux couleurs institutionnelles du GSR, responsive, incluant avertissements de sécurité et rappel anti-phishing.
 
 ## Architecture
 
@@ -247,7 +261,7 @@ Repères pour ne pas reperdre le contexte d'une session à l'autre. Le détail f
 ### Auth model — three independent systems, all built
 1. **Admin staff** (`public.users`): Supabase Auth (JWT, httpOnly cookies). The login screen asks for `username`, but Supabase Auth only knows `email` — `login()` in `src/actions/auth.ts` resolves `username → email` via the service-role client first, *then* calls `signInWithPassword`. Si le compte a activé le 2FA (`nextLevel === "aal2"`), `login()` retourne `{ requireMfa: true }` sans poser `ADMIN_ACTIVITY_COOKIE` ; l'utilisateur est alors orienté vers l'écran autonome `/admin/verifier-2fa` pour valider son code TOTP à 6 chiffres (`verifierCodeMfa`) ou l'un de ses 5 codes de secours imprimés (`verifierCodeSecours`). Une fois validé, le cookie d'activité est posé pour autoriser l'accès au tableau de bord.
 2. **Parents** (`public.comptes_parents`): bcrypt + signed httpOnly cookie (`src/lib/session-parent.ts`), no Supabase Auth.
-3. **TD professeurs** (`td.professeurs`): same custom bcrypt pattern as parents (`src/lib/session-td.ts`); the coordonnateur reuses their existing admin session inside the TD portal instead of a fourth auth system.
+3. **TD professeurs** (`td.professeurs`): same custom bcrypt pattern as parents (`src/lib/session-td.ts`); the coordonnateur reuses their existing admin session inside the TD portal instead of a fourth auth system. Réinitialisation de mot de passe en double modalité (2026-10-28) : autonome par e-mail (`/td/mot-de-passe-oublie`, token cryptographique 256 bits à usage unique haché en SHA-256 avec expiration 15 min, envoi SMTP LWS sécurisé `src/lib/email.ts`, protection anti-énumération et anti brute-force) ET maintien de la réinitialisation directe par le coordonnateur depuis `/td/coord/config/professeurs` avec purge automatique des jetons en cours.
 
 All three are meant to share a 1200s (20 min) inactivity timeout and a brute-force guard via `public.login_attempts`. Le système applique un double contrôle strict (`src/lib/brute-force.ts`) : 5 échecs consécutifs / 15 min par couple (identifiant, IP), 8 échecs consécutifs / 15 min au total sur un même compte (protection multi-IP contre les attaques distribuées par proxys/botnet), et 25 échecs par IP globale. Ce même rate-limiting est appliqué à la saisie des identifiants (mot de passe) et à la vérification des facteurs 2FA (TOTP et codes de secours dans `src/actions/auth.ts`).
 

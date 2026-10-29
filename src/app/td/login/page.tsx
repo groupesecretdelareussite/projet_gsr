@@ -8,6 +8,7 @@ import { User, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-rea
 import { cn } from "@/lib/utils";
 import { login } from "@/actions/auth";
 import { connexionProfesseurTD } from "@/actions/auth-td";
+import { CONTACTS_GSR, genererLienWhatsAppSupport } from "@/lib/constants";
 
 type TypeCompte = "coordonnateur" | "professeur";
 
@@ -174,10 +175,19 @@ export default function TdLoginPage() {
           )}
         </form>
 
-        <div className="border-t border-gray-100 mt-8 pt-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors text-sm">
+        <div className="border-t border-gray-100 mt-8 pt-6 flex items-center justify-between text-sm">
+          <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Retour au site
           </Link>
+          <a
+            href={genererLienWhatsAppSupport("Bonjour Support GSR, j'ai besoin d'aide pour me connecter au portail TD.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Support Technique GSR (${CONTACTS_GSR.supportTechnique.telephone} - ${CONTACTS_GSR.supportTechnique.disponibilite})`}
+            className="text-primary font-semibold hover:underline"
+          >
+            Besoin d&apos;aide ?
+          </a>
         </div>
       </div>
     </div>

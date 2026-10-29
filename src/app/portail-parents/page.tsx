@@ -6,6 +6,7 @@ import Link from "next/link";
 import { IdCard, Eye, EyeOff, ArrowRight, ArrowLeft, UserPlus } from "lucide-react";
 import { ParentsAuthPanel } from "@/components/parents/ParentsAuthPanel";
 import { connexionParent } from "@/actions/auth-parent";
+import { CONTACTS_GSR, genererLienWhatsAppSupport } from "@/lib/constants";
 
 export default function ConnexionParentPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -86,7 +87,15 @@ export default function ConnexionParentPage() {
                 </button>
               </div>
               <p className="text-xs text-gray-400 mt-1.5">
-                Mot de passe oublié ? Contactez-nous pour une réinitialisation.
+                Mot de passe oublié ?{" "}
+                <a
+                  href={genererLienWhatsAppSupport("Bonjour Support GSR, j'ai oublié le mot de passe de mon compte Portail Parents.")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                >
+                  Contactez le support technique sur WhatsApp
+                </a>
               </p>
             </div>
 
@@ -118,10 +127,20 @@ export default function ConnexionParentPage() {
             </Link>
           </div>
 
-          <div className="flex items-center justify-center gap-3 mt-6 text-xs text-gray-300">
-            <span>Mentions légales</span>
+          <div className="flex items-center justify-center gap-3 mt-6 text-xs text-gray-400">
+            <Link href="/mentions-legales" className="hover:text-gray-600 transition-colors">
+              Mentions légales
+            </Link>
             <span>•</span>
-            <span>Aide</span>
+            <a
+              href={genererLienWhatsAppSupport("Bonjour Support GSR, j'ai besoin d'aide sur le portail parents.")}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`Support Technique GSR (${CONTACTS_GSR.supportTechnique.telephone} - ${CONTACTS_GSR.supportTechnique.disponibilite})`}
+              className="hover:text-primary transition-colors font-medium"
+            >
+              Support Technique (WhatsApp)
+            </a>
           </div>
         </div>
       </div>

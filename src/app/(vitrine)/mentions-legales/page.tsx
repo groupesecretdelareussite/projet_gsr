@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CONTACTS_GSR } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Mentions légales et politique de confidentialité | GSR",
@@ -8,9 +9,10 @@ export const metadata: Metadata = {
 };
 
 const IFU_OFFICIEL = "0 2019 1094 0473";
-const CONTACT_EMAIL = "contact@groupe-secretdelareussite.com";
-const PHONE_1 = "+229 01 96 08 40 67";
-const PHONE_2 = "+229 01 49 76 16 35";
+const CONTACT_EMAIL = CONTACTS_GSR.general.email;
+const PHONE_COORDINATION = CONTACTS_GSR.coordination.telephone;
+const PHONE_SUPPORT_TECHNIQUE = CONTACTS_GSR.supportTechnique.telephone;
+const PHONE_STANDARD = CONTACTS_GSR.general.telephoneMtn;
 
 export default function MentionsLegalesPage() {
   return (
@@ -62,13 +64,26 @@ export default function MentionsLegalesPage() {
                   Jéricho, Yagbé - Akpakpa, Vèdoko)
                 </p>
                 <p>
-                  <span className="text-gray-500">Téléphones :</span>{" "}
-                  <a href={`tel:${PHONE_1.replace(/\s+/g, "")}`} className="text-primary hover:underline">
-                    {PHONE_1}
-                  </a>{" "}
-                  /{" "}
-                  <a href={`tel:${PHONE_2.replace(/\s+/g, "")}`} className="text-primary hover:underline">
-                    {PHONE_2}
+                  <span className="text-gray-500">Coordination Générale :</span>{" "}
+                  <a href={CONTACTS_GSR.coordination.appelHref} className="text-primary hover:underline">
+                    {PHONE_COORDINATION}
+                  </a>
+                </p>
+                <p>
+                  <span className="text-gray-500">Support Technique :</span>{" "}
+                  <a
+                    href={CONTACTS_GSR.supportTechnique.whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    {PHONE_SUPPORT_TECHNIQUE} ({CONTACTS_GSR.supportTechnique.disponibilite})
+                  </a>
+                </p>
+                <p>
+                  <span className="text-gray-500">Ligne standard / MTN :</span>{" "}
+                  <a href={`tel:${PHONE_STANDARD.replace(/\s+/g, "")}`} className="text-primary hover:underline">
+                    {PHONE_STANDARD}
                   </a>
                 </p>
                 <p>
@@ -283,8 +298,19 @@ export default function MentionsLegalesPage() {
                   </a>
                 </li>
                 <li>
-                  Par téléphone ou WhatsApp officiel :{" "}
-                  <span className="font-medium text-gray-900">{PHONE_1}</span>
+                  Par téléphone (Coordination Générale) :{" "}
+                  <span className="font-medium text-gray-900">{PHONE_COORDINATION}</span>
+                </li>
+                <li>
+                  Par WhatsApp (Support Technique) :{" "}
+                  <a
+                    href={CONTACTS_GSR.supportTechnique.whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-primary hover:underline"
+                  >
+                    {PHONE_SUPPORT_TECHNIQUE}
+                  </a>
                 </li>
                 <li>Directement auprès du secrétariat de l&apos;un de nos centres à Cotonou.</li>
               </ul>
@@ -334,9 +360,19 @@ export default function MentionsLegalesPage() {
               {CONTACT_EMAIL}
             </a>
             {" · "}
-            Téléphone :{" "}
-            <a href={`tel:${PHONE_1.replace(/\s+/g, "")}`} className="text-primary hover:underline font-medium">
-              {PHONE_1}
+            Coordination :{" "}
+            <a href={CONTACTS_GSR.coordination.appelHref} className="text-primary hover:underline font-medium">
+              {PHONE_COORDINATION}
+            </a>
+            {" · "}
+            Support Technique :{" "}
+            <a
+              href={CONTACTS_GSR.supportTechnique.whatsappHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium"
+            >
+              {PHONE_SUPPORT_TECHNIQUE} ({CONTACTS_GSR.supportTechnique.disponibilite})
             </a>
           </p>
         </div>

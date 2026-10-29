@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Download, ShieldCheck } from "lucide-react";
 import { PageHeader } from "@/components/vitrine/PageHeader";
+import { CONTACTS_GSR, genererLienWhatsAppSupport } from "@/lib/constants";
 
 export const metadata = {
   title: "Télécharger l'application mobile GSR Staff & Enseignants",
@@ -102,12 +103,13 @@ export default function TelechargerAppPage() {
           <div>
             <h3 className="font-bold text-emerald-950">Besoin d'aide pour l'installation ?</h3>
             <p className="text-emerald-800 text-sm mt-1">
-              Contactez la coordination technique GSR pour vous accompagner dans la prise en main.
+              Contactez le support technique GSR au <span className="font-semibold text-emerald-950">{CONTACTS_GSR.supportTechnique.telephone}</span> ({CONTACTS_GSR.supportTechnique.disponibilite}) pour vous accompagner dans la prise en main.
             </p>
           </div>
           <Link
-            href="https://wa.me/2290196084067"
+            href={genererLienWhatsAppSupport("Bonjour Support GSR, j'ai besoin d'aide pour l'installation de l'application staff.")}
             target="_blank"
+            rel="noopener noreferrer"
             className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl whitespace-nowrap transition-colors"
           >
             Assistance WhatsApp

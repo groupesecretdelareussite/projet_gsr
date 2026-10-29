@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ShieldCheck, KeyRound, ArrowRight, ArrowLeft, LifeBuoy } from "lucide-react";
 import { verifierCodeMfa, verifierCodeSecours, logout } from "@/actions/auth";
+import { CONTACTS_GSR, genererLienWhatsAppSupport } from "@/lib/constants";
 
 export default function Verifier2faPage() {
   const [modeSecours, setModeSecours] = useState(false);
@@ -166,7 +167,13 @@ export default function Verifier2faPage() {
           <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Retour au site
           </Link>
-          <a href="tel:+2290196084067" className="text-primary font-semibold hover:underline">
+          <a
+            href={genererLienWhatsAppSupport("Bonjour Support GSR, j'ai besoin d'aide avec mon authentification 2FA.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Support Technique GSR (${CONTACTS_GSR.supportTechnique.telephone} - ${CONTACTS_GSR.supportTechnique.disponibilite})`}
+            className="text-primary font-semibold hover:underline"
+          >
             Besoin d&apos;aide ?
           </a>
         </div>

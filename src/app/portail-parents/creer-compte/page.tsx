@@ -7,6 +7,7 @@ import { IdCard, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ParentsAuthPanel } from "@/components/parents/ParentsAuthPanel";
 import { creerCompteParent } from "@/actions/auth-parent";
+import { CONTACTS_GSR, genererLienWhatsAppSupport } from "@/lib/constants";
 
 function forceMotDePasse(motDePasse: string): { label: string; niveau: number; couleur: string } {
   if (motDePasse.length === 0) return { label: "", niveau: 0, couleur: "bg-gray-200" };
@@ -59,7 +60,15 @@ export default function CreerCompteParentPage() {
           <p className="text-primary text-xs font-bold uppercase tracking-widest mb-2">Première connexion</p>
           <h1 className="text-3xl font-bold text-gray-900 mb-3">Créer votre compte</h1>
           <p className="text-gray-500 text-sm mb-8 leading-relaxed">
-            Utilisez le matricule de votre enfant, communiqué par le groupe.
+            Utilisez le matricule de votre enfant, communiqué par le groupe. En cas de difficulté ou de matricule égaré,{" "}
+            <a
+              href={genererLienWhatsAppSupport("Bonjour Support GSR, j'ai besoin d'aide pour créer mon compte parent (problème avec le matricule).")}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium"
+            >
+              contactez le support technique sur WhatsApp
+            </a>.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">

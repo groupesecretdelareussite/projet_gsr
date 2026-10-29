@@ -38,7 +38,7 @@ const JSON_LD_ORGANISATION = {
   description:
     "Cours de renfort, préparation BEPC/BAC et accompagnement scolaire à Cotonou, Bénin.",
   email: "contact@groupe-secretdelareussite.com",
-  telephone: "+2290196084067",
+  telephone: "+2290149761635",
   address: {
     "@type": "PostalAddress",
     addressLocality: "Cotonou",

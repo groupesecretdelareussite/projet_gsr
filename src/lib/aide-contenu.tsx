@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { CONTACTS_GSR } from "@/lib/constants";
 
 /** Petite carte de fonctionnalité — même habillage visuel que les tableaux (`rounded-2xl border border-gray-100`). */
 function Carte({ titre, route, children }: { titre: string; route?: string; children: ReactNode }) {
@@ -203,6 +204,7 @@ export const AIDE_CONNEXION_SECURITE: ReactNode = (
     <li><strong>Déconnexion automatique</strong> après 20 minutes d&apos;inactivité.</li>
     <li><strong>Blocage anti-intrusion</strong> : 5 tentatives échouées bloquent l&apos;identifiant 15 minutes.</li>
     <li><strong>Mot de passe oublié</strong> : lien de réinitialisation envoyé par email depuis l&apos;écran de connexion.</li>
+    <li><strong>Support Technique GSR</strong> : <a href={CONTACTS_GSR.supportTechnique.whatsappHref} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">{CONTACTS_GSR.supportTechnique.telephone}</a> ({CONTACTS_GSR.supportTechnique.disponibilite}) en cas de difficulté d&apos;accès.</li>
   </ul>
 );
 
@@ -218,6 +220,7 @@ export const AIDE_CONNEXION_SECURITE_PROF_TD: ReactNode = (
     <li><strong>Déconnexion automatique</strong> après 20 minutes d&apos;inactivité.</li>
     <li><strong>Blocage anti-intrusion</strong> : 5 tentatives échouées bloquent l&apos;identifiant 15 minutes.</li>
     <li><strong>Mot de passe oublié</strong> : contactez le coordonnateur pour une réinitialisation — pas de lien envoyé par email pour les comptes professeur.</li>
+    <li><strong>Support Technique GSR</strong> : <a href={CONTACTS_GSR.supportTechnique.whatsappHref} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-semibold">{CONTACTS_GSR.supportTechnique.telephone}</a> ({CONTACTS_GSR.supportTechnique.disponibilite}) pour toute assistance technique sur la plateforme.</li>
   </ul>
 );
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Phone, Mail, MapPin, MessageCircle } from "lucide-react";
+import { CONTACTS_GSR } from "@/lib/constants";
 
 export default function Footer() {
   return (
@@ -72,23 +73,47 @@ export default function Footer() {
           {/* Column 3: Contact */}
           <div>
             <h3 className="text-lg font-semibold mb-6">Contact</h3>
-            <ul className="space-y-4">
+            <ul className="space-y-4 text-sm">
               <li className="flex items-start gap-3 text-gray-300">
                 <MapPin className="h-5 w-5 text-secondary shrink-0 mt-0.5" />
                 <span>Cotonou, Bénin</span>
               </li>
-              <li className="flex items-center gap-3 text-gray-300">
-                <Phone className="h-5 w-5 text-secondary shrink-0" />
-                <span>+229 01 96 08 40 67</span>
+              <li className="flex items-start gap-3 text-gray-300">
+                <Phone className="h-5 w-5 text-secondary shrink-0 mt-0.5" />
+                <div>
+                  <span className="block text-xs font-semibold uppercase tracking-wider text-gray-400">Coordination Générale</span>
+                  <a href={CONTACTS_GSR.coordination.appelHref} className="hover:text-white transition-colors">
+                    {CONTACTS_GSR.coordination.telephone}
+                  </a>
+                </div>
+              </li>
+              <li className="flex items-start gap-3 text-gray-300">
+                <MessageCircle className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Support Technique</span>
+                    <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-medium">WhatsApp seul</span>
+                  </div>
+                  <a
+                    href={CONTACTS_GSR.supportTechnique.whatsappHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-emerald-300 transition-colors inline-block mt-0.5"
+                  >
+                    {CONTACTS_GSR.supportTechnique.telephone}
+                  </a>
+                </div>
               </li>
               <li className="flex items-center gap-3 text-gray-300">
                 <Phone className="h-5 w-5 text-secondary shrink-0" />
-                <span>+229 01 49 76 16 35</span>
+                <a href={`tel:${CONTACTS_GSR.general.telephoneMtn.replace(/\s+/g, "")}`} className="hover:text-white transition-colors">
+                  {CONTACTS_GSR.general.telephoneMtn}
+                </a>
               </li>
               <li className="flex items-center gap-3 text-gray-300">
                 <Mail className="h-5 w-5 text-secondary shrink-0" />
-                <a href="mailto:contact@groupe-secretdelareussite.com" className="hover:text-white transition-colors">
-                  contact@groupe-secretdelareussite.com
+                <a href={`mailto:${CONTACTS_GSR.general.email}`} className="hover:text-white transition-colors">
+                  {CONTACTS_GSR.general.email}
                 </a>
               </li>
             </ul>
