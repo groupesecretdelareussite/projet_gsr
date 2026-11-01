@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Wallet } from "lucide-react";
+import { Wallet, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -34,6 +35,22 @@ export default async function EnregistrerPaiementPage() {
     <div>
       <PageHeader title="Enregistrer un paiement" subtitle="Le reste dû est vérifié automatiquement" />
       <PaiementsNav active="enregistrer" role={scope.role} />
+
+      <div className="mb-4 p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-900">
+        <div className="flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+          <span>
+            Un élève a payé en ligne avant la coupure automatique du 1er du mois et a été suspendu par erreur ?
+          </span>
+        </div>
+        <Link
+          href="/admin/eleves/suspendus/regularisation"
+          className="font-bold text-primary hover:underline shrink-0"
+        >
+          Accéder à la régularisation de crise &rarr;
+        </Link>
+      </div>
+
       <EnregistrerPaiementForm />
     </div>
   );

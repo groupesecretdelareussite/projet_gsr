@@ -35,6 +35,7 @@ export const RESEAUX_MOMO: Record<ReseauMoMo, ReseauMoMoConfig> = {
 };
 
 export const MONTANT_MINIMUM_RETRAIT = 5000;
+export const PAS_MONTANT_RETRAIT = 100;
 export const JOUR_OUVERTURE_RETRAIT = 28;
 export const NUMERO_WHATSAPP_GSR = process.env.NEXT_PUBLIC_GSR_WHATSAPP || "+229 01 49 76 16 35";
 

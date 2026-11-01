@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserX } from "lucide-react";
+import { UserX, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -191,14 +191,25 @@ export default async function ElevesSuspendusPage() {
         title="Élèves suspendus"
         subtitle={`${rows.length} élève(s) suspendu(s)`}
         actions={
-          peutExporter ? (
-            <ExporterExcelButton
-              titre={`Élèves suspendus — ${dateExport}`}
-              lignes={lignesExport}
-              nomFichier={`Eleves_suspendus_${dateExport}`.replace(/\s+/g, "_")}
-              nomFeuille="Suspendus"
-            />
-          ) : undefined
+          <div className="flex items-center gap-2">
+            {peutGerer && (
+              <Link
+                href="/admin/eleves/suspendus/regularisation"
+                className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-lg text-white bg-primary-gradient shadow-xs hover:shadow-md transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Régulariser paiements en ligne</span>
+              </Link>
+            )}
+            {peutExporter && (
+              <ExporterExcelButton
+                titre={`Élèves suspendus — ${dateExport}`}
+                lignes={lignesExport}
+                nomFichier={`Eleves_suspendus_${dateExport}`.replace(/\s+/g, "_")}
+                nomFeuille="Suspendus"
+              />
+            )}
+          </div>
         }
       />
       <DataTable

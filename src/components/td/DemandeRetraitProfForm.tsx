@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   RESEAUX_MOMO,
   MONTANT_MINIMUM_RETRAIT,
+  PAS_MONTANT_RETRAIT,
   type ReseauMoMo,
   type StatutFenetreRetrait,
   genererLienReclamationPaiementWhatsApp,
@@ -300,7 +301,7 @@ export function DemandeRetraitProfForm({
             type="number"
             min={MONTANT_MINIMUM_RETRAIT}
             max={soldeDisponible}
-            step={500}
+            step={PAS_MONTANT_RETRAIT}
             required
             placeholder={`Minimum ${MONTANT_MINIMUM_RETRAIT.toLocaleString("fr-FR")} F`}
             value={montant}

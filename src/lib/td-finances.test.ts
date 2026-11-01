@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   getStatutFenetreRetrait,
   MONTANT_MINIMUM_RETRAIT,
+  PAS_MONTANT_RETRAIT,
   RESEAUX_MOMO,
   genererMessageWhatsAppReclamation,
   genererLienReclamationPaiementWhatsApp,
@@ -10,6 +11,10 @@ import {
 describe("Logique financière & Retraits TD (td-finances)", () => {
   it("vérifie que le montant minimum de retrait est fixé à 5 000 F CFA", () => {
     expect(MONTANT_MINIMUM_RETRAIT).toBe(5000);
+  });
+
+  it("vérifie que le pas d'incrément de retrait est fixé à 100 F CFA", () => {
+    expect(PAS_MONTANT_RETRAIT).toBe(100);
   });
 
   it("supporte les 3 réseaux béninois : MTN, Moov et Celtis", () => {
