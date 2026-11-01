@@ -36,18 +36,18 @@ export default async function EnregistrerPaiementPage() {
       <PageHeader title="Enregistrer un paiement" subtitle="Le reste dû est vérifié automatiquement" />
       <PaiementsNav active="enregistrer" role={scope.role} />
 
-      <div className="mb-4 p-3.5 bg-amber-50/80 border border-amber-200/80 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-amber-900">
+      <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-gray-700">
         <div className="flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+          <AlertCircle className="w-4 h-4 text-gray-500 shrink-0" />
           <span>
-            Un élève a payé en ligne avant la coupure automatique du 1er du mois et a été suspendu par erreur ?
+            Un versement a été effectué pour un élève actuellement suspendu ?
           </span>
         </div>
         <Link
           href="/admin/eleves/suspendus/regularisation"
-          className="font-bold text-primary hover:underline shrink-0"
+          className="font-medium text-primary hover:underline shrink-0"
         >
-          Accéder à la régularisation de crise &rarr;
+          Régulariser le dossier &rarr;
         </Link>
       </div>
 

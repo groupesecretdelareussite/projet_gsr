@@ -293,7 +293,7 @@ export async function regulariserSuspension(
   // ==========================================================================
   if (input.montantVerse > resteAvantVersement) {
     return {
-      error: `Le montant versé (${input.montantVerse.toLocaleString("fr-FR")} F) dépasse le reste dû (${resteAvantVersement.toLocaleString("fr-FR")} F). Frais attendus : ${montantAttendu.toLocaleString("fr-FR")} F, déjà réglé : ${dejaPaye.toLocaleString("fr-FR")} F. Aucun dépassement n'est autorisé.`,
+      error: `Le montant versé (${input.montantVerse.toLocaleString("fr-FR")} F) dépasse le reste dû (${resteAvantVersement.toLocaleString("fr-FR")} F). Aucun dépassement n'est autorisé.`,
       categorie: "depassement",
     };
   }
@@ -355,7 +355,7 @@ export async function regulariserSuspension(
       nouveauStatut: "actif",
       nouveauResteDu: 0,
       montantPaye: input.montantVerse,
-      message: `Mois de ${moisConcerne} intégralement soldé (${montantAttendu.toLocaleString("fr-FR")} F). L'élève ${eleve.nom} ${eleve.prenoms} a été immédiatement rétabli avec le statut actif (sans aucune pénalité).`,
+      message: `Mois de ${moisConcerne} soldé. L'élève ${eleve.nom} ${eleve.prenoms} a été rétabli avec le statut actif.`,
     };
   }
 
@@ -389,6 +389,6 @@ export async function regulariserSuspension(
     nouveauStatut: "suspendu",
     nouveauResteDu,
     montantPaye: input.montantVerse,
-    message: `Acompte de ${input.montantVerse.toLocaleString("fr-FR")} F enregistré avec succès. L'élève ${eleve.nom} ${eleve.prenoms} reste suspendu avec un reste dû actualisé à ${nouveauResteDu.toLocaleString("fr-FR")} F.`,
+    message: `Acompte de ${input.montantVerse.toLocaleString("fr-FR")} F enregistré. Nouveau reste dû : ${nouveauResteDu.toLocaleString("fr-FR")} F.`,
   };
 }

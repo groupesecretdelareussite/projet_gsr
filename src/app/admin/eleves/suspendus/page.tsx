@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserX, Sparkles } from "lucide-react";
+import { UserX, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -197,8 +197,8 @@ export default async function ElevesSuspendusPage() {
                 href="/admin/eleves/suspendus/regularisation"
                 className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-lg text-white bg-primary-gradient shadow-xs hover:shadow-md transition-all"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Régulariser paiements en ligne</span>
+                <Receipt className="w-3.5 h-3.5" />
+                <span>Régularisation des paiements</span>
               </Link>
             )}
             {peutExporter && (
