@@ -121,14 +121,24 @@ export async function getElevesSuspendusDefautPaiement(): Promise<{
         site_id: number;
         sites: { nom_site: string } | null;
       };
-      eleves_suspendus: Array<{
-        raison: string;
-        motif: string;
-        montant_du: number;
-        mois_souscription: string | null;
-        date_suspension: string;
-        annee_scolaire_id: number;
-      }>;
+      eleves_suspendus:
+        | Array<{
+            raison: string;
+            motif: string;
+            montant_du: number;
+            mois_souscription: string | null;
+            date_suspension: string;
+            annee_scolaire_id: number;
+          }>
+        | {
+            raison: string;
+            motif: string;
+            montant_du: number;
+            mois_souscription: string | null;
+            date_suspension: string;
+            annee_scolaire_id: number;
+          }
+        | null;
     };
 
     const rawList = (elevesRows ?? []) as unknown as RawEleveRow[];
@@ -154,7 +164,8 @@ export async function getElevesSuspendusDefautPaiement(): Promise<{
     }
 
     const data: EleveSuspenduDefautPaiement[] = autorises.map((e) => {
-      const susp = e.eleves_suspendus[0];
+      const rawSusp = e.eleves_suspendus;
+      const susp = Array.isArray(rawSusp) ? rawSusp[0] : (rawSusp ?? null);
       const mois = (susp?.mois_souscription as MoisScolaire) ?? "Octobre";
       const cle = `${e.id}-${mois}`;
       const montantAttendu = montantFraisParClasse.get(e.classe_id) ?? Number(susp?.montant_du ?? 0);

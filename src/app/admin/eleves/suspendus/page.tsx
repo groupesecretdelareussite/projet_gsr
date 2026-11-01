@@ -12,13 +12,29 @@ import { ACTIONS_HOVER_REVEAL } from "@/lib/utils";
 import { estVenuDansLeMois } from "@/lib/reinscription";
 import { ExporterExcelButton } from "@/components/admin/ExporterExcelButton";
 
+interface RawSuspension {
+  raison: string;
+  motif: string;
+  montant_du: number;
+  mois_souscription: string | null;
+  date_suspension: string;
+}
+
+function extraireSuspension(raw: unknown): RawSuspension | null {
+  if (!raw) return null;
+  if (Array.isArray(raw)) {
+    return (raw[0] as RawSuspension) ?? null;
+  }
+  return raw as RawSuspension;
+}
+
 interface EleveSuspenduRow {
   id: number;
   matricule: string;
   nom: string;
   prenoms: string;
   classes: { nom_classe: string; sites: { nom_site: string } | null } | null;
-  eleves_suspendus: { raison: string; motif: string; montant_du: number; mois_souscription: string | null; date_suspension: string }[];
+  suspension: RawSuspension | null;
   estVenuDansLeMois: boolean | null;
 }
 
@@ -43,13 +59,28 @@ export default async function ElevesSuspendusPage() {
   ]);
 
   const rows: EleveSuspenduRow[] = await Promise.all(
-    ((eleves ?? []) as unknown as Omit<EleveSuspenduRow, "estVenuDansLeMois">[]).map(async (e) => {
-      const suspension = e.eleves_suspendus[0];
+    ((eleves ?? []) as unknown as Array<{
+      id: number;
+      matricule: string;
+      nom: string;
+      prenoms: string;
+      classes: { nom_classe: string; sites: { nom_site: string } | null } | null;
+      eleves_suspendus: unknown;
+    }>).map(async (e) => {
+      const suspension = extraireSuspension(e.eleves_suspendus);
       const doitVerifier = suspension?.raison === "defaut_paiement" && suspension.montant_du > 0 && suspension.mois_souscription && anneeEnCours;
       const estVenu = doitVerifier
         ? await estVenuDansLeMois(supabase, e.id, suspension.mois_souscription as MoisScolaire, anneeEnCours.date_debut)
         : null;
-      return { ...e, estVenuDansLeMois: estVenu };
+      return {
+        id: e.id,
+        matricule: e.matricule,
+        nom: e.nom,
+        prenoms: e.prenoms,
+        classes: e.classes,
+        suspension,
+        estVenuDansLeMois: estVenu,
+      };
     })
   );
 
@@ -61,7 +92,7 @@ export default async function ElevesSuspendusPage() {
       key: "raison",
       label: "Raison",
       render: (e) => {
-        const raison = e.eleves_suspendus[0]?.raison as keyof typeof RAISON_LABELS | undefined;
+        const raison = e.suspension?.raison as keyof typeof RAISON_LABELS | undefined;
         return raison ? <Badge variant="warning">{RAISON_LABELS[raison]}</Badge> : "—";
       },
     },
@@ -69,7 +100,7 @@ export default async function ElevesSuspendusPage() {
       key: "motif",
       label: "Motif",
       render: (e) => {
-        const motif = e.eleves_suspendus[0]?.motif;
+        const motif = e.suspension?.motif;
         return motif ? (
           <span className="block md:max-w-[220px] md:truncate" title={motif}>
             {motif}
@@ -83,10 +114,10 @@ export default async function ElevesSuspendusPage() {
       key: "montant_du",
       label: "Montant dû",
       render: (e) => {
-        const montant = e.eleves_suspendus[0]?.montant_du ?? 0;
+        const montant = e.suspension?.montant_du ?? 0;
         if (montant === 0) return "0 F";
         if (e.estVenuDansLeMois === false) return <span className="text-gray-400 italic">Sera exonéré (absence)</span>;
-        return <span className="text-red-600 font-semibold">{montant} F</span>;
+        return <span className="text-red-600 font-semibold">{montant.toLocaleString("fr-FR")} F</span>;
       },
     },
     ...(peutGerer
@@ -95,7 +126,7 @@ export default async function ElevesSuspendusPage() {
             key: "actions",
             label: "Actions",
             render: (e: EleveSuspenduRow) => {
-              const suspension = e.eleves_suspendus[0];
+              const suspension = e.suspension;
               return (
                 <div className={ACTIONS_HOVER_REVEAL}>
                   <ReinscrireDialog
@@ -116,7 +147,7 @@ export default async function ElevesSuspendusPage() {
 
   const dateExport = new Date().toLocaleDateString("fr-FR");
   const lignesExport = rows.map((e) => {
-    const suspension = e.eleves_suspendus[0];
+    const suspension = e.suspension;
     const raison = suspension?.raison as keyof typeof RAISON_LABELS | undefined;
     return {
       Matricule: e.matricule,
@@ -144,14 +175,14 @@ export default async function ElevesSuspendusPage() {
       </Link>
     ),
     topRight: (e) => {
-      const suspension = e.eleves_suspendus[0];
+      const suspension = e.suspension;
       const raison = suspension?.raison as keyof typeof RAISON_LABELS | undefined;
       const montant = suspension?.montant_du ?? 0;
       return (
         <div className="flex flex-col items-end gap-1">
           {raison && <Badge variant="warning">{RAISON_LABELS[raison]}</Badge>}
           {montant > 0 && e.estVenuDansLeMois !== false && (
-            <span className="text-red-600 font-semibold text-xs">{montant} F</span>
+            <span className="text-red-600 font-semibold text-xs">{montant.toLocaleString("fr-FR")} F</span>
           )}
         </div>
       );
@@ -164,13 +195,13 @@ export default async function ElevesSuspendusPage() {
       </>
     ),
     extraInfo: (e) => {
-      const suspension = e.eleves_suspendus[0];
+      const suspension = e.suspension;
       if (!suspension?.motif) return null;
       return <span>Motif : {suspension.motif}</span>;
     },
     actions: peutGerer
       ? (e) => {
-          const suspension = e.eleves_suspendus[0];
+          const suspension = e.suspension;
           return (
             <ReinscrireDialog
               eleveId={e.id}
