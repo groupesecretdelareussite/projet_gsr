@@ -88,11 +88,11 @@ export default function Footer() {
                 </div>
               </li>
               <li className="flex items-start gap-3 text-gray-300">
-                <MessageCircle className="h-5 w-5 text-emerald-400 shrink-0 mt-0.5" />
+                <MessageCircle className="h-5 w-5 text-secondary shrink-0 mt-0.5" />
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Support Technique</span>
-                    <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded font-medium">WhatsApp seul</span>
+                    <span className="text-[10px] text-emerald-300 px-1.5 py-0.5 rounded font-medium">(WhatsApp)</span>
                   </div>
                   <a
                     href={CONTACTS_GSR.supportTechnique.whatsappHref}
@@ -106,9 +106,14 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-3 text-gray-300">
                 <Phone className="h-5 w-5 text-secondary shrink-0" />
-                <a href={`tel:${CONTACTS_GSR.general.telephoneMtn.replace(/\s+/g, "")}`} className="hover:text-white transition-colors">
-                  {CONTACTS_GSR.general.telephoneMtn}
-                </a>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Le Coordonnateur</span>
+                  </div>
+                  <a href={`tel:${CONTACTS_GSR.general.telephoneMtn.replace(/\s+/g, "")}`} className="hover:text-white transition-colors">
+                    {CONTACTS_GSR.general.telephoneMtn}
+                  </a>
+                </div>
               </li>
               <li className="flex items-center gap-3 text-gray-300">
                 <Mail className="h-5 w-5 text-secondary shrink-0" />
