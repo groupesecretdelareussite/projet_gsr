@@ -166,6 +166,15 @@ export const GEMINI_TOOL_DECLARATIONS = [
 ];
 
 /**
+ * Extrait défensivement le montant de frais_td qu'il soit retourné sous forme d'objet (1:1) ou de tableau par PostgREST.
+ */
+function extraireMontantFrais(fraisTd: unknown): number {
+  if (!fraisTd) return 0;
+  if (Array.isArray(fraisTd)) return Number((fraisTd[0] as { montant?: number })?.montant ?? 0);
+  return Number((fraisTd as { montant?: number })?.montant ?? 0);
+}
+
+/**
  * Exécuteurs de requêtes en Lecture Seule avec contrôle de scope
  */
 export async function executeToolCall(
@@ -291,7 +300,7 @@ export async function executeToolCall(
           nom_complet: `${eleve.nom} ${eleve.prenoms}`,
           classe: (eleve as any).classes?.nom_classe,
           site: (eleve as any).classes?.sites?.nom_site,
-          frais_mensuel_td: (eleve as any).classes?.frais_td?.[0]?.montant ?? 0,
+          frais_mensuel_td: extraireMontantFrais((eleve as any).classes?.frais_td),
           contact_parent: eleve.contact_parent,
           college: eleve.college,
           option: eleve.option_m,
@@ -370,7 +379,7 @@ export async function executeToolCall(
 
         let montantTotalAttendu = 0;
         for (const el of elevesList || []) {
-          const montantMois = Number((el as any).classes?.frais_td?.[0]?.montant || 0);
+          const montantMois = extraireMontantFrais((el as any).classes?.frais_td);
           montantTotalAttendu += montantMois;
 
           const moisPayes = paiementsParEleve.get(el.id) || [];

@@ -17,10 +17,13 @@ interface EleveDashboard {
   classes: { nom_classe: string } | null;
 }
 
-/** Variation en % entre deux comptages ; `null` si la base de comparaison est à 0 (rien d'honnête à afficher). */
+/** Variation en % entre deux comptages ; `null` si la base de comparaison est à 0 (sauf si actuel est aussi à 0). */
 function variation(actuel: number, precedent: number): number | null {
-  if (precedent === 0) return null;
-  return ((actuel - precedent) / precedent) * 100;
+  if (precedent === 0) {
+    if (actuel === 0) return 0;
+    return null;
+  }
+  return Math.round(((actuel - precedent) / precedent) * 100);
 }
 
 function appartientAuMois(dateIso: string, reference: Date): boolean {
@@ -88,7 +91,7 @@ export default async function TableauDeBordPage() {
     .maybeSingle();
 
   const mois = moisCourant(maintenant);
-  let nonAJourCeMois = 0;
+  let valeurNonAJour = 0;
   let variationNonAJour: number | null = null;
   const alertes: Alerte[] = [];
 
@@ -105,7 +108,7 @@ export default async function TableauDeBordPage() {
         new Set([mois, ...(moisPrec ? [moisPrec] : []), ...moisVisiblesRetardCourant])
       );
 
-      const [{ data: fraisTd }, { data: paiements }, { data: exoneresData }] = await Promise.all([
+      const [{ data: fraisTd }, { data: paiements }, { data: exoneresData }, { data: suspendusDefaut }] = await Promise.all([
         supabase.from("frais_td").select("classe_id, montant"),
         supabase
           .from("paiements")
@@ -117,6 +120,11 @@ export default async function TableauDeBordPage() {
           .select("eleve_id, mois_souscription")
           .eq("annee_scolaire_id", anneeEnCours.id)
           .in("mois_souscription", moisNecessaires),
+        supabase
+          .from("eleves_suspendus")
+          .select("id")
+          .eq("annee_scolaire_id", anneeEnCours.id)
+          .eq("raison", "defaut_paiement"),
       ]);
 
       const setExoneres = new Set((exoneresData ?? []).map((e) => `${e.eleve_id}-${e.mois_souscription}`));
@@ -131,25 +139,33 @@ export default async function TableauDeBordPage() {
         paiementsParEleveMois.set(cle, liste);
       }
 
-      nonAJourCeMois = compterNonAJour(elevesActifs, montantParClasse, paiementsParEleveMois, mois, setExoneres);
+      const countSuspendus = (suspendusDefaut ?? []).length;
+      const jourDuMois = maintenant.getDate();
+      const estDebutAnnee = mois === "Octobre" && jourDuMois <= 15;
+      const retardsActifsMoisCourant = compterNonAJour(elevesActifs, montantParClasse, paiementsParEleveMois, mois, setExoneres);
+
+      if (estDebutAnnee) {
+        valeurNonAJour = 0;
+      } else if (jourDuMois <= 15) {
+        valeurNonAJour = countSuspendus;
+      } else {
+        valeurNonAJour = countSuspendus + retardsActifsMoisCourant;
+      }
 
       if (moisPrec) {
         const nonAJourMoisPrecedent = compterNonAJour(elevesActifs, montantParClasse, paiementsParEleveMois, moisPrec, setExoneres);
-        variationNonAJour = variation(nonAJourCeMois, nonAJourMoisPrecedent);
+        variationNonAJour = variation(valeurNonAJour, nonAJourMoisPrecedent);
       }
 
-      // --- Alerte "Retard de paiement" (élèves distincts en retard, règle du 15) ---
-      if (moisVisiblesRetardCourant.length > 0) {
+      // --- Alerte "Retard de paiement" — uniquement active à partir du 16 pour les élèves actifs (§règle du 15) ---
+      if (jourDuMois > 15) {
         const elevesEnRetard = new Set<number>();
         for (const e of elevesActifs) {
           const montantAttendu = montantParClasse.get(e.classe_id);
           if (montantAttendu === undefined) continue;
-          for (const m of moisVisiblesRetardCourant) {
-            if (setExoneres.has(`${e.id}-${m}`)) continue;
-            if (resteAPayer(montantAttendu, paiementsParEleveMois.get(`${e.id}-${m}`) ?? []) > 0) {
-              elevesEnRetard.add(e.id);
-              break;
-            }
+          if (setExoneres.has(`${e.id}-${mois}`)) continue;
+          if (resteAPayer(montantAttendu, paiementsParEleveMois.get(`${e.id}-${mois}`) ?? []) > 0) {
+            elevesEnRetard.add(e.id);
           }
         }
 
@@ -157,7 +173,7 @@ export default async function TableauDeBordPage() {
           alertes.push({
             icon: AlertTriangle,
             titre: "Retard de paiement",
-            description: `${elevesEnRetard.size} élève(s) ont un paiement en retard.`,
+            description: `${elevesEnRetard.size} élève(s) ont un paiement en retard pour ${mois}.`,
           });
         }
       }
@@ -192,8 +208,8 @@ export default async function TableauDeBordPage() {
         {peutVoirKpiNonAJour && (
           <KpiCard
             icon={UserX}
-            label={mois ? `Non à jour — ${mois}` : "Non à jour"}
-            value={mois ? nonAJourCeMois : "—"}
+            label="Non à jour"
+            value={mois ? valeurNonAJour : "—"}
             trend={variationNonAJour !== null ? { value: variationNonAJour, positive: variationNonAJour <= 0 } : undefined}
           />
         )}

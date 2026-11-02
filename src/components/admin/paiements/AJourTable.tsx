@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Award } from "lucide-react";
 import { DataTable, type DataTableColumn, type MobileCardConfig } from "@/components/admin/DataTable";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { TelechargerQuittanceButton } from "@/components/admin/paiements/QuittanceDownloadButton";
@@ -15,6 +15,8 @@ export interface EleveAJourItem {
   nomClasse: string;
   nomSite: string;
   quittance: QuittanceData;
+  estExonere?: boolean;
+  motifExoneration?: string;
 }
 
 export function AJourTable({
@@ -33,7 +35,17 @@ export function AJourTable({
     {
       key: "nom",
       label: "Nom",
-      render: (e) => <span className="font-medium">{e.nom}</span>,
+      render: (e) => (
+        <span className="font-medium inline-flex items-center gap-1.5">
+          <span>{e.nom}</span>
+          {e.estExonere && (
+            <Award
+              className="w-4 h-4 text-purple-600 shrink-0"
+              title={e.motifExoneration || "Élève boursier / exonéré"}
+            />
+          )}
+        </span>
+      ),
     },
     {
       key: "prenoms",
@@ -55,7 +67,11 @@ export function AJourTable({
       label: "Quittance",
       render: (e) => (
         <div className="flex justify-end sm:justify-start">
-          <TelechargerQuittanceButton data={e.quittance} />
+          {e.estExonere && e.quittance.versements.length === 0 ? (
+            <span className="text-xs text-purple-700 font-medium italic">Dispensé</span>
+          ) : (
+            <TelechargerQuittanceButton data={e.quittance} />
+          )}
         </div>
       ),
     },
@@ -70,12 +86,25 @@ export function AJourTable({
     title: (e) => (
       <Link
         href={`/admin/eleves/${e.id}`}
-        className="hover:text-primary hover:underline"
+        className="hover:text-primary hover:underline inline-flex items-center gap-1.5"
       >
-        {e.nom} {e.prenoms}
+        <span>
+          {e.nom} {e.prenoms}
+        </span>
+        {e.estExonere && (
+          <Award
+            className="w-4 h-4 text-purple-600 shrink-0"
+            title={e.motifExoneration || "Élève boursier / exonéré"}
+          />
+        )}
       </Link>
     ),
-    topRight: (e) => <TelechargerQuittanceButton data={e.quittance} />,
+    topRight: (e) =>
+      e.estExonere && e.quittance.versements.length === 0 ? (
+        <span className="text-xs text-purple-700 font-medium italic">Dispensé</span>
+      ) : (
+        <TelechargerQuittanceButton data={e.quittance} />
+      ),
     subtitle: (e) => (
       <>
         <span className="font-medium text-gray-700">{e.nomClasse}</span>

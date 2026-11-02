@@ -115,11 +115,22 @@ export default async function PaiementsAJourPage(props: {
   const { data: fraisTd } = await supabase.from("frais_td").select("classe_id, montant");
   const montantParClasse = new Map((fraisTd ?? []).map((f) => [f.classe_id, Number(f.montant)]));
 
-  const { data: paiements } = await supabase
-    .from("paiements")
-    .select("id, eleve_id, montant_paye, date_paiement, mode_paiement")
-    .eq("annee_scolaire_id", anneeEnCours.id)
-    .eq("mois_souscription", mois);
+  const [{ data: paiements }, { data: exoneresData }] = await Promise.all([
+    supabase
+      .from("paiements")
+      .select("id, eleve_id, montant_paye, date_paiement, mode_paiement")
+      .eq("annee_scolaire_id", anneeEnCours.id)
+      .eq("mois_souscription", mois),
+    supabase
+      .from("mois_exoneres")
+      .select("eleve_id, motif")
+      .eq("annee_scolaire_id", anneeEnCours.id)
+      .eq("mois_souscription", mois),
+  ]);
+
+  const mapExoneres = new Map<number, string>(
+    (exoneresData ?? []).map((exo) => [exo.eleve_id as number, exo.motif as string])
+  );
 
   const paiementsParEleve = new Map<number, PaiementVersementRow[]>();
   for (const p of (paiements ?? []) as unknown as PaiementVersementRow[]) {
@@ -135,6 +146,7 @@ export default async function PaiementsAJourPage(props: {
   }
 
   const elevesAJour = elevesActifs.filter((e) => {
+    if (mapExoneres.has(e.id)) return true;
     const montantAttendu = montantParClasse.get(e.classe_id);
     if (montantAttendu === undefined) return false;
     return resteAPayer(montantAttendu, paiementsParEleve.get(e.id) ?? []) === 0;
@@ -142,6 +154,8 @@ export default async function PaiementsAJourPage(props: {
 
   const anneeLibelle = anneeEnCours.libelle ?? "2025-2026";
   const itemsAJour: EleveAJourItem[] = elevesAJour.map((e) => {
+    const estExonere = mapExoneres.has(e.id);
+    const motifExoneration = mapExoneres.get(e.id);
     const versements = (paiementsParEleve.get(e.id) ?? []).sort((a, b) =>
       a.date_paiement.localeCompare(b.date_paiement)
     );
@@ -156,6 +170,8 @@ export default async function PaiementsAJourPage(props: {
       prenoms: e.prenoms,
       nomClasse: e.classes?.nom_classe ?? "—",
       nomSite: e.classes?.sites?.nom_site ?? "—",
+      estExonere,
+      motifExoneration,
       quittance: {
         eleveId: e.id,
         numeroQuittance,
@@ -188,6 +204,7 @@ export default async function PaiementsAJourPage(props: {
     Prénoms: e.prenoms,
     Classe: e.classes?.nom_classe ?? "—",
     Site: e.classes?.sites?.nom_site ?? "—",
+    Régime: mapExoneres.has(e.id) ? `Exonéré / Boursier (${mapExoneres.get(e.id)})` : "Standard",
   }));
 
   return (

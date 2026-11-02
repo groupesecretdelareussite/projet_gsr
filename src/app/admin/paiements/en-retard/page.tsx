@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
-import { moisVisiblesRetard, resteAPayer } from "@/lib/paiements";
+import { moisCourant, moisVisiblesRetard, resteAPayer } from "@/lib/paiements";
 import { PageHeader } from "@/components/admin/PageHeader";
 import { PaiementsNav } from "@/components/admin/paiements/PaiementsNav";
 import { EmptyState } from "@/components/admin/EmptyState";
@@ -93,6 +93,32 @@ export default async function PaiementsEnRetardPage(props: {
   const moisFiltre: MoisScolaire = moisVisibles.includes(searchParams.mois as MoisScolaire)
     ? (searchParams.mois as MoisScolaire)
     : moisParDefaut;
+  if (!anneeEnCours) {
+    return (
+      <div>
+        {header}
+        <EmptyState icon={AlertTriangle} title="Aucune année active" description="Aucune année scolaire en cours." />
+      </div>
+    );
+  }
+
+  const maintenant = new Date();
+  const moisActuel = moisCourant(maintenant);
+  const estPeriodeGrace = maintenant.getDate() <= 15;
+
+  if (estPeriodeGrace && moisActuel) {
+    return (
+      <div>
+        {header}
+        <EmptyState
+          icon={AlertTriangle}
+          title="Période de grâce en cours"
+          description={`Les retards du mois de ${moisActuel} ne s'affichent qu'à partir du 16. Les impayés des mois antérieurs sont traités dans Élèves suspendus.`}
+        />
+      </div>
+    );
+  }
+
   if (moisVisibles.length === 0) {
     return (
       <div>
@@ -102,15 +128,6 @@ export default async function PaiementsEnRetardPage(props: {
           title="Rien à afficher"
           description="Avant le 16 du mois (règle du 15), ou avant le début de l'année scolaire en cours, il n'y a rien à afficher."
         />
-      </div>
-    );
-  }
-
-  if (!anneeEnCours) {
-    return (
-      <div>
-        {header}
-        <EmptyState icon={AlertTriangle} title="Aucune année active" description="Aucune année scolaire en cours." />
       </div>
     );
   }

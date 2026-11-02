@@ -7,7 +7,6 @@ import { KpiCard } from "@/components/admin/KpiCard";
 import { EncaissementsMensuelsChart } from "@/components/admin/statistiques/EncaissementsMensuelsChart";
 import { EncaissementsParSiteChart } from "@/components/admin/statistiques/EncaissementsParSiteChart";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
-import { moisVisiblesRetard } from "@/lib/paiements";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
 import { MOIS_SCOLAIRES, type MoisScolaire } from "@/lib/constants";
 
@@ -89,17 +88,12 @@ export default async function StatistiquesPage(
   const totalMomo = paiementsKpi.filter((p) => p.mode_paiement === "MoMo").reduce((s, p) => s + p.montant_paye, 0);
   const pctMomo = totalEncaisse > 0 ? Math.round((totalMomo / totalEncaisse) * 100) : 0;
 
-  // Taux de recouvrement — uniquement calculable pour l'année en_cours : c'est
-  // la seule pour laquelle "élèves actifs aujourd'hui" est une approximation
-  // valable de "qui devait payer". Pour une année en_pause/terminee, le
-  // périmètre des élèves a bougé depuis (passages, sorties) — plutôt afficher
-  // "—" qu'un chiffre trompeur. Approximation assumée même sur l'année en
-  // cours : ne tient pas compte des élèves inscrits en cours d'année (compte
-  // les mois écoulés depuis la rentrée pour tout le monde, pas depuis la date
-  // d'inscription individuelle) — suffisant pour un indicateur de pilotage.
+  // Taux de recouvrement — calculé pour l'année en_cours :
+  // - Si un mois est sélectionné : assiette = 1 mois pour l'ensemble des élèves inscrits (actifs + suspendus).
+  // - Si "Tous les mois" : assiette = les 8 mois de l'année scolaire (Octobre à Mai).
   let tauxRecouvrement: number | null = null;
   if (anneeSelectionnee?.statut === "en_cours") {
-    let queryElevesScope = supabase.from("eleves").select("classe_id, classes!inner(site_id)").eq("statut", "actif");
+    let queryElevesScope = supabase.from("eleves").select("classe_id, classes!inner(site_id)");
     if (siteIdEffectif) queryElevesScope = queryElevesScope.eq("classes.site_id", siteIdEffectif);
     if (searchParams.classe_id) queryElevesScope = queryElevesScope.eq("classe_id", searchParams.classe_id);
     const [{ data: elevesScope }, { data: fraisTdRows }] = await Promise.all([
@@ -109,9 +103,7 @@ export default async function StatistiquesPage(
 
     const montantParClasse = new Map((fraisTdRows ?? []).map((f) => [f.classe_id, Number(f.montant)]));
     const montantMensuelAttendu = (elevesScope ?? []).reduce((s, e) => s + (montantParClasse.get(e.classe_id) ?? 0), 0);
-    const nbMois = searchParams.mois
-      ? 1
-      : moisVisiblesRetard(new Date(), { dateDebut: anneeSelectionnee.date_debut, dateFin: anneeSelectionnee.date_fin }).length;
+    const nbMois = searchParams.mois ? 1 : 8;
     const montantAttendu = montantMensuelAttendu * nbMois;
 
     tauxRecouvrement = montantAttendu > 0 ? Math.round((totalEncaisse / montantAttendu) * 100) : null;
