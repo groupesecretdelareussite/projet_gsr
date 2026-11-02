@@ -397,6 +397,7 @@ export async function suspendreEleve(
 export interface ReinscrireInput {
   modePaiement: ModePaiement;
   datePaiement: string; // YYYY-MM-DD
+  dispensePenalite?: boolean;
 }
 
 export interface ReinscrireResultat {
@@ -474,15 +475,22 @@ export async function reinscrireEleve(eleveId: number, input: ReinscrireInput): 
     }
   }
 
-  const { error: penaliteError } = await supabaseAdmin.from("penalites_reinscription").insert({
-    eleve_id: eleveId,
-    montant: PENALITE_REINSCRIPTION_MONTANT,
-    mode_paiement: input.modePaiement,
-    date_paiement: input.datePaiement,
-    enregistre_par: scope.userId,
-    annee_scolaire_id: suspension.annee_scolaire_id,
-  });
-  if (penaliteError) return { error: penaliteError.message };
+  if (input.dispensePenalite && scope.role !== "coordonnateur") {
+    return { error: "Seul le coordonnateur peut dispenser de la pénalité de réinscription." };
+  }
+
+  const appliquerPenalite = !input.dispensePenalite;
+  if (appliquerPenalite) {
+    const { error: penaliteError } = await supabaseAdmin.from("penalites_reinscription").insert({
+      eleve_id: eleveId,
+      montant: PENALITE_REINSCRIPTION_MONTANT,
+      mode_paiement: input.modePaiement,
+      date_paiement: input.datePaiement,
+      enregistre_par: scope.userId,
+      annee_scolaire_id: suspension.annee_scolaire_id,
+    });
+    if (penaliteError) return { error: penaliteError.message };
+  }
 
   const { error: updateError } = await supabaseAdmin
     .from("eleves")
@@ -498,10 +506,11 @@ export async function reinscrireEleve(eleveId: number, input: ReinscrireInput): 
 
   const classeNom = (eleve as unknown as { classes: { nom_classe?: string } })?.classes?.nom_classe;
   const classeLabel = classeNom ? `, ${classeNom}` : "";
+  const mentionDispense = input.dispensePenalite ? " (dispense de pénalité accordée)" : "";
 
   await supabaseAdmin.from("notifications").insert({
     site_id: siteId,
-    contenu: `Réinscription : ${eleve.nom} ${eleve.prenoms} (${eleve.matricule}${classeLabel}) a été réinscrit(e).`,
+    contenu: `Réinscription : ${eleve.nom} ${eleve.prenoms} (${eleve.matricule}${classeLabel}) a été réinscrit(e)${mentionDispense}.`,
     roles_cibles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
   });
 
@@ -516,7 +525,7 @@ export async function reinscrireEleve(eleveId: number, input: ReinscrireInput): 
   return {
     montantDuPaye: moisExonere ? 0 : suspension.montant_du,
     moisExonere,
-    penalite: PENALITE_REINSCRIPTION_MONTANT,
+    penalite: appliquerPenalite ? PENALITE_REINSCRIPTION_MONTANT : 0,
   };
 }
 

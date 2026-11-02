@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { HOVER_ONLY_LABEL } from "@/lib/utils";
 import { reinscrireEleve } from "@/actions/eleves";
+import { useUserScope } from "@/hooks/useUserScope";
 import { MODES_PAIEMENT, MODE_PAIEMENT_LABELS, type ModePaiement } from "@/lib/constants";
 import { PENALITE_REINSCRIPTION_MONTANT } from "@/lib/reinscription";
 
@@ -44,22 +45,29 @@ export function ReinscrireDialog({
   moisSouscription,
   estVenuDansLeMois,
 }: ReinscrireDialogProps) {
+  const scope = useUserScope();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<ModePaiement>("Presentiel");
   const [date, setDate] = useState(todayIso());
+  const [dispensePenalite, setDispensePenalite] = useState(false);
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const montantDuApplicable = raison === "defaut_paiement" && montantDu > 0 && moisSouscription !== null;
   const moisExonere = montantDuApplicable && estVenuDansLeMois === false;
   const montantDuAPercevoir = montantDuApplicable && !moisExonere ? montantDu : 0;
-  const total = montantDuAPercevoir + PENALITE_REINSCRIPTION_MONTANT;
+  const penaliteMontant = dispensePenalite ? 0 : PENALITE_REINSCRIPTION_MONTANT;
+  const total = montantDuAPercevoir + penaliteMontant;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     startTransition(async () => {
-      const result = await reinscrireEleve(eleveId, { modePaiement: mode, datePaiement: date });
+      const result = await reinscrireEleve(eleveId, {
+        modePaiement: mode,
+        datePaiement: date,
+        dispensePenalite,
+      });
       if (result.error) {
         toast.error(result.error);
         return;
@@ -96,13 +104,33 @@ export function ReinscrireDialog({
               )}
               <div className="flex items-center justify-between px-3 py-2">
                 <dt className="text-gray-500">Pénalité de réinscription</dt>
-                <dd className="font-semibold text-gray-800">{PENALITE_REINSCRIPTION_MONTANT} F</dd>
+                <dd className={dispensePenalite ? "text-emerald-600 font-medium italic" : "font-semibold text-gray-800"}>
+                  {dispensePenalite ? "0 F (Dispensée)" : `${PENALITE_REINSCRIPTION_MONTANT} F`}
+                </dd>
               </div>
               <div className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-b-lg">
                 <dt className="font-semibold text-gray-900">Total à percevoir</dt>
                 <dd className="font-bold text-primary">{total} F</dd>
               </div>
             </dl>
+
+            {scope.role === "coordonnateur" && (
+              <div className="flex items-center gap-2 p-2 bg-emerald-50/50 border border-emerald-100 rounded-lg">
+                <input
+                  type="checkbox"
+                  id={`dispense-penalite-${eleveId}`}
+                  checked={dispensePenalite}
+                  onChange={(e) => setDispensePenalite(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                />
+                <Label
+                  htmlFor={`dispense-penalite-${eleveId}`}
+                  className="text-xs text-gray-700 font-normal cursor-pointer select-none"
+                >
+                  Dispenser de la pénalité de réinscription
+                </Label>
+              </div>
+            )}
 
             <div>
               <Label htmlFor="mode">Mode de paiement</Label>

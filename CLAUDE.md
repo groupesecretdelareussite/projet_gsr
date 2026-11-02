@@ -307,6 +307,7 @@ Client-side, `useUserScope()` (`src/hooks/useUserScope.ts`) reads scope from `Sc
   - *Caisse Prof* (Fonds réservé aux rémunérations des enseignants) = Total des créneaux TD clôturés pourvus – Total des retraits déjà payés par MoMo aux professeurs (`td.demandes_retrait` avec `statut = 'paye'`).
 - **Recherche sur la page des élèves suspendus** (`src/components/admin/eleves/SuspendusClient.tsx`, `/admin/eleves/suspendus`) : Barre de recherche instantanée (filtrage par nom, prénoms, matricule, classe, site, motif ou raison de suspension) avec cartes mobile interactives et synchronisation de l'export Excel.
 - **Revalidations de cache Next.js** (`src/actions/exonerations.ts`, `src/actions/eleves.ts`) : `revalidatePath("/admin/paiements/a-jour")` ajouté lors de l'attribution/révocation d'exonération et de la suppression d'élèves ; `revalidatePath("/admin/eleves/suspendus")` et `revalidatePath("/admin/eleves/[id]")` ajoutés lors de la modification d'un élève.
+- **Dispense de pénalité de réinscription** (`src/actions/eleves.ts`, `src/components/admin/eleves/ReinscrireDialog.tsx`) : La pénalité forfaitaire de réinscription est de 500 F. Le Coordonnateur seul dispose d'une case à cocher « Dispenser de la pénalité de réinscription » permettant d'annuler la pénalité (0 F) sans motif requis. L'action est tracée dans la notification d'audit.
 
 ### UI conventions
 - Interface is French-only (labels, messages, routes) — technical tokens like `MoMo` or subject codes are the only exception.
