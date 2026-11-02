@@ -39,10 +39,9 @@ export function AJourTable({
         <span className="font-medium inline-flex items-center gap-1.5">
           <span>{e.nom}</span>
           {e.estExonere && (
-            <Award
-              className="w-4 h-4 text-purple-600 shrink-0"
-              title={e.motifExoneration || "Élève boursier / exonéré"}
-            />
+            <span title={e.motifExoneration || "Élève boursier / exonéré"} className="inline-flex">
+              <Award className="w-4 h-4 text-purple-600 shrink-0" />
+            </span>
           )}
         </span>
       ),
@@ -67,7 +66,7 @@ export function AJourTable({
       label: "Quittance",
       render: (e) => (
         <div className="flex justify-end sm:justify-start">
-          {e.estExonere && e.quittance.versements.length === 0 ? (
+          {e.estExonere && (!e.quittance.versements || e.quittance.versements.length === 0) ? (
             <span className="text-xs text-purple-700 font-medium italic">Dispensé</span>
           ) : (
             <TelechargerQuittanceButton data={e.quittance} />
@@ -92,15 +91,14 @@ export function AJourTable({
           {e.nom} {e.prenoms}
         </span>
         {e.estExonere && (
-          <Award
-            className="w-4 h-4 text-purple-600 shrink-0"
-            title={e.motifExoneration || "Élève boursier / exonéré"}
-          />
+          <span title={e.motifExoneration || "Élève boursier / exonéré"} className="inline-flex">
+            <Award className="w-4 h-4 text-purple-600 shrink-0" />
+          </span>
         )}
       </Link>
     ),
     topRight: (e) =>
-      e.estExonere && e.quittance.versements.length === 0 ? (
+      e.estExonere && (!e.quittance.versements || e.quittance.versements.length === 0) ? (
         <span className="text-xs text-purple-700 font-medium italic">Dispensé</span>
       ) : (
         <TelechargerQuittanceButton data={e.quittance} />
