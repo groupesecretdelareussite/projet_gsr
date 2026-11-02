@@ -1,4 +1,4 @@
-import { Calculator, Wallet, TrendingDown, TrendingUp, Receipt, BadgePercent } from "lucide-react";
+import { Calculator, Wallet, GraduationCap, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope } from "@/lib/auth-scope";
@@ -66,7 +66,15 @@ export default async function ComptabilitePage(
     );
   }
 
-  const [{ data: paiements }, { data: penalites }, { data: creneaux }, { data: postulations }, { data: depenses }, { data: recompenses }] = await Promise.all([
+  const [
+    { data: paiements },
+    { data: penalites },
+    { data: creneaux },
+    { data: postulations },
+    { data: depenses },
+    { data: recompenses },
+    { data: demandesRetrait },
+  ] = await Promise.all([
     supabaseAdmin.from("paiements").select("montant_paye, mois_souscription").eq("annee_scolaire_id", anneeSelectionnee.id),
     supabaseAdmin.from("penalites_reinscription").select("montant, date_paiement").eq("annee_scolaire_id", anneeSelectionnee.id),
     // §8 CLAUDE.md prohibition #8 — pas de JOIN cross-schéma : td.creneaux/td.postulations sont dans le même schéma td,
@@ -88,11 +96,39 @@ export default async function ComptabilitePage(
       .from("recompenses")
       .select("montant, mois, date_paiement")
       .eq("annee_scolaire_id", anneeSelectionnee.id),
+    supabaseAdmin
+      .schema("td")
+      .from("demandes_retrait")
+      .select("montant_demande, statut, date_paiement, date_demande")
+      .eq("statut", "paye"),
   ]);
 
   const creneauxPourvusIds = new Set((postulations ?? []).map((p) => p.creneau_id));
   const creneauxRemuneres = (creneaux ?? []).filter((c) => creneauxPourvusIds.has(c.id));
   const depensesRows = (depenses ?? []) as unknown as DepenseRow[];
+
+  // --- Calcul des deux Caisses (cumul annuel, indépendant du filtre mensuel) ---
+  const dateDebutAnnee = anneeSelectionnee.date_debut;
+  const dateFinAnnee = anneeSelectionnee.date_fin + "T23:59:59.999Z";
+
+  // 1. Caisse Prof : Rémunérations dues (créneaux TD clôturés pourvus) - Retraits payés (MoMo)
+  const totalRemunerationsCumul = creneauxRemuneres.reduce((s, c) => s + Number(c.montant_prevu), 0);
+  const retraitsPayesAnnee = (demandesRetrait ?? []).filter((d) => {
+    const dDate = d.date_paiement || d.date_demande;
+    return dDate ? dDate >= dateDebutAnnee && dDate <= dateFinAnnee : true;
+  });
+  const totalRetraitsProfPayes = retraitsPayesAnnee.reduce((s, d) => s + Number(d.montant_demande), 0);
+  const soldeCaisseProf = totalRemunerationsCumul - totalRetraitsProfPayes;
+
+  // 2. Caisse Courante : Entrées totales - Sorties totales engagées (Rémunérations TD + Dépenses annexes + Récompenses)
+  const totalEntreesCumul =
+    (paiements ?? []).reduce((s, p) => s + p.montant_paye, 0) +
+    (penalites ?? []).reduce((s, p) => s + Number(p.montant), 0);
+  const totalDepensesAnnexesCumul = depensesRows.reduce((s, d) => s + Number(d.montant), 0);
+  const totalRecompensesElevesCumul = (recompenses ?? []).reduce((s, r) => s + Number(r.montant), 0);
+  const totalSortiesEngageesCumul =
+    totalRemunerationsCumul + totalDepensesAnnexesCumul + totalRecompensesElevesCumul;
+  const soldeCaisseCourante = totalEntreesCumul - totalSortiesEngageesCumul;
 
   const moisFiltre = (searchParams.mois as MoisScolaire | undefined) ?? undefined;
 
@@ -222,12 +258,19 @@ export default async function ComptabilitePage(
         <AutoSubmitOnChange />
       </form>
 
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-        <KpiCard icon={Wallet} label="Entrées" value={`${totalEntrees.toLocaleString("fr-FR")} F`} />
-        <KpiCard icon={BadgePercent} label="Dont pénalités" value={`${totalPenalites.toLocaleString("fr-FR")} F`} />
-        <KpiCard icon={TrendingDown} label="Sorties (total)" value={`${totalSorties.toLocaleString("fr-FR")} F`} />
-        <KpiCard icon={Receipt} label="Dont dépenses annexes" value={`${totalDepensesAnnexes.toLocaleString("fr-FR")} F`} />
-        <KpiCard icon={TrendingUp} label="Résultat net" value={`${resultatNet.toLocaleString("fr-FR")} F`} />
+      <div className="grid sm:grid-cols-2 gap-4 mb-6">
+        <KpiCard
+          icon={Wallet}
+          label="Caisse courante"
+          value={`${soldeCaisseCourante.toLocaleString("fr-FR")} F`}
+          subtitle="Trésorerie disponible du groupe"
+        />
+        <KpiCard
+          icon={GraduationCap}
+          label="Caisse Prof"
+          value={`${soldeCaisseProf.toLocaleString("fr-FR")} F`}
+          subtitle="Fonds réservé aux rémunérations des enseignants"
+        />
       </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6 max-w-md">

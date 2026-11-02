@@ -607,7 +607,7 @@ export async function supprimerPaiement(
   const { data: paiement } = await supabaseAdmin
     .from("paiements")
     .select(
-      "id, mois_souscription, montant_paye, date_paiement, mode_paiement, eleves(nom, prenoms, matricule, classes(site_id))"
+      "id, eleve_id, annee_scolaire_id, mois_souscription, montant_paye, date_paiement, mode_paiement, eleves(nom, prenoms, matricule, classes(site_id))"
     )
     .eq("id", paiementId)
     .single();
@@ -631,12 +631,50 @@ export async function supprimerPaiement(
   const { error: deleteError } = await supabaseAdmin.from("paiements").delete().eq("id", paiementId);
   if (deleteError) return { error: deleteError.message };
 
+  // Vérifier et révoquer les éventuels mois offerts promotionnels (multi-mois) si le critère n'est plus rempli
+  let detailPromo = "";
+  if (paiement.eleve_id && paiement.annee_scolaire_id) {
+    const { data: moisOffertsPromo } = await supabaseAdmin
+      .from("mois_exoneres")
+      .select("id, mois_souscription, motif")
+      .eq("eleve_id", paiement.eleve_id)
+      .eq("annee_scolaire_id", paiement.annee_scolaire_id)
+      .ilike("motif", "%Offre%payés simultanément%");
+
+    if (moisOffertsPromo && moisOffertsPromo.length > 0) {
+      const { data: paiementsRestants } = await supabaseAdmin
+        .from("paiements")
+        .select("mois_souscription")
+        .eq("eleve_id", paiement.eleve_id)
+        .eq("annee_scolaire_id", paiement.annee_scolaire_id);
+
+      const nbMoisPayesRestants = new Set((paiementsRestants ?? []).map((p) => p.mois_souscription)).size;
+      const nbOffertsAutorises = nbMoisPayesRestants >= 6 ? 2 : nbMoisPayesRestants >= 3 ? 1 : 0;
+
+      if (moisOffertsPromo.length > nbOffertsAutorises) {
+        // Trier les mois offerts par ordre chronologique scolaire
+        const moisTries = [...moisOffertsPromo].sort(
+          (a, b) =>
+            MOIS_SCOLAIRES.indexOf(a.mois_souscription as MoisScolaire) -
+            MOIS_SCOLAIRES.indexOf(b.mois_souscription as MoisScolaire)
+        );
+        const moisARetirer = moisTries.slice(nbOffertsAutorises);
+        const idsARetirer = moisARetirer.map((m) => m.id);
+
+        await supabaseAdmin.from("mois_exoneres").delete().in("id", idsARetirer);
+
+        const nomsRetires = moisARetirer.map((m) => m.mois_souscription).join(", ");
+        detailPromo = ` — Offre fidélité réajustée : mois offert (${nomsRetires}) révoqué car le total payé est passé à ${nbMoisPayesRestants} mois.`;
+      }
+    }
+  }
+
   const nomComplet = [eleve.nom, eleve.prenoms].filter(Boolean).join(" ");
   const cibleAffichee = nomComplet ? `${nomComplet} (${eleve.matricule})` : eleve.matricule;
 
   await supabaseAdmin.from("notifications").insert({
     site_id: eleve.classes.site_id,
-    contenu: `Paiement supprimé : ${paiement.montant_paye.toLocaleString("fr-FR")} F (${paiement.mois_souscription}) annulé pour ${cibleAffichee} par ${scope.username} — Motif : ${motif.trim()}`,
+    contenu: `Paiement supprimé : ${paiement.montant_paye.toLocaleString("fr-FR")} F (${paiement.mois_souscription}) annulé pour ${cibleAffichee} par ${scope.username} — Motif : ${motif.trim()}${detailPromo}`,
     roles_cibles: ["coordonnateur", "comptable"],
   });
 

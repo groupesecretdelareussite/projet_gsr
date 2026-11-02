@@ -178,6 +178,8 @@ export async function modifierEleve(input: ModifierEleveInput): Promise<{ error?
   if (error) return { error: error.message };
 
   revalidatePath("/admin/eleves/liste");
+  revalidatePath("/admin/eleves/suspendus");
+  revalidatePath(`/admin/eleves/${input.id}`);
   return {};
 }
 
@@ -719,6 +721,7 @@ export async function supprimerEleves(
   revalidatePath("/admin/eleves/suspendus");
   revalidatePath("/admin/tableau-de-bord");
   revalidatePath("/admin/statistiques");
+  revalidatePath("/admin/paiements/a-jour");
   for (const id of idsASupprimer) {
     revalidatePath(`/admin/eleves/${id}`);
   }

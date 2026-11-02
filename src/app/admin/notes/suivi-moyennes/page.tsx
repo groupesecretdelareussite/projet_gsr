@@ -72,7 +72,6 @@ export default async function SuiviMoyennesPage(
   let query = supabase
     .from("eleves")
     .select("id, nom, prenoms, classes!inner(nom_classe, site_id, sites(nom_site))")
-    .eq("statut", "actif")
     .order("nom");
   if (searchParams.site_id) query = query.eq("classes.site_id", searchParams.site_id);
 
@@ -189,7 +188,7 @@ export default async function SuiviMoyennesPage(
         rows={eleves}
         rowKey={(e) => e.id}
         mobileCard={mobileCard}
-        emptyState={<EmptyState icon={ClipboardList} title="Aucun élève" description="Aucun élève actif à afficher." />}
+        emptyState={<EmptyState icon={ClipboardList} title="Aucun élève" description="Aucun élève à afficher." />}
       />
     </div>
   );

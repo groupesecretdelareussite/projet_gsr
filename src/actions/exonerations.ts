@@ -135,6 +135,7 @@ export async function attribuerExoneration(
 
   revalidatePath(`/admin/eleves/${input.eleveId}`);
   revalidatePath("/admin/eleves/liste");
+  revalidatePath("/admin/paiements/a-jour");
   revalidatePath("/admin/paiements/en-retard");
   revalidatePath("/admin/paiements/exonerations");
   revalidatePath("/admin/tableau-de-bord");
@@ -180,6 +181,7 @@ export async function revoquerExoneration(eleveId: number): Promise<{ error?: st
 
   revalidatePath(`/admin/eleves/${eleveId}`);
   revalidatePath("/admin/eleves/liste");
+  revalidatePath("/admin/paiements/a-jour");
   revalidatePath("/admin/paiements/en-retard");
   revalidatePath("/admin/paiements/exonerations");
   revalidatePath("/admin/tableau-de-bord");

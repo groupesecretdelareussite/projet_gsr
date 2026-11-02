@@ -59,6 +59,39 @@ export async function creerCreneauTD(input: CreerCreneauInput): Promise<{ error?
     return { error: "La date du créneau doit être comprise dans la semaine sélectionnée." };
   }
 
+  // Vérification de chevauchement d'horaires pour une même classe à la même date
+  const { data: creneauxExistants } = await supabaseAdmin
+    .schema("td")
+    .from("creneaux")
+    .select("id, heure_debut, heure_fin, matiere_id")
+    .eq("classe_id", input.classeId)
+    .eq("date_td", input.dateTd);
+
+  const hDebut = input.heureDebut.slice(0, 5);
+  const hFin = input.heureFin.slice(0, 5);
+
+  const conflit = (creneauxExistants ?? []).find((c) => {
+    const cHesDebut = c.heure_debut.slice(0, 5);
+    const cHesFin = c.heure_fin.slice(0, 5);
+    return hDebut < cHesFin && hFin > cHesDebut;
+  });
+
+  if (conflit) {
+    let nomMatiere = "une autre matière";
+    const { data: matData } = await supabaseAdmin
+      .schema("td")
+      .from("matieres_td")
+      .select("nom_matiere")
+      .eq("id", conflit.matiere_id)
+      .maybeSingle();
+    if (matData?.nom_matiere) {
+      nomMatiere = matData.nom_matiere;
+    }
+    return {
+      error: `Un cours de ${nomMatiere} est déjà programmé pour cette classe de ${conflit.heure_debut.slice(0, 5)} à ${conflit.heure_fin.slice(0, 5)} (chevauchement interdit).`,
+    };
+  }
+
   // Si la semaine est déjà publiée, le créneau est inséré directement en "public"
   // pour être visible immédiatement par les professeurs.
   const statutCreneau = semaine.statut === "publiee" ? "public" : "brouillon";

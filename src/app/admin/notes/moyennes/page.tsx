@@ -75,7 +75,7 @@ export default async function MoyennesPage(
 
   if (classeId && anneeEnCours) {
     const [{ data: elevesData }, { data: coefficientsData }] = await Promise.all([
-      supabase.from("eleves").select("id, nom, prenoms").eq("classe_id", classeId).eq("statut", "actif").order("nom"),
+      supabase.from("eleves").select("id, nom, prenoms").eq("classe_id", classeId).order("nom"),
       supabase.from("coefficients").select("matiere_id, coefficient").eq("classe_id", classeId),
     ]);
     eleves = elevesData ?? [];
@@ -191,7 +191,7 @@ export default async function MoyennesPage(
       ) : !anneeEnCours ? (
         <EmptyState icon={Calculator} title="Aucune année scolaire en cours" description="Configurez une année scolaire en_cours." />
       ) : eleves.length === 0 ? (
-        <EmptyState icon={Calculator} title="Aucun élève actif" description="Cette classe n'a aucun élève actif." />
+        <EmptyState icon={Calculator} title="Aucun élève" description="Cette classe n'a aucun élève." />
       ) : (
         <DataTable columns={columns} rows={eleves} rowKey={(e) => e.id} />
       )}

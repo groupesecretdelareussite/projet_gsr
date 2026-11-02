@@ -40,7 +40,7 @@ export async function cloturerSemestre(semestre: Semestre): Promise<{ error?: st
   if (!anneeEnCours) return { error: "Aucune année scolaire en cours" };
 
   const [{ data: elevesData }, { data: matieresData }, { data: coefficientsData }] = await Promise.all([
-    supabase.from("eleves").select("id, classe_id").eq("statut", "actif"),
+    supabase.from("eleves").select("id, classe_id"),
     supabase.from("matieres").select("id").eq("actif", true),
     supabase.from("coefficients").select("classe_id, matiere_id, coefficient"),
   ]);

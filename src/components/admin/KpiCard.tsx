@@ -13,10 +13,11 @@ interface KpiCardProps {
   icon: LucideIcon;
   label: string;
   value: string | number;
+  subtitle?: string;
   trend?: KpiTrend;
 }
 
-export function KpiCard({ icon: Icon, label, value, trend }: KpiCardProps) {
+export function KpiCard({ icon: Icon, label, value, subtitle, trend }: KpiCardProps) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center gap-4">
       <div className="w-11 h-11 rounded-xl bg-primary-gradient flex items-center justify-center shrink-0">
@@ -24,7 +25,8 @@ export function KpiCard({ icon: Icon, label, value, trend }: KpiCardProps) {
       </div>
       <div>
         <p className="text-2xl font-bold text-gray-800">{value}</p>
-        <p className="text-xs text-gray-500">{label}</p>
+        <p className="text-xs font-medium text-gray-600">{label}</p>
+        {subtitle && <p className="text-[11px] text-gray-400 mt-0.5">{subtitle}</p>}
         {trend && (
           <div
             className={cn(

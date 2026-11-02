@@ -118,6 +118,7 @@ export async function executerSuspensionAutomatique(dateReference: Date): Promis
     await supabase.from("notifications").insert({
       site_id: siteId,
       contenu: `Suspension automatique : ${eleve.nom} ${eleve.prenoms} (${eleve.matricule}) — défaut de paiement ${moisVerifie}, ${montantDu} F restants.`,
+      roles_cibles: ["coordonnateur", "comptable", "superviseur", "chef_site"],
     });
 
     suspendus.push({ matricule: eleve.matricule, nom: eleve.nom, prenoms: eleve.prenoms, montantDu });

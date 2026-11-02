@@ -59,7 +59,6 @@ export default async function NotesPage(
       .from("eleves")
       .select("id, nom, prenoms")
       .eq("classe_id", classeId)
-      .eq("statut", "actif")
       .order("nom");
     eleves = elevesData ?? [];
 
@@ -148,7 +147,7 @@ export default async function NotesPage(
       ) : !anneeEnCours ? (
         <EmptyState icon={NotebookText} title="Aucune année scolaire en cours" description="Configurez une année scolaire en_cours avant de saisir des notes." />
       ) : eleves.length === 0 ? (
-        <EmptyState icon={NotebookText} title="Aucun élève actif" description="Cette classe n'a aucun élève actif." />
+        <EmptyState icon={NotebookText} title="Aucun élève" description="Cette classe n'a aucun élève." />
       ) : (matieres ?? []).length === 0 ? (
         <EmptyState icon={NotebookText} title="Aucune matière active" description="Activez au moins une matière dans les données de référence." />
       ) : (
