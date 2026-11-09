@@ -8,9 +8,11 @@ vi.mock("@/lib/auth-scope", async () => {
   return { ...actual, getUserScope: vi.fn() };
 });
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
-import { enregistrerAppelDuJour, marquerRetardataire } from "./presences";
+import { enregistrerAppelDuJour, marquerRetardataire, regulariserPresence, getStatutPresenceDate } from "./presences";
 
 function makeScope(overrides: Partial<UserScope>): UserScope {
   return {
@@ -150,3 +152,157 @@ describe("marquerRetardataire", () => {
     expect(result.error).toBe("Élève introuvable");
   });
 });
+
+describe("regulariserPresence", () => {
+  it("refuse l'accès pour un rôle non autorisé (ex. secretaire)", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "secretaire", isGlobal: false }));
+
+    const result = await regulariserPresence({ eleveId: 42, datePresence: "2026-10-14" });
+    expect(result.error).toBe("Action réservée au coordonnateur et au comptable.");
+  });
+
+  it("refuse une date invalide", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "coordonnateur" }));
+
+    const result = await regulariserPresence({ eleveId: 42, datePresence: "date-invalide" });
+    expect(result.error).toBe("Format de date invalide (YYYY-MM-DD requis).");
+  });
+
+  it("refuse une date future", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "coordonnateur" }));
+
+    const result = await regulariserPresence({ eleveId: 42, datePresence: "2099-01-01" });
+    expect(result.error).toBe("Impossible de régulariser une présence pour une date future.");
+  });
+
+  it("permet au coordonnateur de régulariser une date passée valide", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "coordonnateur" }));
+
+    const upsertMock = vi.fn().mockResolvedValue({ error: null });
+    vi.mocked(createClient).mockResolvedValue({
+      from: (table: string) => {
+        if (table === "eleves") {
+          return {
+            select: () => ({
+              eq: () => ({ single: () => Promise.resolve({ data: { classe_id: 5, classes: { site_id: 1 } }, error: null }) }),
+            }),
+          };
+        }
+        if (table === "annees_scolaires") {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: () =>
+                  Promise.resolve({ data: { id: 2, date_debut: "2026-09-01", date_fin: "2027-06-30" }, error: null }),
+              }),
+            }),
+          };
+        }
+        if (table === "presences") {
+          return { upsert: upsertMock };
+        }
+        throw new Error(`table inattendue : ${table}`);
+      },
+    } as never);
+
+    const result = await regulariserPresence({ eleveId: 42, datePresence: "2026-10-14" });
+
+    expect(result).toEqual({});
+    expect(upsertMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        eleve_id: 42,
+        date_presence: "2026-10-14",
+        classe_id: 5,
+        site_id: 1,
+        annee_scolaire_id: 2,
+        present: true,
+      }),
+      { onConflict: "eleve_id,date_presence" }
+    );
+  });
+
+  it("permet également au comptable de régulariser", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "comptable" }));
+
+    const upsertMock = vi.fn().mockResolvedValue({ error: null });
+    vi.mocked(createClient).mockResolvedValue({
+      from: (table: string) => {
+        if (table === "eleves") {
+          return {
+            select: () => ({
+              eq: () => ({ single: () => Promise.resolve({ data: { classe_id: 5, classes: { site_id: 1 } }, error: null }) }),
+            }),
+          };
+        }
+        if (table === "annees_scolaires") {
+          return {
+            select: () => ({
+              eq: () => ({
+                maybeSingle: () =>
+                  Promise.resolve({ data: { id: 2, date_debut: "2026-09-01", date_fin: "2027-06-30" }, error: null }),
+              }),
+            }),
+          };
+        }
+        if (table === "presences") {
+          return { upsert: upsertMock };
+        }
+        throw new Error(`table inattendue : ${table}`);
+      },
+    } as never);
+
+    const result = await regulariserPresence({ eleveId: 42, datePresence: "2026-10-14" });
+    expect(result).toEqual({});
+  });
+});
+
+describe("getStatutPresenceDate", () => {
+  it("retourne non_enregistre si aucune présence n'existe à cette date", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "coordonnateur" }));
+    vi.mocked(createClient).mockResolvedValue({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            eq: () => ({ maybeSingle: () => Promise.resolve({ data: null, error: null }) }),
+          }),
+        }),
+      }),
+    } as never);
+
+    const result = await getStatutPresenceDate(42, "2026-10-14");
+    expect(result).toEqual({ statut: "non_enregistre" });
+  });
+
+  it("retourne absent si marqué absent à cette date", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "coordonnateur" }));
+    vi.mocked(createClient).mockResolvedValue({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            eq: () => ({ maybeSingle: () => Promise.resolve({ data: { present: false }, error: null }) }),
+          }),
+        }),
+      }),
+    } as never);
+
+    const result = await getStatutPresenceDate(42, "2026-10-14");
+    expect(result).toEqual({ statut: "absent" });
+  });
+
+  it("retourne present si déjà présent à cette date", async () => {
+    vi.mocked(getUserScope).mockResolvedValueOnce(makeScope({ role: "coordonnateur" }));
+    vi.mocked(createClient).mockResolvedValue({
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            eq: () => ({ maybeSingle: () => Promise.resolve({ data: { present: true }, error: null }) }),
+          }),
+        }),
+      }),
+    } as never);
+
+    const result = await getStatutPresenceDate(42, "2026-10-14");
+    expect(result).toEqual({ statut: "present" });
+  });
+});
+

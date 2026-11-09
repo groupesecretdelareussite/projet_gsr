@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/admin/PageHeader";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { PresencesNav } from "@/components/admin/presences/PresencesNav";
 import { RetardataireForm } from "@/components/admin/presences/RetardataireForm";
+import { RegularisationForm } from "@/components/admin/presences/RegularisationForm";
 
 export default async function RetardatairesPage() {
   const supabase = await createClient();
@@ -19,11 +20,21 @@ export default async function RetardatairesPage() {
     );
   }
 
+  const estGestionnaire = scope.role === "coordonnateur" || scope.role === "comptable";
+
   return (
     <div>
-      <PageHeader title="Retardataires" subtitle="Marquer présent un élève arrivé après l'appel" />
-      <PresencesNav active="retardataires" />
-      <RetardataireForm />
+      <PageHeader
+        title={estGestionnaire ? "Régularisation des présences" : "Retardataires"}
+        subtitle={
+          estGestionnaire
+            ? "Régulariser la présence d'un élève réinscrit après l'appel ou confirmer sa venue"
+            : "Marquer présent un élève arrivé après l'appel"
+        }
+      />
+      <PresencesNav active="retardataires" role={scope.role} />
+      {estGestionnaire ? <RegularisationForm /> : <RetardataireForm />}
     </div>
   );
 }
+

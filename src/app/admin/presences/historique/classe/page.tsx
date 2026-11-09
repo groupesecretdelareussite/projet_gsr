@@ -95,7 +95,7 @@ export default async function HistoriqueClassePage(
   return (
     <div>
       <PageHeader title="Historique des présences" subtitle="Par classe et par date" />
-      <PresencesNav active="historique" />
+      <PresencesNav active="historique" role={scope.role} />
       <HistoriqueModeTabs active="classe" />
 
       <form method="get" className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3 max-w-2xl">

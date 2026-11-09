@@ -81,7 +81,7 @@ export default async function HistoriqueElevePage(
   return (
     <div>
       <PageHeader title="Historique des présences" subtitle="Par élève et par mois scolaire" />
-      <PresencesNav active="historique" />
+      <PresencesNav active="historique" role={scope.role} />
       <HistoriqueModeTabs active="eleve" />
 
       <HistoriqueEleveFiltre eleveInitial={eleveSelectionne} moisInitial={mois} />

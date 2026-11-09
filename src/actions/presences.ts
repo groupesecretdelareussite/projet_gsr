@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/admin";
 import { getUserScope, type UserScope } from "@/lib/auth-scope";
@@ -171,5 +172,106 @@ export async function marquerRetardataire(input: MarquerRetardataireInput): Prom
   );
 
   if (error) return { error: error.message };
+
+  revalidatePath("/admin/presences");
+  revalidatePath("/admin/presences/retardataires");
+  revalidatePath("/admin/presences/historique/classe");
+  revalidatePath("/admin/presences/historique/eleve");
+  revalidatePath(`/admin/eleves/${input.eleveId}`);
+
+  return {};
+}
+
+export type StatutPresenceDate = "present" | "absent" | "non_enregistre";
+
+/**
+ * Consulte le statut de présence d'un élève pour une date donnée.
+ * Utilisé par le formulaire de Régularisation pour afficher l'état avant validation.
+ */
+export async function getStatutPresenceDate(
+  eleveId: number,
+  datePresence: string
+): Promise<{ statut?: StatutPresenceDate; error?: string }> {
+  try {
+    await getScopeAndAssert();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePresence)) {
+      return { error: "Date invalide" };
+    }
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("presences")
+      .select("present")
+      .eq("eleve_id", eleveId)
+      .eq("date_presence", datePresence)
+      .maybeSingle();
+
+    if (error) return { error: error.message };
+    if (!data) return { statut: "non_enregistre" };
+    return { statut: data.present ? "present" : "absent" };
+  } catch (err: unknown) {
+    return { error: err instanceof Error ? err.message : "Erreur inattendue" };
+  }
+}
+
+export interface RegulariserPresenceInput {
+  eleveId: number;
+  datePresence: string; // YYYY-MM-DD
+}
+
+/**
+ * "Régularisation" — réservée exclusivement au coordonnateur et au comptable.
+ * Permet de marquer présent un élève pour n'importe quelle date passée de l'année scolaire
+ * (ex: élève réinscrit après paiement dont la présence n'avait pas pu être enregistrée lors de l'appel).
+ */
+export async function regulariserPresence(input: RegulariserPresenceInput): Promise<{ error?: string }> {
+  const scope = await getScopeAndAssert();
+  if (scope.role !== "coordonnateur" && scope.role !== "comptable") {
+    return { error: "Action réservée au coordonnateur et au comptable." };
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.datePresence)) {
+    return { error: "Format de date invalide (YYYY-MM-DD requis)." };
+  }
+
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  if (input.datePresence > aujourdhui) {
+    return { error: "Impossible de régulariser une présence pour une date future." };
+  }
+
+  const supabase = await createClient();
+
+  const [{ data: eleveData }, { data: anneeEnCours }] = await Promise.all([
+    supabase.from("eleves").select("classe_id, classes(site_id)").eq("id", input.eleveId).single(),
+    supabase.from("annees_scolaires").select("id, date_debut, date_fin").eq("statut", "en_cours").maybeSingle(),
+  ]);
+
+  const eleve = eleveData as unknown as EleveAvecSite | null;
+  if (!eleve?.classes) return { error: "Élève introuvable" };
+  if (!anneeEnCours) return { error: "Aucune année scolaire en cours" };
+
+  if (anneeEnCours.date_debut && input.datePresence < anneeEnCours.date_debut) {
+    return { error: "La date indiquée est antérieure au début de l'année scolaire en cours." };
+  }
+
+  const { error } = await supabase.from("presences").upsert(
+    {
+      eleve_id: input.eleveId,
+      date_presence: input.datePresence,
+      site_id: eleve.classes.site_id,
+      classe_id: eleve.classe_id,
+      annee_scolaire_id: anneeEnCours.id,
+      present: true,
+    },
+    { onConflict: "eleve_id,date_presence" }
+  );
+
+  if (error) return { error: error.message };
+
+  revalidatePath("/admin/presences");
+  revalidatePath("/admin/presences/retardataires");
+  revalidatePath("/admin/presences/historique/classe");
+  revalidatePath("/admin/presences/historique/eleve");
+  revalidatePath(`/admin/eleves/${input.eleveId}`);
+
   return {};
 }

@@ -74,7 +74,7 @@ export default async function PresencesPage(
         title="Présences"
         subtitle={`Appel du jour — ${formaterDateTd(datePresence, { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}`}
       />
-      <PresencesNav active="appel" />
+      <PresencesNav active="appel" role={scope.role} />
 
       <form method="get" className="grid grid-cols-2 sm:grid-cols-2 gap-2 mb-3 max-w-xl">
         {!estChefSiteOuSecretaire && (
@@ -116,11 +116,15 @@ export default async function PresencesPage(
         <EmptyState
           icon={Clock}
           title="Appel déjà effectué aujourd'hui"
-          description="L'appel de cette classe est définitif pour la journée. Pour un élève arrivé en retard, utilisez Retardataires."
+          description={
+            scope.role === "coordonnateur" || scope.role === "comptable"
+              ? "L'appel de cette classe est définitif pour la journée. Pour un élève arrivé en retard ou réinscrit, utilisez Régularisation."
+              : "L'appel de cette classe est définitif pour la journée. Pour un élève arrivé en retard, utilisez Retardataires."
+          }
           action={
             <Link href="/admin/presences/retardataires">
               <Button variant="outline" size="sm">
-                Retardataires
+                {scope.role === "coordonnateur" || scope.role === "comptable" ? "Régularisation" : "Retardataires"}
               </Button>
             </Link>
           }

@@ -1,23 +1,38 @@
 import Link from "next/link";
-import { ClipboardCheck, Clock, History } from "lucide-react";
+import { ClipboardCheck, Clock, CalendarCheck, History } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/lib/constants";
 
-const ONGLETS = [
-  { key: "appel", label: "Appel du jour", href: "/admin/presences", icon: ClipboardCheck },
-  { key: "retardataires", label: "Retardataires", href: "/admin/presences/retardataires", icon: Clock },
-  { key: "historique", label: "Historique", href: "/admin/presences/historique/classe", icon: History },
-] as const;
+interface PresencesNavProps {
+  active: "appel" | "retardataires" | "historique";
+  role?: UserRole;
+}
 
 /**
  * Onglets de navigation Présences.
+ * Pour coordonnateur et comptable : l'onglet s'appelle "Régularisation" (icône CalendarCheck).
+ * Pour les autres rôles (chef_site, secretaire, superviseur) : l'onglet s'appelle "Retardataires" (icône Clock).
  * Sur mobile : l'onglet actif affiche son icône et son libellé,
  * tandis que les onglets inactifs n'affichent que leur icône (libellé masqué sous `sm:`).
  * Actif = soulignement et couleur primaire.
  */
-export function PresencesNav({ active }: { active: (typeof ONGLETS)[number]["key"] }) {
+export function PresencesNav({ active, role }: PresencesNavProps) {
+  const estGestionnaire = role === "coordonnateur" || role === "comptable";
+
+  const onglets = [
+    { key: "appel" as const, label: "Appel du jour", href: "/admin/presences", icon: ClipboardCheck },
+    {
+      key: "retardataires" as const,
+      label: estGestionnaire ? "Régularisation" : "Retardataires",
+      href: "/admin/presences/retardataires",
+      icon: estGestionnaire ? CalendarCheck : Clock,
+    },
+    { key: "historique" as const, label: "Historique", href: "/admin/presences/historique/classe", icon: History },
+  ];
+
   return (
     <div className="flex items-center gap-1 mb-4 border-b border-gray-100 overflow-x-auto">
-      {ONGLETS.map((onglet) => {
+      {onglets.map((onglet) => {
         const Icon = onglet.icon;
         const isActive = active === onglet.key;
         return (
@@ -37,3 +52,4 @@ export function PresencesNav({ active }: { active: (typeof ONGLETS)[number]["key
     </div>
   );
 }
+
