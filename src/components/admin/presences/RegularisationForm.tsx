@@ -77,10 +77,7 @@ export function RegularisationForm() {
     <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-5 max-w-xl shadow-sm">
       <div className="space-y-1">
         <h3 className="text-base font-semibold text-gray-900">Régularisation d&apos;une présence</h3>
-        <p className="text-xs text-gray-500 leading-relaxed">
-          Pour un élève réinscrit après l&apos;appel du matin ou dont la présence physique a été confirmée
-          après coup, sélectionnez l&apos;élève et la date du jour où il était venu.
-        </p>
+        
       </div>
 
       <div className="space-y-1.5">
