@@ -6,7 +6,7 @@
 
 > **À l'attention exclusive de la Coordination Générale du GSR**  
 > Ce manuel a été spécialement conçu pour vous, Coordonnateur du groupe. Il détaille l'intégralité du fonctionnement de votre plateforme web, sans jargon technique, écran par écran, bouton par bouton et situation par situation.  
-> Chaque processus métier, règle de calcul, automatisme de sécurité et scénario d'exception y est documenté avec la plus grande précision pour vous garantir la maîtrise absolue de votre établissement.
+> Chaque processus métier, règle de calcul, automatisme de sécurité et scénarios d'exception y est documenté avec la plus grande précision pour vous garantir la maîtrise absolue de votre établissement.
 
 ---
 
