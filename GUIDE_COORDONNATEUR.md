@@ -458,10 +458,11 @@ Accessible depuis **Présences > Historique > Élève** (`/admin/presences/histo
 - Affiche le taux de présence global et détaille la liste exhaustive des dates d'absences avec les motifs notés lors de l'appel.
 - Cette fiche est imprimable pour servir de pièce officielle lors d'un conseil de discipline ou d'un entretien avec la famille.
 
-### 7.4. L'historique des présences et la gestion des retardataires
-Dans **Présences > Retardataires** (`/admin/presences/retardataires`) :
-- Vous retrouvez le classement des élèves qui accumulent les retards matinaux.
-- Vous pouvez filtrer par campus ou par période pour cibler les actions de discipline et sensibiliser les transporteurs scolaires.
+### 7.4. Régularisation des présences (Coordonnateur & Comptable) et gestion des retardataires
+Pour le Coordonnateur et le Comptable, ce sous-menu s'intitule **Présences > Régularisation** (`/admin/presences/retardataires`) :
+- **Régularisation rétroactive d'une présence** : permet d'ajuster la présence d'un élève réinscrit après l'appel du matin ou dont la présence physique a été confirmée après coup, pour n'importe quelle date passée de l'année scolaire en cours.
+- **Diagnostic instantané** : l'écran indique l'état actuel de l'élève à la date choisie (*Non enregistré*, *Marqué Absent* ou *Déjà Présent*) et permet de valider le passage en *Présent* en un clic.
+- **Rôle Chef de site et Secrétaire** : pour les équipes de terrain, ce sous-menu conserve son intitulé **Retardataires** et sert uniquement à enregistrer les élèves arrivés après l'appel du jour même.
 
 ---
 

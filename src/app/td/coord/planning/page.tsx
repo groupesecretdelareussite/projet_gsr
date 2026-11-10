@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { NouvelleSemaineTDDialog } from "@/components/td/NouvelleSemaineTDDialog";
 import { NouveauCreneauTDDialog } from "@/components/td/NouveauCreneauTDDialog";
+import { ModifierCreneauTDDialog } from "@/components/td/ModifierCreneauTDDialog";
 import { SemaineActionsTD } from "@/components/td/SemaineActionsTD";
 import { SupprimerCreneauTDButton } from "@/components/td/SupprimerCreneauTDButton";
 import { LibererCreneauTDDialog } from "@/components/td/LibererCreneauTDDialog";
@@ -167,6 +168,27 @@ export default async function PlanningTDPage(props: { searchParams: Promise<{ se
                         </div>
                         <div className="flex items-center gap-2">
                           <Badge variant={badge.variant}>{badge.label}</Badge>
+                          {semaineActive.statut !== "cloturee" && c.statut_creneau !== "cloture" && (
+                            <ModifierCreneauTDDialog
+                              creneau={{
+                                id: c.id,
+                                classeId: c.classe_id,
+                                matiereId: c.matiere_id,
+                                dateTd: c.date_td,
+                                heureDebut: c.heure_debut,
+                                heureFin: c.heure_fin,
+                                montantPrevu: Number(c.montant_prevu),
+                              }}
+                              semaine={{
+                                id: semaineActive.id,
+                                dateDebut: semaineActive.date_debut,
+                                dateFin: semaineActive.date_fin,
+                                statut: semaineActive.statut,
+                              }}
+                              classes={classesOptions}
+                              matieres={matieresOptions}
+                            />
+                          )}
                           {c.statut_creneau === "brouillon" && <SupprimerCreneauTDButton creneauId={c.id} />}
                           {c.statut_creneau === "cloture" && semaineActive.statut !== "cloturee" && (
                             <LibererCreneauTDDialog creneauId={c.id} />

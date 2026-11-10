@@ -118,6 +118,215 @@ export async function creerCreneauTD(input: CreerCreneauInput): Promise<{ error?
   return {};
 }
 
+export interface ModifierCreneauInput {
+  creneauId: number;
+  classeId: number;
+  matiereId: number;
+  dateTd: string; // ISO yyyy-mm-dd
+  heureDebut: string; // HH:mm
+  heureFin: string; // HH:mm
+  montantPrevu: number;
+  forcerAnnulationCandidaturesSiConflit?: boolean;
+}
+
+export interface ModifierCreneauResult {
+  error?: string;
+  confirmationRequise?: boolean;
+  messageConfirmation?: string;
+  candidatsEnConflit?: string[];
+}
+
+/**
+ * Modification d'un créneau TD (brouillon ou public).
+ * Règle A : si des professeurs ont déjà postulé et que le nouvel horaire entre
+ * en conflit avec un créneau validé ailleurs, une confirmation est requise.
+ * En cas de confirmation, les candidatures en attente sont réinitialisées (supprimées)
+ * pour leur permettre de re-postuler.
+ * Règle B : si le créneau est clôturé (prof validé), la modification directe est bloquée
+ * (obligation de libérer le créneau d'abord).
+ */
+export async function modifierCreneauTD(input: ModifierCreneauInput): Promise<ModifierCreneauResult> {
+  await getScopeAndAssert();
+
+  if (input.heureFin <= input.heureDebut) {
+    return { error: "L'heure de fin doit être après l'heure de début." };
+  }
+
+  const supabaseAdmin = createServiceRoleClient();
+
+  const { data: creneau } = await supabaseAdmin
+    .schema("td")
+    .from("creneaux")
+    .select("id, semaine_id, classe_id, matiere_id, date_td, heure_debut, heure_fin, montant_prevu, statut_creneau")
+    .eq("id", input.creneauId)
+    .single();
+
+  if (!creneau) {
+    return { error: "Créneau introuvable." };
+  }
+
+  if (creneau.statut_creneau === "cloture") {
+    return {
+      error: "Ce créneau est déjà clôturé avec un professeur validé. Veuillez d'abord utiliser l'action « Libérer le créneau » pour le repasser en public avant de le modifier.",
+    };
+  }
+
+  const { data: semaine } = await supabaseAdmin
+    .schema("td")
+    .from("semaines")
+    .select("statut, date_debut, date_fin")
+    .eq("id", creneau.semaine_id)
+    .single();
+
+  if (!semaine) {
+    return { error: "Semaine associée introuvable." };
+  }
+
+  if (semaine.statut === "cloturee") {
+    return { error: "Cette semaine est déjà clôturée, impossible de modifier ses créneaux." };
+  }
+
+  if (input.dateTd < semaine.date_debut || input.dateTd > semaine.date_fin) {
+    return { error: "La date du créneau doit être comprise dans la semaine sélectionnée." };
+  }
+
+  // Vérification de chevauchement d'horaires pour une même classe à la même date
+  const { data: creneauxClasseExistants } = await supabaseAdmin
+    .schema("td")
+    .from("creneaux")
+    .select("id, heure_debut, heure_fin, matiere_id")
+    .eq("classe_id", input.classeId)
+    .eq("date_td", input.dateTd)
+    .neq("id", input.creneauId);
+
+  const hDebut = input.heureDebut.slice(0, 5);
+  const hFin = input.heureFin.slice(0, 5);
+
+  const conflitClasse = (creneauxClasseExistants ?? []).find((c) => {
+    const cHesDebut = c.heure_debut.slice(0, 5);
+    const cHesFin = c.heure_fin.slice(0, 5);
+    return hDebut < cHesFin && hFin > cHesDebut;
+  });
+
+  if (conflitClasse) {
+    let nomMatiere = "une autre matière";
+    const { data: matData } = await supabaseAdmin
+      .schema("td")
+      .from("matieres_td")
+      .select("nom_matiere")
+      .eq("id", conflitClasse.matiere_id)
+      .maybeSingle();
+    if (matData?.nom_matiere) {
+      nomMatiere = matData.nom_matiere;
+    }
+    return {
+      error: `Un cours de ${nomMatiere} est déjà programmé pour cette classe de ${conflitClasse.heure_debut.slice(0, 5)} à ${conflitClasse.heure_fin.slice(0, 5)} (chevauchement interdit).`,
+    };
+  }
+
+  // Vérification des candidatures existantes en attente
+  const { data: candidaturesEnAttente } = await supabaseAdmin
+    .schema("td")
+    .from("postulations")
+    .select("id, professeur_id, professeurs(nom, prenom)")
+    .eq("creneau_id", input.creneauId)
+    .eq("statut_validation", "En attente");
+
+  const candidats = candidaturesEnAttente ?? [];
+
+  if (candidats.length > 0) {
+    const idsProfs = candidats.map((c) => c.professeur_id);
+    const { data: postulationsValideesAilleurs } = await supabaseAdmin
+      .schema("td")
+      .from("postulations")
+      .select("professeur_id, creneau_id")
+      .in("professeur_id", idsProfs)
+      .eq("statut_validation", "Valide");
+
+    const idsCreneauxAVerifier = [
+      ...new Set((postulationsValideesAilleurs ?? []).map((p) => p.creneau_id).filter((id) => id !== input.creneauId)),
+    ];
+    const { data: creneauxValides } = idsCreneauxAVerifier.length
+      ? await supabaseAdmin.schema("td").from("creneaux").select("id, date_td, heure_debut, heure_fin").in("id", idsCreneauxAVerifier)
+      : { data: [] as { id: number; date_td: string; heure_debut: string; heure_fin: string }[] };
+
+    const creneauValideParId = new Map((creneauxValides ?? []).map((c) => [c.id, c]));
+
+    const profsEnConflitIds = new Set(
+      (postulationsValideesAilleurs ?? [])
+        .filter((p) => {
+          const autre = creneauValideParId.get(p.creneau_id);
+          return (
+            autre &&
+            chevauchent(autre, {
+              date_td: input.dateTd,
+              heure_debut: input.heureDebut,
+              heure_fin: input.heureFin,
+            })
+          );
+        })
+        .map((p) => p.professeur_id)
+    );
+
+    if (profsEnConflitIds.size > 0) {
+      const profsEnConflitNoms = candidats
+        .filter((c) => profsEnConflitIds.has(c.professeur_id))
+        .map((c) => {
+          const p = c.professeurs as unknown as { nom: string; prenom: string } | null;
+          return p ? `${p.prenom} ${p.nom}` : `Professeur #${c.professeur_id}`;
+        });
+
+      if (!input.forcerAnnulationCandidaturesSiConflit) {
+        return {
+          confirmationRequise: true,
+          candidatsEnConflit: profsEnConflitNoms,
+          messageConfirmation: `Ce nouvel horaire entre en conflit avec l'agenda validé de : ${profsEnConflitNoms.join(
+            ", "
+          )}. Souhaitez-vous quand même appliquer la modification ? Cela annulera les candidatures en attente pour leur permettre de re-postuler.`,
+        };
+      }
+
+      // Confirmation accordée par le coordonnateur : purge des candidatures en attente pour libérer les professeurs
+      const { error: errSuppressionPostulations } = await supabaseAdmin
+        .schema("td")
+        .from("postulations")
+        .delete()
+        .eq("creneau_id", input.creneauId)
+        .eq("statut_validation", "En attente");
+
+      if (errSuppressionPostulations) {
+        return { error: errSuppressionPostulations.message };
+      }
+    }
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .schema("td")
+    .from("creneaux")
+    .update({
+      classe_id: input.classeId,
+      matiere_id: input.matiereId,
+      date_td: input.dateTd,
+      heure_debut: input.heureDebut,
+      heure_fin: input.heureFin,
+      montant_prevu: input.montantPrevu,
+    })
+    .eq("id", input.creneauId);
+
+  if (updateError) {
+    if (estErreurContrainteUnique(updateError)) {
+      return { error: "Un créneau existe déjà pour cette classe à cette date et cette heure." };
+    }
+    return { error: updateError.message };
+  }
+
+  revalidatePlanning();
+  revalidatePath("/td/coord/arbitrage");
+  revalidatePath("/td/prof/candidatures");
+  revalidatePath("/programmes");
+  return {};
+}
+
 /** §12.8 — modification des créneaux uniquement en brouillon ; la suppression suit la même règle. */
 export async function supprimerCreneauTD(creneauId: number): Promise<{ error?: string }> {
   await getScopeAndAssert();
