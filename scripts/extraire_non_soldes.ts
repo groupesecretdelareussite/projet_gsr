@@ -52,7 +52,7 @@ function getMoisCourant(date: Date = new Date()): string {
 }
 
 async function fetchAllWithPagination<T>(
-  fetchPage: (from: number, to: number) => Promise<{ data: T[] | null; error: any }>
+  fetchPage: (from: number, to: number) => PromiseLike<{ data: any; error: any }>
 ): Promise<T[]> {
   const pageSize = 1000;
   let from = 0;
