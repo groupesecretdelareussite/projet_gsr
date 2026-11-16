@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { NotesGrid, type EleveOption, type MatiereOption, type NoteExistante } from "@/components/admin/notes/NotesGrid";
 import { AutoSubmitOnChange } from "@/components/admin/AutoSubmitOnChange";
 import { lireFiltreSiteSuperviseur } from "@/lib/site-filter-cookie";
-import { SEMESTRES, type Semestre } from "@/lib/constants";
+import { SEMESTRES, OPTIONS_M, type Semestre } from "@/lib/constants";
 
 export default async function NotesPage(
   props: {
-    searchParams: Promise<{ site_id?: string; classe_id?: string; semestre?: string }>;
+    searchParams: Promise<{ site_id?: string; classe_id?: string; semestre?: string; option?: string }>;
   }
 ) {
   const searchParams = await props.searchParams;
@@ -55,11 +55,16 @@ export default async function NotesPage(
   let notesExistantes: NoteExistante[] = [];
 
   if (classeId && anneeEnCours) {
-    const { data: elevesData } = await supabase
+    let query = supabase
       .from("eleves")
       .select("id, nom, prenoms")
-      .eq("classe_id", classeId)
-      .order("nom");
+      .eq("classe_id", classeId);
+
+    if (searchParams.option) {
+      query = query.eq("option_m", searchParams.option);
+    }
+
+    const { data: elevesData } = await query.order("nom");
     eleves = elevesData ?? [];
 
     if (eleves.length > 0) {
@@ -101,7 +106,7 @@ export default async function NotesPage(
         }
       />
 
-      <form method="get" className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3 max-w-2xl">
+      <form method="get" className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3 max-w-3xl">
         {!estChefSiteOuSecretaire && (
           <select
             name="site_id"
@@ -139,6 +144,18 @@ export default async function NotesPage(
             </option>
           ))}
         </select>
+        <select
+          name="option"
+          defaultValue={searchParams.option ?? ""}
+          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
+        >
+          <option value="">Toutes les options</option>
+          {OPTIONS_M.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
         <AutoSubmitOnChange />
       </form>
 
@@ -147,12 +164,12 @@ export default async function NotesPage(
       ) : !anneeEnCours ? (
         <EmptyState icon={NotebookText} title="Aucune année scolaire en cours" description="Configurez une année scolaire en_cours avant de saisir des notes." />
       ) : eleves.length === 0 ? (
-        <EmptyState icon={NotebookText} title="Aucun élève" description="Cette classe n'a aucun élève." />
+        <EmptyState icon={NotebookText} title="Aucun élève" description="Cette classe n'a aucun élève pour ce filtre." />
       ) : (matieres ?? []).length === 0 ? (
         <EmptyState icon={NotebookText} title="Aucune matière active" description="Activez au moins une matière dans les données de référence." />
       ) : (
         <NotesGrid
-          key={`${classeId}-${semestre}`}
+          key={`${classeId}-${semestre}-${searchParams.option ?? "all"}`}
           eleves={eleves}
           matieres={(matieres ?? []) as MatiereOption[]}
           notesExistantes={notesExistantes}
