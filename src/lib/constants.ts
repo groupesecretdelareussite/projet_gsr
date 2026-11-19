@@ -37,7 +37,11 @@ export const RAISON_LABELS: Record<"maladie" | "renvoi" | "defaut_paiement" | "a
   autre: "Autre",
 };
 
-export const OPTIONS_M = Array.from({ length: 20 }, (_, i) => `M${i + 1}`);
+export const OPTIONS_M = [
+  ...Array.from({ length: 20 }, (_, i) => `M${i + 1}`),
+  ...Array.from({ length: 5 }, (_, i) => `D${i + 1}`),
+  ...Array.from({ length: 5 }, (_, i) => `B${i + 1}`),
+];
 
 export const MODES_PAIEMENT = ["MoMo", "Presentiel"] as const;
 export type ModePaiement = (typeof MODES_PAIEMENT)[number];
