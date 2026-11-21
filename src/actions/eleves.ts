@@ -540,6 +540,7 @@ export async function recupererTousLesElevesPourExport(filtres: {
   classeId?: string;
   college?: string;
   nom?: string;
+  option?: string;
 }): Promise<Record<string, string | number>[]> {
   const supabase = await createClient();
   const scope = await getUserScope(supabase);
@@ -558,6 +559,7 @@ export async function recupererTousLesElevesPourExport(filtres: {
     prenoms: string;
     contact_parent: string | null;
     contact_parent_2: string | null;
+    option_m: string | null;
     classes: { nom_classe: string; sites: { nom_site: string } | null } | null;
   }
   const allEleves: EleveExportRow[] = [];
@@ -577,6 +579,7 @@ export async function recupererTousLesElevesPourExport(filtres: {
     if (filtres.classeId) batchQuery = batchQuery.eq("classe_id", filtres.classeId);
     if (filtres.college) batchQuery = batchQuery.ilike("college", `%${filtres.college}%`);
     if (filtres.nom) batchQuery = batchQuery.ilike("nom", `%${filtres.nom}%`);
+    if (filtres.option) batchQuery = batchQuery.eq("option_m", filtres.option);
 
     const { data, error } = await batchQuery;
     if (error || !data || data.length === 0) {
@@ -599,6 +602,7 @@ export async function recupererTousLesElevesPourExport(filtres: {
     Prénoms: e.prenoms,
     Classe: e.classes?.nom_classe ?? "—",
     Site: e.classes?.sites?.nom_site ?? "—",
+    Option: e.option_m ?? "—",
     ...(peutVoirContacts
       ? {
           "Contact parent": formaterNumeroAffichage(e.contact_parent),

@@ -250,6 +250,9 @@ export function ElevesTableInteractive({
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-primary-dark whitespace-nowrap">
                     Site
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-primary-dark whitespace-nowrap">
+                    Option
+                  </th>
                   {peutGerer && (
                     <>
                       <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-primary-dark whitespace-nowrap">
@@ -303,6 +306,7 @@ export function ElevesTableInteractive({
                       <td className="px-4 py-3 text-gray-700">{e.prenoms}</td>
                       <td className="px-4 py-3 text-gray-700">{e.classes?.nom_classe ?? "—"}</td>
                       <td className="px-4 py-3 text-gray-700">{e.classes?.sites?.nom_site ?? "—"}</td>
+                      <td className="px-4 py-3 text-gray-700">{e.option_m ?? "—"}</td>
                       {peutGerer && (
                         <>
                           <td className="px-4 py-3 text-gray-700">
@@ -424,6 +428,12 @@ export function ElevesTableInteractive({
                         <span className="font-medium text-gray-700">{e.classes?.nom_classe ?? "—"}</span>
                         <span>•</span>
                         <span>{e.classes?.sites?.nom_site ?? "—"}</span>
+                        {e.option_m && (
+                          <>
+                            <span>•</span>
+                            <span className="font-medium text-gray-700">{e.option_m}</span>
+                          </>
+                        )}
                       </div>
 
                       {peutGerer && (e.contact_parent || e.contact_parent_2) && (

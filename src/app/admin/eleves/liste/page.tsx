@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { UserPlus } from "lucide-react";
+import { Layers, UserPlus } from "lucide-react";
+import { OPTIONS_M } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 import { getUserScope } from "@/lib/auth-scope";
 import { PageHeader } from "@/components/admin/PageHeader";
@@ -12,7 +14,14 @@ import { ElevesTableInteractive, type EleveRow } from "@/components/admin/eleves
 
 export default async function ListeElevesPage(
   props: {
-    searchParams: Promise<{ site_id?: string; classe_id?: string; college?: string; nom?: string; page?: string }>;
+    searchParams: Promise<{
+      site_id?: string;
+      classe_id?: string;
+      college?: string;
+      nom?: string;
+      option?: string;
+      page?: string;
+    }>;
   }
 ) {
   const searchParams = await props.searchParams;
@@ -41,6 +50,9 @@ export default async function ListeElevesPage(
       ? searchParams.classe_id
       : undefined;
 
+  const optionValide =
+    searchParams.option && OPTIONS_M.includes(searchParams.option) ? searchParams.option : undefined;
+
   const PAGE_SIZE = 50;
   const pageNumber = Math.max(1, parseInt(searchParams.page ?? "1", 10) || 1);
   const from = (pageNumber - 1) * PAGE_SIZE;
@@ -60,6 +72,7 @@ export default async function ListeElevesPage(
   if (classeIdValide) query = query.eq("classe_id", classeIdValide);
   if (searchParams.college) query = query.ilike("college", `%${searchParams.college}%`);
   if (searchParams.nom) query = query.ilike("nom", `%${searchParams.nom}%`);
+  if (optionValide) query = query.eq("option_m", optionValide);
 
   const { data: eleves, count: totalElevesBrut } = await query;
   const totalEleves = totalElevesBrut ?? 0;
@@ -124,12 +137,42 @@ export default async function ListeElevesPage(
           placeholder="Collège"
           className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
         />
-        <input
-          name="nom"
-          defaultValue={searchParams.nom ?? ""}
-          placeholder="Nom"
-          className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
-        />
+        <div className="flex gap-2 min-w-0">
+          <input
+            name="nom"
+            defaultValue={searchParams.nom ?? ""}
+            placeholder="Nom"
+            className="w-full min-w-0 px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-1 focus:ring-primary truncate"
+          />
+          {/* Filtre par option : un <select> natif invisible recouvre le bouton visible.
+              Sans filtre → icône ; filtre actif → la valeur choisie remplace l'icône. */}
+          <div
+            className={cn(
+              "relative shrink-0 min-w-[34px] px-2 flex items-center justify-center rounded-lg border bg-white focus-within:ring-1 focus-within:ring-primary",
+              optionValide ? "border-primary text-primary" : "border-gray-200 text-gray-500"
+            )}
+            title={optionValide ? `Option : ${optionValide}` : "Filtrer par option"}
+          >
+            {optionValide ? (
+              <span className="text-xs sm:text-sm font-semibold">{optionValide}</span>
+            ) : (
+              <Layers className="w-4 h-4" aria-hidden="true" />
+            )}
+            <select
+              name="option"
+              defaultValue={optionValide ?? ""}
+              aria-label="Filtrer par option"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            >
+              <option value="">Toutes les options</option>
+              {OPTIONS_M.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         <AutoSubmitOnChange />
       </form>
 
@@ -146,6 +189,7 @@ export default async function ListeElevesPage(
                   classeId: classeIdValide,
                   college: searchParams.college,
                   nom: searchParams.nom,
+                  option: optionValide,
                 }),
                 nomFichier: `Liste_eleves_${nomSiteTitre}_${dateExport}`.replace(/\s+/g, "_"),
                 nomFeuille: "Élèves",
