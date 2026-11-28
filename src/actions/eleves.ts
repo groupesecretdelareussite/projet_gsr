@@ -560,6 +560,7 @@ export async function recupererTousLesElevesPourExport(filtres: {
     contact_parent: string | null;
     contact_parent_2: string | null;
     option_m: string | null;
+    college: string;
     classes: { nom_classe: string; sites: { nom_site: string } | null } | null;
   }
   const allEleves: EleveExportRow[] = [];
@@ -569,7 +570,7 @@ export async function recupererTousLesElevesPourExport(filtres: {
     let batchQuery = supabase
       .from("eleves")
       .select(
-        "id, matricule, nom, prenoms, contact_parent, contact_parent_2, option_m, classes!inner(nom_classe, site_id, sites(nom_site))"
+        "id, matricule, nom, prenoms, contact_parent, contact_parent_2, option_m, college, classes!inner(nom_classe, site_id, sites(nom_site))"
       )
       .eq("statut", "actif")
       .order("nom")
@@ -603,6 +604,7 @@ export async function recupererTousLesElevesPourExport(filtres: {
     Classe: e.classes?.nom_classe ?? "—",
     Site: e.classes?.sites?.nom_site ?? "—",
     Option: e.option_m ?? "—",
+    Collège: e.college ?? "—",
     ...(peutVoirContacts
       ? {
           "Contact parent": formaterNumeroAffichage(e.contact_parent),
