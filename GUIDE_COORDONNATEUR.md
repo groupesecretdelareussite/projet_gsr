@@ -77,7 +77,7 @@
    - 9.5. [Les candidatures des enseignants externes](#95-les-candidatures-des-enseignants-externes)
    - 9.6. [Le système d'arbitrage du Coordonnateur](#96-le-système-darbitrage-du-coordonnateur)
    - 9.7. [Désistement et réattribution d'un cours par le Coordonnateur](#97-désistement-et-réattribution-dun-cours-par-le-coordonnateur)
-   - 9.8. [Rémunération des professeurs et validation des retraits Mobile Money (MTN, Moov, Celtis)](#98-rémunération-des-professeurs-et-validation-des-retraits-mobile-money-mtn-moov-celtis)
+   - 9.8. [Rémunération des professeurs et validation des retraits Mobile Money (MTN, Moov, Celtiis)](#98-rémunération-des-professeurs-et-validation-des-retraits-mobile-money-mtn-moov-Celtiis)
    - 9.9. [Configuration des matières TD, zones géographiques et fiches professeurs](#99-configuration-des-matières-td-zones-géographiques-et-fiches-professeurs)
 10. [Comptabilité Générale et Trésorerie Consolidée du Groupe](#10-comptabilité-générale-et-trésorerie-consolidée-du-groupe)
     - 10.1. [Les Deux Caisses Globales de l'Établissement](#101-les-deux-caisses-globales-de-létablissement)
@@ -330,7 +330,7 @@ Les montants mensuels attendus sont définis par classe dans la configuration de
 Dans **Paiements > Enregistrer** (`/admin/paiements/enregistrer`) :
 1. Recherchez l'élève en tapant son nom ou son matricule. Sa fiche financière s'affiche instantanément avec l'état de chaque mois.
 2. Saisissez le montant en Francs CFA versé par le parent.
-3. Choisissez le mode de règlement : *Présentiel (Espèces)*, *MoMo (MTN)*, *Moov Money*, *Celtis Cash*, *Virement bancaire*, ou *Chèque*.
+3. Choisissez le mode de règlement : *Présentiel (Espèces)*, *MoMo (MTN)*, *Moov Money*, *Celtiis Cash*, *Virement bancaire*, ou *Chèque*.
 4. Indiquez la date du versement.
 5. Choisissez les mois auxquels ce paiement s'applique.
 6. Cliquez sur **Enregistrer le paiement**.
@@ -538,9 +538,9 @@ Si un professeur validé appelle le vendredi soir pour signaler un empêchement 
 - Le Coordonnateur clique sur le bouton **Libérer le créneau** et saisit le motif de désistement.
 - Le créneau est immédiatement rouvert aux autres candidats disponibles qui avaient postulé, permettant au Coordonnateur de désigner un remplaçant au pied levé sans désorganiser les élèves.
 
-### 9.8. Rémunération des professeurs et validation des retraits Mobile Money (MTN, Moov, Celtis)
+### 9.8. Rémunération des professeurs et validation des retraits Mobile Money (MTN, Moov, Celtiis)
 1. **Constitution de la cagnotte** : Dès qu'une semaine TD est clôturée, chaque cours validé crédite la cagnotte personnelle du professeur.
-2. **Demande de retrait** : Depuis son espace, le professeur formule une demande de retrait d'au moins **5 000 F** en indiquant son numéro de téléphone Mobile Money et son opérateur (**MTN Bénin**, **Moov Money** ou **Celtis Cash**).
+2. **Demande de retrait** : Depuis son espace, le professeur formule une demande de retrait d'au moins **5 000 F** en indiquant son numéro de téléphone Mobile Money et son opérateur (**MTN Bénin**, **Moov Money** ou **Celtiis Cash**).
 3. **Traitement par le Coordonnateur** (`/td/coord/paiements`) :
    - Le Coordonnateur vérifie la demande sur son tableau des retraits.
    - Il effectue le transfert d'argent depuis le terminal Mobile Money de l'école.
@@ -616,7 +616,7 @@ Le système calcule le taux de recouvrement financier avec une exactitude mathé
 Des graphiques ventilent l'assiduité par site et par classe pour repérer les promotions modèles et celles où l'absentéisme est anormalement élevé.
 
 ### 11.3. La ventilation des règlements par mode de paiement
-Un diagramme vous montre la proportion des encaissements reçus en espèces, par Mobile Money (MTN, Moov, Celtis) et par virement bancaire, facilitant la réconciliation quotidienne avec vos relevés financiers.
+Un diagramme vous montre la proportion des encaissements reçus en espèces, par Mobile Money (MTN, Moov, Celtiis) et par virement bancaire, facilitant la réconciliation quotidienne avec vos relevés financiers.
 
 ---
 

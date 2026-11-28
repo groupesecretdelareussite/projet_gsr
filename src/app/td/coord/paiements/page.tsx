@@ -15,7 +15,7 @@ interface DemandeRow {
   professeur_id: number;
   mois: string;
   montant_demande: number;
-  reseau_momo: "mtn" | "moov" | "celtis";
+  reseau_momo: "mtn" | "moov" | "Celtiis";
   numero_momo: string;
   statut: "en_attente" | "paye" | "rejete";
   date_demande: string;

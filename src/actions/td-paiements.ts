@@ -107,8 +107,8 @@ export async function demanderRetraitProfTD(
   }
 
   // 3. Contrôle du réseau Mobile Money
-  if (!["mtn", "moov", "celtis"].includes(input.reseau)) {
-    return { error: "Veuillez sélectionner un opérateur Mobile Money valide (MTN, Moov ou Celtis)." };
+  if (!["mtn", "moov", "Celtiis"].includes(input.reseau)) {
+    return { error: "Veuillez sélectionner un opérateur Mobile Money valide (MTN, Moov ou Celtiis)." };
   }
 
   // 4. Contrôle et normalisation du numéro Mobile Money
@@ -178,7 +178,7 @@ export async function demanderRetraitProfTD(
 
 /**
  * Validation d'un paiement par le coordonnateur.
- * Exige la saisie de la référence de transaction de l'opérateur (MTN/Moov/Celtis).
+ * Exige la saisie de la référence de transaction de l'opérateur (MTN/Moov/Celtiis).
  */
 export async function validerPaiementProfTD(
   demandeId: number,

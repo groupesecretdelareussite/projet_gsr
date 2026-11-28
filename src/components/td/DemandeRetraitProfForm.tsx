@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Wallet,
   Clock,
@@ -289,7 +290,7 @@ export function DemandeRetraitProfForm({
               Montant à retirer (F CFA) <span className="text-red-500">*</span>
             </Label>
             <span className="text-xs text-gray-400">
-              Max disponible :{" "}
+              Max :{" "}
               <strong className="text-primary font-bold">
                 {soldeDisponible.toLocaleString("fr-FR")} F
               </strong>
@@ -334,12 +335,16 @@ export function DemandeRetraitProfForm({
 
         {/* Choix de l'opérateur GSM */}
         <div className="space-y-2">
-          <Label className="text-xs font-semibold text-gray-800">
+          <Label id="label-operateur" className="text-xs font-semibold text-gray-800">
             Opérateur Mobile Money <span className="text-red-500">*</span>
           </Label>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {(["mtn", "moov", "celtis"] as ReseauMoMo[]).map((r) => {
+          <div
+            role="radiogroup"
+            aria-labelledby="label-operateur"
+            className="grid grid-cols-1 sm:grid-cols-3 gap-2"
+          >
+            {(["mtn", "moov", "Celtiis"] as ReseauMoMo[]).map((r) => {
               const cfg = RESEAUX_MOMO[r];
               const actif = reseau === r;
 
@@ -347,20 +352,32 @@ export function DemandeRetraitProfForm({
                 <button
                   key={r}
                   type="button"
+                  role="radio"
+                  aria-checked={actif}
                   onClick={() => setReseau(r)}
-                  className={`p-3 rounded-xl border text-left flex items-center justify-between transition cursor-pointer ${
+                  className={`p-3 rounded-xl border text-left flex items-center gap-3 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
                     actif
-                      ? "border-primary bg-primary/5 text-primary ring-1 ring-primary/20"
-                      : "border-gray-200 hover:border-gray-300 text-gray-700"
+                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                      : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50"
                   }`}
                 >
-                  <div>
-                    <p className="text-xs font-bold leading-tight">{cfg.nomCourt}</p>
-                    <p className="text-[10px] text-gray-400 mt-0.5">{cfg.label}</p>
+                  <Image
+                    src={cfg.logo}
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="w-10 h-10 rounded-lg object-contain shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-gray-900 leading-tight">{cfg.nomCourt}</p>
+                    <p className="text-[11px] text-gray-500 mt-0.5 truncate" title={cfg.label}>
+                      {cfg.label}
+                    </p>
                   </div>
                   <span
-                    className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                      actif ? "border-primary bg-primary" : "border-gray-300"
+                    aria-hidden="true"
+                    className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      actif ? "border-primary bg-primary" : "border-gray-300 bg-white"
                     }`}
                   >
                     {actif && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
@@ -377,15 +394,24 @@ export function DemandeRetraitProfForm({
             Numéro de réception {RESEAUX_MOMO[reseau]?.nomCourt}{" "}
             <span className="text-red-500">*</span>
           </Label>
-          <Input
-            id="numero-momo"
-            type="tel"
-            required
-            placeholder="Ex: 97 00 00 00"
-            value={numeroMomo}
-            onChange={(e) => setNumeroMomo(e.target.value)}
-            className="font-mono text-sm h-10"
-          />
+          <div className="relative">
+            <Image
+              src={RESEAUX_MOMO[reseau].logo}
+              alt=""
+              width={24}
+              height={24}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded object-contain pointer-events-none"
+            />
+            <Input
+              id="numero-momo"
+              type="tel"
+              required
+              placeholder="Ex: 97 00 00 00"
+              value={numeroMomo}
+              onChange={(e) => setNumeroMomo(e.target.value)}
+              className="font-mono text-sm h-10 pl-11"
+            />
+          </div>
           <p className="text-[11px] text-gray-400">
             Vous pouvez saisir n&apos;importe quel numéro de votre choix sur le réseau sélectionné.
           </p>

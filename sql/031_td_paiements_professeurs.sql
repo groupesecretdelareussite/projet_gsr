@@ -8,7 +8,7 @@ create table if not exists td.demandes_retrait (
   professeur_id       integer not null references td.professeurs(id) on delete restrict,
   mois                varchar(7) not null, -- Format 'YYYY-MM'
   montant_demande     numeric(10,2) not null check (montant_demande >= 5000),
-  reseau_momo         text not null check (reseau_momo in ('mtn', 'moov', 'celtis')),
+  reseau_momo         text not null check (reseau_momo in ('mtn', 'moov', 'Celtiis')),
   numero_momo         varchar(25) not null,
   statut              text not null default 'en_attente' check (statut in ('en_attente', 'paye', 'rejete')),
   date_demande        timestamptz not null default now(),

@@ -1,6 +1,6 @@
 import { genererLienWhatsApp } from "@/lib/whatsapp";
 
-export type ReseauMoMo = "mtn" | "moov" | "celtis";
+export type ReseauMoMo = "mtn" | "moov" | "Celtiis";
 
 export interface ReseauMoMoConfig {
   code: ReseauMoMo;
@@ -8,6 +8,8 @@ export interface ReseauMoMoConfig {
   nomCourt: string;
   badgeClass: string;
   placeholderRef: string;
+  /** Logo de l'opérateur (fichier dans `public/`), affiché sur le formulaire de retrait. */
+  logo: string;
 }
 
 export const RESEAUX_MOMO: Record<ReseauMoMo, ReseauMoMoConfig> = {
@@ -17,6 +19,7 @@ export const RESEAUX_MOMO: Record<ReseauMoMo, ReseauMoMoConfig> = {
     nomCourt: "MTN MoMo",
     badgeClass: "bg-yellow-50 text-yellow-800 border-yellow-200",
     placeholderRef: "Ex: 20261028-123456 ou ID MTN",
+    logo: "/images/reseaux/mtn-momo.png",
   },
   moov: {
     code: "moov",
@@ -24,13 +27,15 @@ export const RESEAUX_MOMO: Record<ReseauMoMo, ReseauMoMoConfig> = {
     nomCourt: "Moov Money",
     badgeClass: "bg-blue-50 text-blue-800 border-blue-200",
     placeholderRef: "Ex: MP261028.1234.A12345",
+    logo: "/images/reseaux/moov-money.png",
   },
-  celtis: {
-    code: "celtis",
-    label: "Celtis Cash (Celtis Bénin)",
-    nomCourt: "Celtis Cash",
+  Celtiis: {
+    code: "Celtiis",
+    label: "Celtiis Cash (Celtiis Bénin)",
+    nomCourt: "Celtiis Cash",
     badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200",
     placeholderRef: "Ex: CEL-9382019",
+    logo: "/images/reseaux/celtiis-cash.png",
   },
 };
 

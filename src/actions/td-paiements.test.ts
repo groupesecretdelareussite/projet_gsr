@@ -64,7 +64,7 @@ describe("Paiements & Retraits TD — Demande par le professeur", () => {
     vi.mocked(getTdProfesseurSession).mockResolvedValueOnce({ professeurId: undefined } as never);
     const res = await demanderRetraitProfTD({
       montant: 10000,
-      reseau: "celtis",
+      reseau: "Celtiis",
       numeroMomo: "40123456",
     });
     expect(res.error).toBe("Non authentifié");
@@ -83,7 +83,7 @@ describe("Paiements & Retraits TD — Demande par le professeur", () => {
 
     const res = await demanderRetraitProfTD({
       montant: 10000,
-      reseau: "celtis",
+      reseau: "Celtiis",
       numeroMomo: "40123456",
     });
     expect(res.error).toContain("La période de retrait est fermée");
@@ -93,7 +93,7 @@ describe("Paiements & Retraits TD — Demande par le professeur", () => {
     vi.mocked(getTdProfesseurSession).mockResolvedValueOnce({ professeurId: 10 } as never);
     const res = await demanderRetraitProfTD({
       montant: 2000,
-      reseau: "celtis",
+      reseau: "Celtiis",
       numeroMomo: "40123456",
     });
     expect(res.error).toContain("5\u202f000 F CFA");

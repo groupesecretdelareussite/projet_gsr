@@ -17,10 +17,10 @@ describe("Logique financière & Retraits TD (td-finances)", () => {
     expect(PAS_MONTANT_RETRAIT).toBe(100);
   });
 
-  it("supporte les 3 réseaux béninois : MTN, Moov et Celtis", () => {
+  it("supporte les 3 réseaux béninois : MTN, Moov et Celtiis", () => {
     expect(RESEAUX_MOMO.mtn.label).toBe("MTN Mobile Money");
     expect(RESEAUX_MOMO.moov.label).toBe("Moov Money");
-    expect(RESEAUX_MOMO.celtis.label).toBe("Celtis Cash (Celtis Bénin)");
+    expect(RESEAUX_MOMO.Celtiis.label).toBe("Celtiis Cash (Celtiis Bénin)");
   });
 
   describe("Calcul de la fenêtre de retrait (28 au dernier jour du mois)", () => {
@@ -75,7 +75,7 @@ describe("Logique financière & Retraits TD (td-finances)", () => {
         codeDemande: "PAY-202610-001",
         montant: 50000,
         nomProf: "Jean DUPONT",
-        reseau: "celtis",
+        reseau: "Celtiis",
         numeroMomo: "40123456",
         statut: "paye",
         referencePaiement: "CEL-9382019",
@@ -84,7 +84,7 @@ describe("Logique financière & Retraits TD (td-finances)", () => {
       expect(msg).toContain("#PAY-202610-001");
       expect(msg).toContain("50\u202f000 F CFA");
       expect(msg).toContain("CEL-9382019");
-      expect(msg).toContain("Celtis Cash");
+      expect(msg).toContain("Celtiis Cash");
       expect(msg).toContain("40123456");
       expect(msg).toContain("Jean DUPONT");
     });
